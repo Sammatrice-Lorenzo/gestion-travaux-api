@@ -1,0 +1,41 @@
+version: '3.7'
+services:
+    database:
+        image: 'mysql:latest'
+        container_name: database_gestion_travaux
+        volumes:
+            - dbdata:/var/lib/mysql
+        environment:
+            MYSQL_DATABASE: gestion_travaux
+            MYSQL_ROOT_PASSWORD: password
+        networks:
+            - dev
+        ports:
+            - "9906:3306"
+            # - '3306'
+
+    # phpmyadmin
+    phpmyadmin:
+        container_name: phpmyadmin_gestion_travaux
+        depends_on:
+            - database
+        image: phpmyadmin
+        restart: always
+        ports:
+            - "8090:80"
+            # - "8020:80"
+        environment:
+            PMA_HOST: database
+        networks:
+            - dev
+
+###< doctrine/doctrine-bundle ###
+
+volumes:
+    ###> doctrine/doctrine-bundle ###
+    dbdata:
+        ###< doctrine/doctrine-bundle ###
+
+networks:
+    dev:
+        driver: bridge

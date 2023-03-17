@@ -1,0 +1,9 @@
+{
+    "scripts": {
+        "start": "symfony server:start --port=8000",
+        "truncate-database": "symfony console d:d:d --if-exists --force && symfony console d:d:c && symfony console d:s:u --force --complete && symfony console d:f:l -n"
+    },
+    "dependencies": {
+        "@openapitools/openapi-generator-cli": "^2.5.2"
+    }
+}
