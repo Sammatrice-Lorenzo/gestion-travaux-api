@@ -23,6 +23,7 @@ class OpenApiFactory implements OpenApiFactoryInterface
 
         $schemas = $openApi->getComponents()->getSchemas();
         $schemas['Credentials'] = $this->getCredential();
+        $schemas['Registration'] = $this->getUserRegistration();
 
         $schemas['cookieAuth'] = new ArrayObject([
             'type' => 'apiKey',
@@ -30,6 +31,7 @@ class OpenApiFactory implements OpenApiFactoryInterface
             'name' => 'PHPSESSID'
         ]);
 
+        $openApi->getPaths()->addPath('/api/registration', $this->getRegistrationPath());
         $openApi->getPaths()->addPath('/api/login', $this->getLoginPath());
         $openApi->getPaths()->addPath('/api/logout', $this->getLogoutPath());
 
@@ -46,6 +48,27 @@ class OpenApiFactory implements OpenApiFactoryInterface
                     'exemple' => 'test@test.com',
                 ],
                 'password' => [
+                    'type' => 'string',
+                    'exemple' => '0000',
+                ]
+            ]
+        ]);
+    }
+
+    private function getUserRegistration(): ArrayObject
+    {
+        return new ArrayObject([
+            'type' => 'object',
+            'properties' => [
+                'email' => [
+                    'type' => 'string',
+                    'exemple' => 'test@test.com',
+                ],
+                'password' => [
+                    'type' => 'string',
+                    'exemple' => '0000',
+                ],
+                'confirmPassword' => [
                     'type' => 'string',
                     'exemple' => '0000',
                 ]
@@ -88,6 +111,37 @@ class OpenApiFactory implements OpenApiFactoryInterface
                 responses: [
                     '200' => [
                         'description' => 'Utilisateur connecté',
+                        'content' => [
+                            'application/json' => [
+                                'schema' => [
+                                    '$ref' => '#/components/schemas/User-read.User'
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            )
+        );
+    }
+
+    private function getRegistrationPath(): PathItem
+    {
+        return new PathItem(
+            post: new Operation(
+                operationId: 'postApiRegistration',
+                tags: ['Auth'],
+                requestBody: new RequestBody(
+                    content: new ArrayObject([
+                        'application/json' => [
+                            'schema' => [
+                                '$ref' => '#/components/schemas/Registration'
+                            ]
+                        ]
+                    ])
+                ),
+                responses: [
+                    '200' => [
+                        'description' => 'Utilisateur enregistrée',
                         'content' => [
                             'application/json' => [
                                 'schema' => [
