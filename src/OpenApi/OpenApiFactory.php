@@ -21,15 +21,16 @@ class OpenApiFactory implements OpenApiFactoryInterface
     {
         $openApi = $this->decorated->__invoke($context);
 
-        $schemas = $openApi->getComponents()->getSchemas();
-        $schemas['Credentials'] = $this->getCredential();
-        $schemas['Registration'] = $this->getUserRegistration();
-
-        $schemas['cookieAuth'] = new ArrayObject([
-            'type' => 'apiKey',
-            'in' => 'cookie',
-            'name' => 'PHPSESSID'
+        $schemas = $openApi->getComponents()->getSecuritySchemes();
+        $schemas['bearerAuth'] = new ArrayObject([
+            'type' => 'http',
+            'scheme' => 'bearer',
+            'bearerFormat' => 'JWT'
         ]);
+
+        $schemas = $openApi->getComponents()->getSchemas();
+        $schemas['Token'] = $this->getCredential();
+        $schemas['Registration'] = $this->getUserRegistration();
 
         $openApi->getPaths()->addPath('/api/registration', $this->getRegistrationPath());
         $openApi->getPaths()->addPath('/api/login', $this->getLoginPath());
@@ -43,14 +44,9 @@ class OpenApiFactory implements OpenApiFactoryInterface
         return new ArrayObject([
             'type' => 'object',
             'properties' => [
-                'email' => [
+                'token' => [
                     'type' => 'string',
-                    'exemple' => 'test@test.com',
                 ],
-                'password' => [
-                    'type' => 'string',
-                    'exemple' => '0000',
-                ]
             ]
         ]);
     }
@@ -85,7 +81,7 @@ class OpenApiFactory implements OpenApiFactoryInterface
                 summary: 'Déconnexion utilisateur connecté',
                 responses: [
                     '204' => [
-                        'description' => 'Utilisateur deconnecté',
+                        'description' => 'Utilisateur déconnecté',
                         'content' => 'No content'
                     ]
                 ]
@@ -110,11 +106,11 @@ class OpenApiFactory implements OpenApiFactoryInterface
                 ),
                 responses: [
                     '200' => [
-                        'description' => 'Utilisateur connecté',
+                        'description' => 'Token JWT',
                         'content' => [
                             'application/json' => [
                                 'schema' => [
-                                    '$ref' => '#/components/schemas/User-read.User'
+                                    '$ref' => '#/components/schemas/Token'
                                 ]
                             ]
                         ]

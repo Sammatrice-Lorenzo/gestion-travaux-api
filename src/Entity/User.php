@@ -3,15 +3,14 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\Get;
-use ApiPlatform\Metadata\Post;
 use Doctrine\ORM\Mapping as ORM;
 use App\Controller\UserController;
 use App\Repository\UserRepository;
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Action\NotFoundAction;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ApiResource(
@@ -22,16 +21,17 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             uriTemplate: '/user',
             controller: UserController::class,
             read: false,
-            openapiContext:['cookieAuth' => []]
+            security: 'is_granted("ROLE_USER")',
+            openapiContext: ['security' => [['bearerAuth' => []]]]
         ),
     ],
-    normalizationContext: ['groups' => 'read:User']
+    normalizationContext: ['groups' => 'read:User'],
 )]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[UniqueEntity(fields: ['email'], message: 'Il ya déjà un compte avec cette email.')]
-#[UniqueEntity(fields: ['id'], message: 'Un utilisatuer ne peut avoir un seul et unique id')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+#[UniqueEntity(fields: ['id'], message: 'Un utilisateur ne peut avoir un seul et unique id')]
+class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -59,6 +59,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(?int $id): self
+    {
+        $this->id = $id;
+
+        return $this;
     }
 
     public function getEmail(): ?string
@@ -136,5 +143,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->isVerified = $isVerified;
 
         return $this;
+    }
+
+    /**
+     * Depuis JWT Interface
+     *
+     * @param [type] $username
+     * @param array $payload
+     * @return User
+     */
+    public static function createFromPayload($username, array $payload): User
+    {
+        return (new User())->setEmail($username)->setId($payload['id']);
     }
 }
