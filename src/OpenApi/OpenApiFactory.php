@@ -30,11 +30,13 @@ class OpenApiFactory implements OpenApiFactoryInterface
 
         $schemas = $openApi->getComponents()->getSchemas();
         $schemas['Token'] = $this->getCredential();
+        $schemas['Link'] = $this->getLinkForVerifiedEmail();
         $schemas['Registration'] = $this->getUserRegistration();
 
         $openApi->getPaths()->addPath('/api/register', $this->getRegistrationPath());
         $openApi->getPaths()->addPath('/api/login', $this->getLoginPath());
         $openApi->getPaths()->addPath('/api/logout', $this->getLogoutPath());
+        $openApi->getPaths()->addPath('/verify/email', $this->getVerifiedToken());
 
         return $openApi;
     }
@@ -49,6 +51,46 @@ class OpenApiFactory implements OpenApiFactoryInterface
                 ],
             ]
         ]);
+    }
+
+    private function getLinkForVerifiedEmail(): ArrayObject
+    {
+        return new ArrayObject([
+            'type' => 'object',
+            'properties' => [
+                'token' => [
+                    'type' => 'string',
+                ],
+                'link' => [
+                    'type' => 'string',
+                ],
+            ]
+        ]);
+    }
+
+    public function getVerifiedToken(): PathItem
+    {
+        return new PathItem(
+            post: new Operation(
+                operationId: 'postVerifiedEmail',
+                tags: ['Auth'],
+                requestBody: new RequestBody(
+                    content: new ArrayObject([
+                        'application/json' => [
+                            'schema' => [
+                                '$ref' => '#/components/schemas/Link',
+                            ]
+                        ]
+                    ])
+                ),
+                responses: [
+                    '204' => [
+                        'description' => 'Utilisateur vérifiée',
+                        'content' => 'No content'
+                    ]
+                ]
+            )
+        );
     }
 
     private function getUserRegistration(): ArrayObject
