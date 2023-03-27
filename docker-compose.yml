@@ -1,5 +1,23 @@
 version: '3.7'
 services:
+    gestion-travaux-api:
+        container_name: gestion-travaux-api
+        build:
+            context: .
+            dockerfile: ./php/Dockerfile
+        depends_on:
+            - database
+        image: php:8.2-apache
+        volumes:
+            - ./php/php.ini:/usr/local/etc/php/php.ini-development
+            - ../gestion-travaux-api:/var/www/
+        ports:
+            - 5000:8000
+        links:
+            - database:database
+        networks:
+            - php
+
     database:
         image: 'mysql:latest'
         container_name: database_gestion_travaux
@@ -9,7 +27,8 @@ services:
             MYSQL_DATABASE: gestion_travaux
             MYSQL_ROOT_PASSWORD: password
         networks:
-            - dev
+            - mysql-phpmyadmin
+            - php
         ports:
             - "9906:3306"
             # - '3306'
@@ -27,15 +46,14 @@ services:
         environment:
             PMA_HOST: database
         networks:
-            - dev
+            - mysql-phpmyadmin
 
-###< doctrine/doctrine-bundle ###
-
-volumes:
-    ###> doctrine/doctrine-bundle ###
-    dbdata:
-        ###< doctrine/doctrine-bundle ###
 
 networks:
-    dev:
-        driver: bridge
+    local:
+    mysql-phpmyadmin:
+    php:
+
+volumes:
+    dbdata:
+        driver: local

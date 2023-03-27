@@ -20,6 +20,8 @@ class UserFixtures extends Fixture
         $faker = Factory::create('fr_FR');
 
         $simpleUser = (new User())
+            ->setFirstname($faker->firstName)
+            ->setLastname($faker->lastName)
             ->setEmail('user@test.com')
             ->setRoles(['ROLE_USER'])
             ->setIsVerified(true)
@@ -28,6 +30,8 @@ class UserFixtures extends Fixture
 
         for ($i = 0; $i < 5; $i++) {
             $user = (new User())
+                ->setFirstname($faker->firstName)
+                ->setLastname($faker->lastName)
                 ->setEmail($faker->email())
                 ->setRoles(['ROLE_USER'])
                 ->setIsVerified(true)

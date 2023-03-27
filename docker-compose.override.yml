@@ -9,6 +9,7 @@ services:
 
 ###> symfony/mailer ###
   mailer:
-    image: schickling/mailcatcher
+    image: maildev/maildev
     ports: ["1025", "1080"]
+    network: php
 ###< symfony/mailer ###

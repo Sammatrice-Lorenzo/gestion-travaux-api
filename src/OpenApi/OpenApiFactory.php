@@ -32,7 +32,7 @@ class OpenApiFactory implements OpenApiFactoryInterface
         $schemas['Token'] = $this->getCredential();
         $schemas['Registration'] = $this->getUserRegistration();
 
-        $openApi->getPaths()->addPath('/api/registration', $this->getRegistrationPath());
+        $openApi->getPaths()->addPath('/api/register', $this->getRegistrationPath());
         $openApi->getPaths()->addPath('/api/login', $this->getLoginPath());
         $openApi->getPaths()->addPath('/api/logout', $this->getLogoutPath());
 
@@ -56,6 +56,14 @@ class OpenApiFactory implements OpenApiFactoryInterface
         return new ArrayObject([
             'type' => 'object',
             'properties' => [
+                'firstname' => [
+                    'type' => 'string',
+                    'exemple' => 'Jules',
+                ],
+                'lastname' => [
+                    'type' => 'string',
+                    'exemple' => 'Du Pont',
+                ],
                 'email' => [
                     'type' => 'string',
                     'exemple' => 'test@test.com',

@@ -39,6 +39,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     #[Groups(['read:User'])]
     private ?int $id = null;
 
+    #[ORM\Column(length: 255)]
+    #[Groups(['read:User'])]
+    private ?string $firstname = null;
+
+    #[ORM\Column(length: 255)]
+    #[Groups(['read:User'])]
+    private ?string $lastname = null;
+
     #[ORM\Column(length: 180, unique: true)]
     #[Groups(['read:User'])]
     private ?string $email = null;
@@ -155,5 +163,29 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     public static function createFromPayload($username, array $payload): User
     {
         return (new User())->setEmail($username)->setId($payload['id']);
+    }
+
+    public function getFirstname(): ?string
+    {
+        return $this->firstname;
+    }
+
+    public function setFirstname(string $firstname): self
+    {
+        $this->firstname = $firstname;
+
+        return $this;
+    }
+
+    public function getLastname(): ?string
+    {
+        return $this->lastname;
+    }
+
+    public function setLastname(string $lastname): self
+    {
+        $this->lastname = $lastname;
+
+        return $this;
     }
 }
