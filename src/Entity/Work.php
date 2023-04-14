@@ -2,12 +2,14 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use App\Repository\WorkRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use App\Entity\User;
+use App\Entity\TypeOfWork;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\WorkRepository;
+use ApiPlatform\Metadata\ApiResource;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 
 #[ORM\Entity(repositoryClass: WorkRepository::class)]
 #[ApiResource]
@@ -33,8 +35,11 @@ class Work
     #[ORM\Column]
     private array $equipement = [];
 
-    #[ORM\ManyToMany(targetEntity: TypeOfWork::class, mappedBy: 'works')]
+    #[ORM\OneToMany(targetEntity: TypeOfWork::class, mappedBy: 'work')]
     private Collection $typeOfWorks;
+
+    #[ORM\ManyToOne(inversedBy: 'works')]
+    private ?User $user = null;
 
     public function __construct()
     {
@@ -118,7 +123,7 @@ class Work
     {
         if (!$this->typeOfWorks->contains($typeOfWork)) {
             $this->typeOfWorks->add($typeOfWork);
-            $typeOfWork->addWork($this);
+            $typeOfWork->setWork($this);
         }
 
         return $this;
@@ -127,8 +132,23 @@ class Work
     public function removeTypeOfWork(TypeOfWork $typeOfWork): self
     {
         if ($this->typeOfWorks->removeElement($typeOfWork)) {
-            $typeOfWork->removeWork($this);
+            // set the owning side to null (unless already changed)
+            if ($typeOfWork->getWork() === $this) {
+                $typeOfWork->setWork(null);
+            }
         }
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
 
         return $this;
     }
