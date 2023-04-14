@@ -2,11 +2,10 @@
 
 namespace App\Entity;
 
+use App\Entity\Work;
+use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\TypeOfWorkRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TypeOfWorkRepository::class)]
 #[ApiResource]
@@ -23,13 +22,8 @@ class TypeOfWork
     #[ORM\Column]
     private array $equipement = [];
 
-    #[ORM\ManyToMany(targetEntity: Work::class, inversedBy: 'typeOfWorks')]
-    private Collection $works;
-
-    public function __construct()
-    {
-        $this->works = new ArrayCollection();
-    }
+    #[ORM\ManyToOne(targetEntity: Work::class, inversedBy: 'typeOfWorks')]
+    private ?Work $work = null;
 
     public function getId(): ?int
     {
@@ -60,26 +54,14 @@ class TypeOfWork
         return $this;
     }
 
-    /**
-     * @return Collection<int, Work>
-     */
-    public function getWorks(): Collection
+    public function getWork(): ?Work
     {
-        return $this->works;
+        return $this->work;
     }
 
-    public function addWork(Work $work): self
+    public function setWork(?Work $work): self
     {
-        if (!$this->works->contains($work)) {
-            $this->works->add($work);
-        }
-
-        return $this;
-    }
-
-    public function removeWork(Work $work): self
-    {
-        $this->works->removeElement($work);
+        $this->work = $work;
 
         return $this;
     }

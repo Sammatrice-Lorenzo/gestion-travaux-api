@@ -2,36 +2,74 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use App\Repository\ClientRepository;
+use App\Entity\User;
+use ApiPlatform\Metadata\Get;
 use Doctrine\ORM\Mapping as ORM;
+use App\Controller\ClientController;
+use App\Repository\ClientRepository;
+use ApiPlatform\Metadata\ApiResource;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ClientRepository::class)]
-#[ApiResource]
+#[ApiResource(
+    security: 'is_granted("ROLE_USER")',
+    operations: [
+        new Get(
+            name: 'getClientsByUser',
+            uriTemplate: '/clientsByUser/{id}',
+            controller: ClientController::class,
+            read: false,
+            security: 'is_granted("ROLE_USER")',
+            openapiContext: [
+                'security' => [['bearerAuth' => []]],
+                'parameters' => [
+                    [
+                        'name' => 'id',
+                        'in' => 'path',
+                        'required' => true,
+                        'description' => 'The user ID',
+                    ]
+                ]
+            ]
+        )
+    ],
+    normalizationContext: ['groups' => 'read:Client'],
+)]
 class Client
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+    #[Groups(['read:Client'])]
 
     #[ORM\Column(length: 255)]
     private ?string $firstname = null;
+    #[Groups(['read:Client'])]
 
     #[ORM\Column(length: 255)]
     private ?string $lastname = null;
+    #[Groups(['read:Client'])]
 
     #[ORM\Column(length: 255)]
     private ?string $phoneNumber = null;
+    #[Groups(['read:Client'])]
 
     #[ORM\Column(length: 255)]
     private ?string $postalCode = null;
+    #[Groups(['read:Client'])]
 
     #[ORM\Column(length: 255)]
     private ?string $city = null;
+    #[Groups(['read:Client'])]
 
     #[ORM\Column(length: 255)]
     private ?string $streetAddress = null;
+    #[Groups(['read:Client'])]
+
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'clients')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $user = null;
 
     public function getId(): ?int
     {
@@ -102,5 +140,17 @@ class Client
     public function setCity(?string $city): void
     {
         $this->city = $city;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
+
+        return $this;
     }
 }
