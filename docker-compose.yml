@@ -12,7 +12,7 @@ services:
             - ./php/php.ini:/usr/local/etc/php/php.ini-development
             - ../gestion-travaux-api:/var/www/
         ports:
-            - 5000:8000
+            - 8000:8000
         links:
             - database:database
         networks:
