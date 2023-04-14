@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\WorkRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -30,6 +32,14 @@ class Work
 
     #[ORM\Column]
     private array $equipement = [];
+
+    #[ORM\ManyToMany(targetEntity: TypeOfWork::class, mappedBy: 'works')]
+    private Collection $typeOfWorks;
+
+    public function __construct()
+    {
+        $this->typeOfWorks = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -92,6 +102,33 @@ class Work
     public function setEquipement(array $equipement): self
     {
         $this->equipement = $equipement;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, TypeOfWork>
+     */
+    public function getTypeOfWorks(): Collection
+    {
+        return $this->typeOfWorks;
+    }
+
+    public function addTypeOfWork(TypeOfWork $typeOfWork): self
+    {
+        if (!$this->typeOfWorks->contains($typeOfWork)) {
+            $this->typeOfWorks->add($typeOfWork);
+            $typeOfWork->addWork($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTypeOfWork(TypeOfWork $typeOfWork): self
+    {
+        if ($this->typeOfWorks->removeElement($typeOfWork)) {
+            $typeOfWork->removeWork($this);
+        }
 
         return $this;
     }
