@@ -2,10 +2,14 @@
 
 namespace App\DataFixtures;
 
-use Doctrine\Bundle\FixturesBundle\Fixture;
+use Faker\Factory;
+use App\Entity\Work;
+use App\Entity\TypeOfWork;
 use Doctrine\Persistence\ObjectManager;
+use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
-class TakeOfWorkFixtures extends Fixture implements DependentFixtureInterface
+class TypeOfWorkFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
@@ -14,15 +18,14 @@ class TakeOfWorkFixtures extends Fixture implements DependentFixtureInterface
 
         foreach ($manager->getRepository(Work::class)->findAll() as $work) {
             for ($i=0; $i < 5; $i++) {
-                $progression = $faker->randomElements(Progression::cases())[0]->value;
 
-                $TypeOfWork = (new TypeOfWork())
+                $typeOfWork = (new TypeOfWork())
                     ->setName($faker->name)
                     ->setEquipement($faker->randomElements($equipements))
                     ->setWork($work)
                 ;
 
-                $manager->persist($work);
+                $manager->persist($typeOfWork);
             }
         }
 
@@ -36,5 +39,3 @@ class TakeOfWorkFixtures extends Fixture implements DependentFixtureInterface
         ];
     }
 }
-
-
