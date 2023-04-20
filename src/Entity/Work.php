@@ -10,8 +10,35 @@ use App\Repository\WorkRepository;
 use ApiPlatform\Metadata\ApiResource;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
+use ApiPlatform\Metadata\Get;
+use App\Controller\WorkController;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: WorkRepository::class)]
+#[ApiResource(
+    security: 'is_granted("ROLE_USER")',
+    operations: [
+        new Get(
+            name: 'getWorksByUser',
+            uriTemplate: '/worksByUser/{id}',
+            controller: WorkController::class,
+            read: false,
+            security: 'is_granted("ROLE_USER")',
+            openapiContext: [
+                'security' => [['bearerAuth' => []]],
+                'parameters' => [
+                    [
+                        'name' => 'id',
+                        'in' => 'path',
+                        'required' => true,
+                        'description' => 'The user ID',
+                    ]
+                ]
+            ]
+        )
+    ],
+    normalizationContext: ['groups' => 'read:Work'],
+)]
 #[ApiResource]
 class Work
 {
@@ -19,21 +46,27 @@ class Work
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+    #[Groups(['read:Work'])]
 
     #[ORM\Column(length: 255)]
     private ?string $city = null;
+    #[Groups(['read:Work'])]
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $start = null;
+    #[Groups(['read:Work'])]
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $end = null;
+    #[Groups(['read:Work'])]
 
     #[ORM\Column(length: 255)]
     private ?string $progression = null;
+    #[Groups(['read:Work'])]
 
     #[ORM\Column]
     private array $equipement = [];
+    #[Groups(['read:Work'])]
 
     #[ORM\OneToMany(targetEntity: TypeOfWork::class, mappedBy: 'work')]
     private Collection $typeOfWorks;
