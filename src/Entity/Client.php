@@ -35,6 +35,7 @@ use Symfony\Component\Serializer\Annotation\Groups;
     ],
     normalizationContext: ['groups' => 'read:Client'],
 )]
+#[ApiResource]
 class Client
 {
     #[ORM\Id]
