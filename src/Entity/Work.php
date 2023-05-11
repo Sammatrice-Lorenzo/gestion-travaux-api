@@ -3,15 +3,16 @@
 namespace App\Entity;
 
 use App\Entity\User;
+use App\Entity\Client;
 use App\Entity\TypeOfWork;
+use ApiPlatform\Metadata\Get;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Controller\WorkController;
 use App\Repository\WorkRepository;
 use ApiPlatform\Metadata\ApiResource;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-use ApiPlatform\Metadata\Get;
-use App\Controller\WorkController;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: WorkRepository::class)]
@@ -37,7 +38,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
             ]
         )
     ],
-    normalizationContext: ['groups' => 'read:Work'],
+    // normalizationContext: ['groups' => 'read:Work'],
+    normalizationContext: ['groups' => ['read:Work', 'read:Client']],
 )]
 #[ApiResource]
 class Work
@@ -77,6 +79,10 @@ class Work
 
     #[ORM\ManyToOne(inversedBy: 'works')]
     private ?User $user = null;
+
+    #[ORM\ManyToOne(inversedBy: 'works')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Client $client = null;
 
     public function __construct()
     {
@@ -198,6 +204,19 @@ class Work
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    #[Groups(['read:Work'])]
+    public function getClient(): ?Client
+    {
+        return $this->client;
+    }
+
+    public function setClient(?Client $client): self
+    {
+        $this->client = $client;
 
         return $this;
     }

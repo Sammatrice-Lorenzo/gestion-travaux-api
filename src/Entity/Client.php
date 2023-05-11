@@ -3,11 +3,14 @@
 namespace App\Entity;
 
 use App\Entity\User;
+use App\Entity\Work;
 use ApiPlatform\Metadata\Get;
 use Doctrine\ORM\Mapping as ORM;
 use App\Controller\ClientController;
 use App\Repository\ClientRepository;
 use ApiPlatform\Metadata\ApiResource;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ClientRepository::class)]
@@ -42,35 +45,44 @@ class Client
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
-    #[Groups(['read:Client'])]
+    #[Groups(['read:Client', 'read:Work'])]
 
     #[ORM\Column(length: 255)]
     private ?string $firstname = null;
-    #[Groups(['read:Client'])]
+    #[Groups(['read:Client', 'read:Work'])]
 
     #[ORM\Column(length: 255)]
     private ?string $lastname = null;
-    #[Groups(['read:Client'])]
+    #[Groups(['read:Client', 'read:Work'])]
 
     #[ORM\Column(length: 255)]
     private ?string $phoneNumber = null;
-    #[Groups(['read:Client'])]
+    #[Groups(['read:Client', 'read:Work'])]
 
     #[ORM\Column(length: 255)]
     private ?string $postalCode = null;
-    #[Groups(['read:Client'])]
+    #[Groups(['read:Client', 'read:Work'])]
 
     #[ORM\Column(length: 255)]
     private ?string $city = null;
-    #[Groups(['read:Client'])]
+    #[Groups(['read:Client', 'read:Work'])]
 
     #[ORM\Column(length: 255)]
     private ?string $streetAddress = null;
-    #[Groups(['read:Client'])]
+    #[Groups(['read:Client', 'read:Work'])]
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'clients')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
+
+    #[ORM\OneToMany(mappedBy: 'client', targetEntity: Work::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Collection $works = null;
+
+    public function __construct()
+    {
+        $this->works = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -151,6 +163,36 @@ class Client
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Work>
+     */
+    public function getWorks(): Collection
+    {
+        return $this->works;
+    }
+
+    public function addWork(Work $work): self
+    {
+        if (!$this->works->contains($work)) {
+            $this->works->add($work);
+            $work->setClient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeWork(Work $work): self
+    {
+        if ($this->works->removeElement($work)) {
+            // set the owning side to null (unless already changed)
+            if ($work->getClient() === $this) {
+                $work->setClient(null);
+            }
+        }
 
         return $this;
     }
