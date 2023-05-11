@@ -49,6 +49,9 @@ class Work
     #[Groups(['read:Work'])]
 
     #[ORM\Column(length: 255)]
+    private ?string $name = null;
+
+    #[ORM\Column(length: 255)]
     private ?string $city = null;
     #[Groups(['read:Work'])]
 
@@ -69,7 +72,8 @@ class Work
     #[Groups(['read:Work'])]
 
     #[ORM\OneToMany(targetEntity: TypeOfWork::class, mappedBy: 'work')]
-    private Collection $typeOfWorks;
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Collection $typeOfWorks = null;
 
     #[ORM\ManyToOne(inversedBy: 'works')]
     private ?User $user = null;
@@ -82,6 +86,18 @@ class Work
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): self
+    {
+        $this->name = $name;
+
+        return $this;
     }
 
     public function getCity(): ?string

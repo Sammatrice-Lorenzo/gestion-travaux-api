@@ -28,6 +28,14 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             security: 'is_granted("ROLE_USER")',
             openapiContext: ['security' => [['bearerAuth' => []]]]
         ),
+        new Get(
+            name: 'userById',
+            uriTemplate: '/user/{id}',
+            controller: UserController::class,
+            read: true,
+            security: 'is_granted("ROLE_USER")',
+            openapiContext: ['security' => [['bearerAuth' => []]]]
+        ),
     ],
     normalizationContext: ['groups' => 'read:User'],
 )]

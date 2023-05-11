@@ -25,6 +25,7 @@ class WorkFixtures extends Fixture implements DependentFixtureInterface
                 $progression = $faker->randomElements(Progression::cases())[0]->value;
 
                 $work = (new Work())
+                    ->setName($faker->name)
                     ->setCity($faker->city)
                     ->setStart(new Datetime())
                     ->setEnd((new DateTime())->add(new DateInterval('P30D')))

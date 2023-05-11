@@ -20,7 +20,7 @@ class TypeOfWork
     private ?string $name = null;
 
     #[ORM\Column]
-    private array $equipement = [];
+    private array $equipements = [];
 
     #[ORM\ManyToOne(targetEntity: Work::class, inversedBy: 'typeOfWorks')]
     private ?Work $work = null;
@@ -42,14 +42,14 @@ class TypeOfWork
         return $this;
     }
 
-    public function getEquipement(): array
+    public function getEquipements(): array
     {
-        return $this->equipement;
+        return $this->equipements;
     }
 
-    public function setEquipement(array $equipement): self
+    public function setEquipements(array $equipements): self
     {
-        $this->equipement = $equipement;
+        $this->equipements = $equipements;
 
         return $this;
     }

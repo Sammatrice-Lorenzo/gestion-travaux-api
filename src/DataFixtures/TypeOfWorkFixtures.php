@@ -21,7 +21,7 @@ class TypeOfWorkFixtures extends Fixture implements DependentFixtureInterface
 
                 $typeOfWork = (new TypeOfWork())
                     ->setName($faker->name)
-                    ->setEquipement($faker->randomElements($equipements))
+                    ->setEquipements($faker->randomElements($equipements))
                     ->setWork($work)
                 ;
 
