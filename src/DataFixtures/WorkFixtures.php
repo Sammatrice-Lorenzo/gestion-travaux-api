@@ -31,7 +31,7 @@ class WorkFixtures extends Fixture implements DependentFixtureInterface
                     ->setCity($faker->city)
                     ->setStart(new Datetime())
                     ->setEnd((new DateTime())->add(new DateInterval('P30D')))
-                    ->setEquipement($faker->randomElements($equipements))
+                    ->setEquipements($faker->randomElements($equipements))
                     ->setProgression($progression)
                     ->setUser($user)
                     ->setClient($faker->randomElement($clients))

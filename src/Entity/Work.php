@@ -70,7 +70,7 @@ class Work
     #[Groups(['read:Work'])]
 
     #[ORM\Column]
-    private array $equipement = [];
+    private array $equipements = [];
     #[Groups(['read:Work'])]
 
     #[ORM\OneToMany(targetEntity: TypeOfWork::class, mappedBy: 'work')]
@@ -154,14 +154,14 @@ class Work
         return $this;
     }
 
-    public function getEquipement(): array
+    public function getEquipements(): array
     {
-        return $this->equipement;
+        return $this->equipements;
     }
 
-    public function setEquipement(array $equipement): self
+    public function setEquipements(array $equipements): self
     {
-        $this->equipement = $equipement;
+        $this->equipements = $equipements;
 
         return $this;
     }
