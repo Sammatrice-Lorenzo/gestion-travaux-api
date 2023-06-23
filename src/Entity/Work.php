@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use App\Entity\User;
 use App\Entity\Client;
 use App\Entity\TypeOfWork;
@@ -52,6 +53,7 @@ class Work
 
     #[ORM\Column(length: 255)]
     private ?string $name = null;
+    #[Groups(['read:Work'])]
 
     #[ORM\Column(length: 255)]
     private ?string $city = null;
@@ -73,7 +75,7 @@ class Work
     private array $equipements = [];
     #[Groups(['read:Work'])]
 
-    #[ORM\OneToMany(targetEntity: TypeOfWork::class, mappedBy: 'work')]
+    #[ORM\OneToMany(targetEntity: TypeOfWork::class, mappedBy: 'work', cascade: ['remove'])]
     #[ORM\JoinColumn(nullable: true)]
     private ?Collection $typeOfWorks = null;
 
@@ -82,6 +84,7 @@ class Work
 
     #[ORM\ManyToOne(inversedBy: 'works')]
     #[ORM\JoinColumn(nullable: false)]
+    #[ApiProperty(readableLink: true)]
     private ?Client $client = null;
 
     public function __construct()

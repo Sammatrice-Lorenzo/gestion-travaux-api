@@ -2,19 +2,19 @@
 
 namespace App\OpenApi;
 
-use ApiPlatform\OpenApi\OpenApi;
-use ApiPlatform\OpenApi\Factory\OpenApiFactoryInterface;
-use ApiPlatform\OpenApi\Model\Operation;
-use ApiPlatform\OpenApi\Model\PathItem;
-use ApiPlatform\OpenApi\Model\RequestBody;
-use App\Repository\UserRepository;
 use ArrayObject;
+use ApiPlatform\OpenApi\OpenApi;
+use App\Repository\UserRepository;
+use ApiPlatform\OpenApi\Model\PathItem;
+use ApiPlatform\OpenApi\Model\Operation;
+use ApiPlatform\OpenApi\Model\RequestBody;
+use ApiPlatform\OpenApi\Factory\OpenApiFactoryInterface;
 
-class OpenApiFactory implements OpenApiFactoryInterface
+readonly class OpenApiFactory implements OpenApiFactoryInterface
 {
     public function __construct(
-        private readonly OpenApiFactoryInterface $decorated,
-        private readonly UserRepository $userRepo,
+        private OpenApiFactoryInterface $decorated,
+        private UserRepository $userRepo,
     ) {}
 
     public function __invoke(array $context = []): OpenApi
