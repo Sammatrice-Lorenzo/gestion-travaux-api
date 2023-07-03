@@ -2,14 +2,19 @@
 
 namespace App\EventSubscriber;
 
+use App\Entity\User;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class JWTSubscriber implements EventSubscriberInterface
 {
     public function onLexikJwtAuthenticationOnJwtCreated($event): void
     {
+        /** @var User $user */
+        $user = $event->getUser();
         $data = $event->getData();
-        $data['id'] = $event->getUser()->getId();
+        $data['id'] = $user->getId();
+        $data['firstname'] = $user?->getFirstname();
+        $data['lastname'] = $user?->getLastname();
         $event->setData($data);
     }
 

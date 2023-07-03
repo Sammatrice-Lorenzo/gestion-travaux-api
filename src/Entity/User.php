@@ -37,7 +37,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             openapiContext: ['security' => [['bearerAuth' => []]]]
         ),
     ],
-    normalizationContext: ['groups' => 'read:User'],
+    normalizationContext: ['groups' => ['read:UserById']],
 )]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
@@ -48,23 +48,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['read:User'])]
+    #[Groups(['read:UserById'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read:User'])]
+    #[Groups(['read:UserById'])]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read:User'])]
+    #[Groups(['read:UserById'])]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['read:User'])]
+    #[Groups(['read:UserById'])]
     private ?string $email = null;
 
     #[ORM\Column]
-    #[Groups(['read:User'])]
+    #[Groups(['read:UserById'])]
     private array $roles = [];
 
     /**
@@ -186,7 +186,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
      */
     public static function createFromPayload($username, array $payload): User
     {
-        return (new User())->setEmail($username)->setId($payload['id']);
+        return (new User())
+            ->setEmail($username)
+            ->setFirstname($payload['firstname'])
+            ->setLastname($payload['lastname'])
+            ->setId($payload['id'])
+        ;
     }
 
     public function getFirstname(): ?string
