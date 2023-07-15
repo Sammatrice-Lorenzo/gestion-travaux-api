@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Security\EmailVerifier;
+use App\Repository\UserRepository;
 use Symfony\Component\Mime\Address;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -20,7 +21,8 @@ class RegistrationController extends AbstractController
 {
     public function __construct(
         private readonly EmailVerifier $emailVerifier,
-        private readonly EntityManagerInterface $em
+        private readonly EntityManagerInterface $em,
+        private readonly UserRepository $userRepo,
     ) {}
 
     #[Route('/api/register', name: 'app_register')]
@@ -35,6 +37,15 @@ class RegistrationController extends AbstractController
             ->setLastname($jsonData->lastname)
             ->setEmail($jsonData->email)
         ;
+
+        try {
+            $user->validateEmail($this->userRepo, $jsonData->email);
+        } catch (\Throwable $th) {
+            return new JsonResponse([
+                'code' => '422',
+                'Unprocessable entity' => $th->getMessage()
+            ], 422);
+        }
 
         $errors = $this->customValidationRegistration($request->getContent());
         if (!$errors) {

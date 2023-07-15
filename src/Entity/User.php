@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Exception;
 use App\Entity\Work;
 use App\Entity\Client;
 use ApiPlatform\Metadata\Get;
@@ -12,6 +13,7 @@ use ApiPlatform\Metadata\ApiResource;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
@@ -41,7 +43,6 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 )]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-#[UniqueEntity(fields: ['email'], message: 'Il ya déjà un compte avec cette email.')]
 #[UniqueEntity(fields: ['id'], message: 'Un utilisateur ne peut avoir un seul et unique id')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUserInterface
 {
@@ -238,11 +239,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
     public function removeWork(Work $work): self
     {
-        if ($this->works->removeElement($work)) {
+        if ($this->works->removeElement($work) && $work->getUser() === $this) {
             // set the owning side to null (unless already changed)
-            if ($work->getUser() === $this) {
-                $work->setUser(null);
-            }
+            $work->setUser(null);
         }
 
         return $this;
@@ -268,13 +267,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
     public function removeClient(Client $client): self
     {
-        if ($this->clients->removeElement($client)) {
+        if ($this->clients->removeElement($client) && $client->getUser() === $this) {
             // set the owning side to null (unless already changed)
-            if ($client->getUser() === $this) {
-                $client->setUser(null);
-            }
+            $client->setUser(null);
         }
 
         return $this;
+    }
+
+    #[Assert\Callback(groups: ['write:User'])]
+    public function validateEmail(UserRepository $userRepository, string $email): ?Exception
+    {
+        $user = $userRepository->find($this->id);
+        $existUserWithThisEmail = $userRepository->findOneBy(['email' => $email]);
+
+        if ($email !== $user->getEmail() && $existUserWithThisEmail !== null && $user !== $existUserWithThisEmail) {
+            throw new Exception('Il ya déjà un compte avec cette email.');
+        }
+
+        return null;
     }
 }
