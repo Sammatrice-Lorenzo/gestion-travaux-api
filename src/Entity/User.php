@@ -276,13 +276,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     }
 
     #[Assert\Callback(groups: ['write:User'])]
-    public function validateEmail(UserRepository $userRepository, string $email): ?Exception
+    public function validateEmail(UserRepository $userRepository, string $email, bool $isCreation = false): ?Exception
     {
-        $user = $userRepository->find($this->id);
+        $exception = new Exception('Il ya déjà un compte avec cette email.');
         $existUserWithThisEmail = $userRepository->findOneBy(['email' => $email]);
+        
+        if ($isCreation && !$existUserWithThisEmail) {
+            return null;
+        }
 
+        if ($isCreation && $existUserWithThisEmail) {
+            throw $exception;
+        }
+
+        $user = $userRepository->find($this->id);
         if ($email !== $user->getEmail() && $existUserWithThisEmail !== null && $user !== $existUserWithThisEmail) {
-            throw new Exception('Il ya déjà un compte avec cette email.');
+            throw $exception;
         }
 
         return null;

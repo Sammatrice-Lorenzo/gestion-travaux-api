@@ -214,7 +214,7 @@ readonly class OpenApiFactory implements OpenApiFactoryInterface
                         'content' => [
                             'application/json' => [
                                 'schema' => [
-                                    '$ref' => '#/components/schemas/User-read.User'
+                                    '$ref' => '#/components/schemas/User-read.UserById'
                                 ]
                             ]
                         ]

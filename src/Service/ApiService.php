@@ -40,4 +40,20 @@ class ApiService
         return $this->getDecodedTokenByString($token)->email === $user->getEmail();
     }
 
+    public static function getJsonResponseErrorForRegistrationUser(array $errors): JsonResponse
+    {
+        return new JsonResponse([
+            'success' => false,
+            'errors' => $errors
+        ], 400);
+    }
+
+    public static function getJsonResponseSuccessForRegistrationUser(): JsonResponse
+    {
+        return new JsonResponse([
+            'code' => '200',
+            'message' => 'created user',
+            'success' => true,
+        ], 200);
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Security\EmailVerifier;
 use App\Repository\UserRepository;
+use App\Service\ApiService;
 use Symfony\Component\Mime\Address;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -14,6 +15,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 
@@ -26,20 +28,18 @@ class RegistrationController extends AbstractController
     ) {}
 
     #[Route('/api/register', name: 'app_register')]
-    public function register(
-        Request $request,
-        UserPasswordHasherInterface $userPasswordHasher,
-    ): JsonResponse
+    public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher): JsonResponse
     {
         $jsonData = json_decode($request->getContent());
         $user = (new User())
             ->setFirstname($jsonData->firstname)
             ->setLastname($jsonData->lastname)
             ->setEmail($jsonData->email)
+            ->setRoles(['ROLE_USER'])
         ;
 
         try {
-            $user->validateEmail($this->userRepo, $jsonData->email);
+            $user->validateEmail($this->userRepo, $jsonData->email, isCreation: true);
         } catch (\Throwable $th) {
             return new JsonResponse([
                 'code' => '422',
@@ -48,6 +48,7 @@ class RegistrationController extends AbstractController
         }
 
         $errors = $this->customValidationRegistration($request->getContent());
+        $response = ApiService::getJsonResponseErrorForRegistrationUser($errors);
         if (!$errors) {
             $user->setPassword(
                 $userPasswordHasher->hashPassword(
@@ -71,16 +72,10 @@ class RegistrationController extends AbstractController
                     ->htmlTemplate('registration/confirmation_email.html.twig')
             );
 
-            return new JsonResponse([
-                'success' => true,
-            ]);
-        } else {
-            return new JsonResponse([
-                'success' => false,
-                'errors' => $errors
-            ]);
+            $response = ApiService::getJsonResponseSuccessForRegistrationUser();
         }
 
+        return $response;
     }
 
     #[Route('/verify/email', name: 'app_verify_email')]
@@ -99,7 +94,7 @@ class RegistrationController extends AbstractController
 
         $this->addFlash('success', 'Votre email a été bien confirmé.');
 
-        return $this->redirectToRoute('app');
+        return new RedirectResponse($_ENV['URL_GESTION_TRAVAUX_PWA']);
     }
 
     /**
