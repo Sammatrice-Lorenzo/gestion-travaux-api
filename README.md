@@ -18,13 +18,13 @@ yarn docker build
 Cela permet d'installer les images docker
 
 Il faudra créer un ficher .env.local à la racine du projet et ajouter la ligne suivante :
-'DATABASE_URL="mysql://root:password@database/gestion_travaux?sslmode=disable&charset=utf8mb4'
+DATABASE_URL="mysql://root:password@database/gestion_travaux?sslmode=disable&charset=utf8mb4"
 
 Pour communiquer avec la base de données
 
 
 
-## Commande Docker
+## Commandes
 ```bash
 php bin/console make:docker:database
 docker-compose up -d
