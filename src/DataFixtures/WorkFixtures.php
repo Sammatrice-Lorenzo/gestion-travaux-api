@@ -8,7 +8,7 @@ use Faker\Factory;
 use App\Entity\User;
 use App\Entity\Work;
 use App\Entity\Client;
-use App\Enum\Progression;
+use App\Enum\ProgressionEnum;
 use App\DataFixtures\UserFixtures;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -24,7 +24,7 @@ class WorkFixtures extends Fixture implements DependentFixtureInterface
 
         foreach ($manager->getRepository(User::class)->findAll() as $user) {
             for ($i=0; $i < 5; $i++) {
-                $progression = $faker->randomElements(Progression::cases())[0]->value;
+                $progression = $faker->randomElements(ProgressionEnum::cases())[0]->value;
 
                 $work = (new Work())
                     ->setName($faker->name)

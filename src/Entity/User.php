@@ -62,6 +62,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
     #[ORM\Column(length: 180, unique: true)]
     #[Groups(['read:UserById'])]
+    #[Assert\Regex(pattern: '/^[^\s@]+@[^\s@]+\.[^\s@]+$/', message: 'Insérer un email valide')]
     private ?string $email = null;
 
     #[ORM\Column]

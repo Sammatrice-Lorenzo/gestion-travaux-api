@@ -12,6 +12,7 @@ use ApiPlatform\Metadata\ApiResource;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ClientRepository::class)]
 #[ApiResource(
@@ -56,10 +57,12 @@ class Client
     #[Groups(['read:Client', 'read:Work'])]
 
     #[ORM\Column(length: 255)]
+    #[Assert\Regex(pattern: '/^(0|\+33|0033)[1-9](\d{2}){4}$/', message: 'Insérer un numéro de téléphone valide')]
     private ?string $phoneNumber = null;
     #[Groups(['read:Client', 'read:Work'])]
-
+    
     #[ORM\Column(length: 255)]
+    #[Assert\Regex(pattern: '/^\d{5}$/', message: 'Insérer un code postale valide')]
     private ?string $postalCode = null;
     #[Groups(['read:Client', 'read:Work'])]
 

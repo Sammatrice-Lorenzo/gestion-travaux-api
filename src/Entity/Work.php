@@ -2,19 +2,21 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiProperty;
 use App\Entity\User;
 use App\Entity\Client;
 use App\Entity\TypeOfWork;
 use ApiPlatform\Metadata\Get;
+use App\Enum\ProgressionEnum;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use App\Controller\WorkController;
 use App\Repository\WorkRepository;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: WorkRepository::class)]
 #[ApiResource(
@@ -68,6 +70,11 @@ class Work
     #[Groups(['read:Work'])]
 
     #[ORM\Column(length: 255)]
+    #[Assert\Choice(choices: [
+        ProgressionEnum::NOT_STARTED->value,
+        ProgressionEnum::IN_PROGRESS->value,
+        ProgressionEnum::DONE->value
+    ])]
     private ?string $progression = null;
     #[Groups(['read:Work'])]
 

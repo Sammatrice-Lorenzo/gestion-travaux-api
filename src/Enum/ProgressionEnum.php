@@ -2,9 +2,9 @@
 
 namespace App\Enum;
 
-enum Progression: String
+enum ProgressionEnum: String
 {
     case NOT_STARTED = "Pas commencé";
-    case IN_PROGRESS = "En progression";
+    case IN_PROGRESS = "En cours";
     case DONE = "Terminé";
 }
