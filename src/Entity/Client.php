@@ -57,7 +57,7 @@ class Client
     #[Groups(['read:Client', 'read:Work'])]
 
     #[ORM\Column(length: 255)]
-    #[Assert\Regex(pattern: '/^(0|\+33|0033)[1-9](\d{2}){4}$/', message: 'Insérer un numéro de téléphone valide')]
+    #[Assert\Regex(pattern: '/^0[1-9](?:[\s.-]?[0-9]{2}){4}$/', message: 'Insérer un numéro de téléphone valide')]
     private ?string $phoneNumber = null;
     #[Groups(['read:Client', 'read:Work'])]
     
