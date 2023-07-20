@@ -2,12 +2,18 @@
 
 namespace App\Entity;
 
+use Exception;
+use App\Entity\Work;
+use App\Entity\Client;
 use ApiPlatform\Metadata\Get;
 use Doctrine\ORM\Mapping as ORM;
 use App\Controller\UserController;
 use App\Repository\UserRepository;
 use ApiPlatform\Metadata\ApiResource;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
@@ -24,35 +30,43 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             security: 'is_granted("ROLE_USER")',
             openapiContext: ['security' => [['bearerAuth' => []]]]
         ),
+        new Get(
+            name: 'userById',
+            uriTemplate: '/user/{id}',
+            controller: UserController::class,
+            read: true,
+            security: 'is_granted("ROLE_USER")',
+            openapiContext: ['security' => [['bearerAuth' => []]]]
+        ),
     ],
-    normalizationContext: ['groups' => 'read:User'],
+    normalizationContext: ['groups' => ['read:UserById']],
 )]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-#[UniqueEntity(fields: ['email'], message: 'Il ya déjà un compte avec cette email.')]
 #[UniqueEntity(fields: ['id'], message: 'Un utilisateur ne peut avoir un seul et unique id')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['read:User'])]
+    #[Groups(['read:UserById'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read:User'])]
+    #[Groups(['read:UserById'])]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read:User'])]
+    #[Groups(['read:UserById'])]
     private ?string $lastname = null;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['read:User'])]
+    #[Groups(['read:UserById'])]
+    #[Assert\Regex(pattern: '/^[^\s@]+@[^\s@]+\.[^\s@]+$/', message: 'Insérer un email valide')]
     private ?string $email = null;
 
     #[ORM\Column]
-    #[Groups(['read:User'])]
+    #[Groups(['read:UserById'])]
     private array $roles = [];
 
     /**
@@ -63,6 +77,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
     #[ORM\Column(type: 'boolean')]
     private bool $isVerified = false;
+
+    #[ORM\OneToMany(targetEntity: Client::class, mappedBy: 'user')]
+    private $clients;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Work::class)]
+    private Collection $works;
+
+    public function __construct()
+    {
+        $this->clients = new ArrayCollection();
+        $this->works = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -162,7 +188,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
      */
     public static function createFromPayload($username, array $payload): User
     {
-        return (new User())->setEmail($username)->setId($payload['id']);
+        return (new User())
+            ->setEmail($username)
+            ->setFirstname($payload['firstname'])
+            ->setLastname($payload['lastname'])
+            ->setId($payload['id'])
+        ;
     }
 
     public function getFirstname(): ?string
@@ -187,5 +218,83 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         $this->lastname = $lastname;
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Work>
+     */
+    public function getWorks(): Collection
+    {
+        return $this->works;
+    }
+
+    public function addWork(Work $work): self
+    {
+        if (!$this->works->contains($work)) {
+            $this->works->add($work);
+            $work->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeWork(Work $work): self
+    {
+        if ($this->works->removeElement($work) && $work->getUser() === $this) {
+            // set the owning side to null (unless already changed)
+            $work->setUser(null);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Client[]
+     */
+    public function getClients(): Collection
+    {
+        return $this->clients;
+    }
+
+    public function addClient(Client $client): self
+    {
+        if (!$this->clients->contains($client)) {
+            $this->clients[] = $client;
+            $client->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeClient(Client $client): self
+    {
+        if ($this->clients->removeElement($client) && $client->getUser() === $this) {
+            // set the owning side to null (unless already changed)
+            $client->setUser(null);
+        }
+
+        return $this;
+    }
+
+    #[Assert\Callback(groups: ['write:User'])]
+    public function validateEmail(UserRepository $userRepository, string $email, bool $isCreation = false): ?Exception
+    {
+        $exception = new Exception('Il ya déjà un compte avec cette email.');
+        $existUserWithThisEmail = $userRepository->findOneBy(['email' => $email]);
+        
+        if ($isCreation && !$existUserWithThisEmail) {
+            return null;
+        }
+
+        if ($isCreation && $existUserWithThisEmail) {
+            throw $exception;
+        }
+
+        $user = $userRepository->find($this->id);
+        if ($email !== $user->getEmail() && $existUserWithThisEmail !== null && $user !== $existUserWithThisEmail) {
+            throw $exception;
+        }
+
+        return null;
     }
 }

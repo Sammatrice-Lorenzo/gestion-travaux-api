@@ -2,19 +2,19 @@
 
 namespace App\OpenApi;
 
-use ApiPlatform\OpenApi\OpenApi;
-use ApiPlatform\OpenApi\Factory\OpenApiFactoryInterface;
-use ApiPlatform\OpenApi\Model\Operation;
-use ApiPlatform\OpenApi\Model\PathItem;
-use ApiPlatform\OpenApi\Model\RequestBody;
-use App\Repository\UserRepository;
 use ArrayObject;
+use ApiPlatform\OpenApi\OpenApi;
+use ApiPlatform\JsonSchema\Schema;
+use ApiPlatform\OpenApi\Model\PathItem;
+use ApiPlatform\OpenApi\Model\Operation;
+use ApiPlatform\OpenApi\Model\Parameter;
+use ApiPlatform\OpenApi\Model\RequestBody;
+use ApiPlatform\OpenApi\Factory\OpenApiFactoryInterface;
 
-class OpenApiFactory implements OpenApiFactoryInterface
+readonly class OpenApiFactory implements OpenApiFactoryInterface
 {
     public function __construct(
-        private readonly OpenApiFactoryInterface $decorated,
-        private readonly UserRepository $userRepo,
+        private OpenApiFactoryInterface $decorated,
     ) {}
 
     public function __invoke(array $context = []): OpenApi
@@ -32,11 +32,13 @@ class OpenApiFactory implements OpenApiFactoryInterface
         $schemas['Token'] = $this->getCredential();
         $schemas['Link'] = $this->getLinkForVerifiedEmail();
         $schemas['Registration'] = $this->getUserRegistration();
+        $schemas['EditUser'] = $this->getEditUser();
 
         $openApi->getPaths()->addPath('/api/register', $this->getRegistrationPath());
         $openApi->getPaths()->addPath('/api/login', $this->getLoginPath());
         $openApi->getPaths()->addPath('/api/logout', $this->getLogoutPath());
         $openApi->getPaths()->addPath('/verify/email', $this->getVerifiedToken());
+        $openApi->getPaths()->addPath('/api/user/edit/{id}', $this->getEditUserPath());
 
         return $openApi;
     }
@@ -122,6 +124,27 @@ class OpenApiFactory implements OpenApiFactoryInterface
         ]);
     }
 
+    private function getEditUser(): ArrayObject
+    {
+        return new ArrayObject([
+            'type' => 'object',
+            'properties' => [
+                'firstname' => [
+                    'type' => 'string',
+                    'exemple' => 'Jules',
+                ],
+                'lastname' => [
+                    'type' => 'string',
+                    'exemple' => 'Du Pont',
+                ],
+                'email' => [
+                    'type' => 'string',
+                    'exemple' => 'test@test.com',
+                ],
+            ]
+        ]);
+    }
+
     private function getLogoutPath(): PathItem
     {
         return new PathItem(
@@ -191,10 +214,59 @@ class OpenApiFactory implements OpenApiFactoryInterface
                         'content' => [
                             'application/json' => [
                                 'schema' => [
-                                    '$ref' => '#/components/schemas/User-read.User'
+                                    '$ref' => '#/components/schemas/User-read.UserById'
                                 ]
                             ]
                         ]
+                    ]
+                ]
+            )
+        );
+    }
+
+    private function getEditUserPath(): PathItem
+    {
+        return new PathItem(
+            put: new Operation(
+                operationId: 'putEditUser',
+                security: [['bearerAuth' => []]],
+                tags: ['User'],
+                parameters: [
+                    new Parameter(
+                        name: 'id',
+                        description: 'Id de l\'utilisateur',
+                        required: true,
+                        in: 'path',
+                        schema: [
+                            new Schema('integer')
+                        ]
+                    )
+                ],
+                requestBody: new RequestBody(
+                    content: new ArrayObject([
+                        'application/json' => [
+                            'schema' => [
+                                '$ref' => '#/components/schemas/EditUser'
+                            ]
+                        ]
+                    ])
+                ),
+                responses: [
+                    '200' => [
+                        'description' => 'Utilisateur mis à jour',
+                        'content' => [
+                            'application/json' => [
+                                'schema' => [
+                                    '$ref' => '#/components/schemas/User-read.UserById'
+                                ]
+                            ]
+                        ]
+                    ],
+                    '403' => [
+                        'description' => 'Non autorisé'
+                    ],
+                    '401' => [
+                        'description' => 'JWT Token Not Found'
                     ]
                 ]
             )

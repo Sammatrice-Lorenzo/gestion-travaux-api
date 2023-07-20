@@ -2,6 +2,9 @@ version: '3'
 
 services:
 ###> doctrine/doctrine-bundle ###
+  gestion-travaux-api:
+    ports:
+     - 8000:8000
   database:
     ports:
       - "9906"
