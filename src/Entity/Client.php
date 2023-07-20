@@ -190,11 +190,9 @@ class Client
 
     public function removeWork(Work $work): self
     {
-        if ($this->works->removeElement($work)) {
+        if ($this->works->removeElement($work) && $work->getClient() === $this) {
             // set the owning side to null (unless already changed)
-            if ($work->getClient() === $this) {
-                $work->setClient(null);
-            }
+            $work->setClient(null);
         }
 
         return $this;
