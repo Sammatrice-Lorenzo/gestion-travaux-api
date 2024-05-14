@@ -78,14 +78,16 @@ class Work
     ])]
     private ?string $progression = null;
     #[Groups(['read:Work'])]
-
     /**
-     * @var Collection<int, TypeOfWork>
+     * @var string[]
      */
     #[ORM\Column]
     private array $equipements = [];
     #[Groups(['read:Work'])]
 
+    /**
+     * @var Collection<int, TypeOfWork>
+     */
     #[ORM\OneToMany(targetEntity: TypeOfWork::class, mappedBy: 'work', cascade: ['remove'])]
     #[ORM\JoinColumn(nullable: true)]
     private ?Collection $typeOfWorks = null;
