@@ -5,7 +5,7 @@ services:
   gestion-travaux-api:
     ports:
      - 8000:8000
-  database:
+  gestion-travaux-database:
     ports:
       - "9906"
 ###< doctrine/doctrine-bundle ###

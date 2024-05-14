@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Entity\User;
 use App\Entity\Client;
+use DateTimeInterface;
 use App\Entity\TypeOfWork;
 use ApiPlatform\Metadata\Get;
 use App\Enum\ProgressionEnum;
@@ -62,11 +63,11 @@ class Work
     #[Groups(['read:Work'])]
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $start = null;
+    private ?DateTimeInterface $start = null;
     #[Groups(['read:Work'])]
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $end = null;
+    private ?DateTimeInterface $end = null;
     #[Groups(['read:Work'])]
 
     #[ORM\Column(length: 255)]
@@ -78,6 +79,9 @@ class Work
     private ?string $progression = null;
     #[Groups(['read:Work'])]
 
+    /**
+     * @var Collection<int, TypeOfWork>
+     */
     #[ORM\Column]
     private array $equipements = [];
     #[Groups(['read:Work'])]
@@ -128,24 +132,24 @@ class Work
         return $this;
     }
 
-    public function getStart(): ?\DateTimeInterface
+    public function getStart(): ?DateTimeInterface
     {
         return $this->start;
     }
 
-    public function setStart(\DateTimeInterface $start): self
+    public function setStart(DateTimeInterface $start): self
     {
         $this->start = $start;
 
         return $this;
     }
 
-    public function getEnd(): ?\DateTimeInterface
+    public function getEnd(): ?DateTimeInterface
     {
         return $this->end;
     }
 
-    public function setEnd(\DateTimeInterface $end): self
+    public function setEnd(DateTimeInterface $end): self
     {
         $this->end = $end;
 
@@ -196,11 +200,9 @@ class Work
 
     public function removeTypeOfWork(TypeOfWork $typeOfWork): self
     {
-        if ($this->typeOfWorks->removeElement($typeOfWork)) {
+        if ($this->typeOfWorks->removeElement($typeOfWork) && $typeOfWork->getWork() === $this) {
             // set the owning side to null (unless already changed)
-            if ($typeOfWork->getWork() === $this) {
-                $typeOfWork->setWork(null);
-            }
+            $typeOfWork->setWork(null);
         }
 
         return $this;

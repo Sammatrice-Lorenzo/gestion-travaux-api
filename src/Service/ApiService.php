@@ -4,6 +4,7 @@ namespace App\Service;
 
 use stdClass;
 use App\Entity\User;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 class ApiService
@@ -13,7 +14,7 @@ class ApiService
         return new JsonResponse([
             'code' => '401',
             'error' => 'Token not found.'
-        ], 401);
+        ], Response::HTTP_UNAUTHORIZED);
     }
 
     public function getErrorUser(): JsonResponse
@@ -21,7 +22,7 @@ class ApiService
         return new JsonResponse([
             'code' => '404',
             'error' => 'Utilisateur non trouvé.'
-        ], 404);
+        ], Response::HTTP_NOT_FOUND);
     }
 
     public function getDecodedTokenByString(string $token): stdClass
@@ -45,7 +46,7 @@ class ApiService
         return new JsonResponse([
             'success' => false,
             'errors' => $errors
-        ], 400);
+        ], Response::HTTP_BAD_REQUEST);
     }
 
     public static function getJsonResponseSuccessForRegistrationUser(): JsonResponse
@@ -54,6 +55,6 @@ class ApiService
             'code' => '200',
             'message' => 'created user',
             'success' => true,
-        ], 200);
+        ], Response::HTTP_OK);
     }
 }

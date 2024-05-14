@@ -3,19 +3,19 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Service\ApiService;
 use App\Security\EmailVerifier;
 use App\Repository\UserRepository;
-use App\Service\ApiService;
 use Symfony\Component\Mime\Address;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 
@@ -27,7 +27,7 @@ class RegistrationController extends AbstractController
         private readonly UserRepository $userRepo,
     ) {}
 
-    #[Route('/api/register', name: 'app_register')]
+    #[Route(path:'/api/register', name: 'app_register')]
     public function register(Request $request, UserPasswordHasherInterface $userPasswordHasher): JsonResponse
     {
         $jsonData = json_decode($request->getContent());
@@ -44,7 +44,7 @@ class RegistrationController extends AbstractController
             return new JsonResponse([
                 'code' => '422',
                 'Unprocessable entity' => $th->getMessage()
-            ], 422);
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $errors = $this->customValidationRegistration($request->getContent());
@@ -78,7 +78,7 @@ class RegistrationController extends AbstractController
         return $response;
     }
 
-    #[Route('/verify/email', name: 'app_verify_email')]
+    #[Route(path:'/verify/email', name: 'app_verify_email')]
     public function verifyUserEmail(Request $request, TranslatorInterface $translator): Response
     {
         $user = $this->em->getRepository(User::class)->findOneBy(['id' => $request->query->get('id')]);
