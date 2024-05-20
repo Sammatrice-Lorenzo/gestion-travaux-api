@@ -42,13 +42,13 @@ class RegistrationController extends AbstractController
             $user->validateEmail($this->userRepo, $jsonData->email, isCreation: true);
         } catch (\Throwable $th) {
             return new JsonResponse([
-                'code' => '422',
+                'code' =>  Response::HTTP_UNPROCESSABLE_ENTITY,
                 'Unprocessable entity' => $th->getMessage()
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $errors = $this->customValidationRegistration($request->getContent());
-        $response = ApiService::getJsonResponseErrorForRegistrationUser($errors);
+        $response = ApiService::getJsonResponseRequestParameters($errors);
         if (!$errors) {
             $user->setPassword(
                 $userPasswordHasher->hashPassword(
@@ -79,7 +79,7 @@ class RegistrationController extends AbstractController
     }
 
     #[Route(path:'/verify/email', name: 'app_verify_email')]
-    public function verifyUserEmail(Request $request, TranslatorInterface $translator): Response
+    public function verifyUserEmail(Request $request, TranslatorInterface $translator): RedirectResponse
     {
         $user = $this->em->getRepository(User::class)->findOneBy(['id' => $request->query->get('id')]);
         // validate email confirmation link, sets User::isVerified=true and persists
@@ -94,7 +94,7 @@ class RegistrationController extends AbstractController
 
         $this->addFlash('success', 'Votre email a été bien confirmé.');
 
-        return new RedirectResponse($_ENV['URL_GESTION_TRAVAUX_PWA']);
+        return new RedirectResponse($this->getParameter('url_front'));
     }
 
     /**

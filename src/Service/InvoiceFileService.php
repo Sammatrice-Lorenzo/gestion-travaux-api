@@ -4,12 +4,12 @@ namespace App\Service;
 
 use DateTime;
 use Override;
+use stdClass;
 use App\Entity\Client;
 use setasign\Fpdi\Fpdi;
 use App\Interface\InvoiceFileInterface;
 
-
-class InvoiceFileService implements InvoiceFileInterface
+final class InvoiceFileService implements InvoiceFileInterface
 {
     private const int WIDTH_COLUMN = 30;
     private const int ROW_HEIGHT_COLUMN = 5;
@@ -313,17 +313,16 @@ class InvoiceFileService implements InvoiceFileInterface
     }
 
     /**
-     * @param string[]  $headers
-     * @param array<int, array<string, string>> $invoiceData
-     * @param string $nameInvoice
+     * @param string[] $headers
+     * @param stdClass $invoiceData
      * @return void
      */
-    public function generateInvoiceFile(Client $client, array $headers, array $invoiceData, string $nameInvoice): void
+    public function generateInvoiceFile(Client $client, array $headers, stdClass $invoiceData): void
     {
         $this->setDate();
         $this->setClient($client);
-        $this->setNameInvoice($nameInvoice);
+        $this->setNameInvoice($invoiceData->nameInvoice);
         $this->setHeaderInvoice($headers);
-        $this->setValuesTable($invoiceData);
+        $this->setValuesTable($invoiceData->invoiceLines);
     }
 }

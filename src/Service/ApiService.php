@@ -7,12 +7,12 @@ use App\Entity\User;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-class ApiService
+final class ApiService
 {
     public function getErrorToken(): JsonResponse
     {
         return new JsonResponse([
-            'code' => '401',
+            'code' => Response::HTTP_UNAUTHORIZED,
             'error' => 'Token not found.'
         ], Response::HTTP_UNAUTHORIZED);
     }
@@ -20,7 +20,7 @@ class ApiService
     public function getErrorUser(): JsonResponse
     {
         return new JsonResponse([
-            'code' => '404',
+            'code' => Response::HTTP_NOT_FOUND,
             'error' => 'Utilisateur non trouvé.'
         ], Response::HTTP_NOT_FOUND);
     }
@@ -28,12 +28,9 @@ class ApiService
     public function getDecodedTokenByString(string $token): stdClass
     {
         $tokenParts = explode(".", $token);
-        $tokenHeader = base64_decode($tokenParts[0]);
         $tokenPayload = base64_decode($tokenParts[1]);
-        $jwtHeader = json_decode($tokenHeader);
-        $jwtPayload = json_decode($tokenPayload);
 
-        return $jwtPayload;
+        return json_decode($tokenPayload);
     }
 
     public function isValidTokenString(User $user, string $token): bool
@@ -41,7 +38,11 @@ class ApiService
         return $this->getDecodedTokenByString($token)->email === $user->getEmail();
     }
 
-    public static function getJsonResponseErrorForRegistrationUser(array $errors): JsonResponse
+    /**
+     * @param string $errors
+     * @return JsonResponse
+     */
+    public static function getJsonResponseRequestParameters(array $errors): JsonResponse
     {
         return new JsonResponse([
             'success' => false,
@@ -52,7 +53,7 @@ class ApiService
     public static function getJsonResponseSuccessForRegistrationUser(): JsonResponse
     {
         return new JsonResponse([
-            'code' => '200',
+            'code' => Response::HTTP_OK,
             'message' => 'created user',
             'success' => true,
         ], Response::HTTP_OK);
