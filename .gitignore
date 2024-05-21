@@ -30,3 +30,5 @@ phpstan.neon
 .php-version
 
 path_to_save_pdf_with_added_data.pdf
+
+*.crt
