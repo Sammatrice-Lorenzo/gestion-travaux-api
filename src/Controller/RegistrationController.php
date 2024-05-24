@@ -19,7 +19,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 
-class RegistrationController extends AbstractController
+final class RegistrationController extends AbstractController
 {
     public function __construct(
         private readonly EmailVerifier $emailVerifier,
@@ -65,8 +65,7 @@ class RegistrationController extends AbstractController
                 'app_verify_email',
                 $user,
                 (new TemplatedEmail())
-                    ->from(new Address('dev-app77@outlook.fr'))
-                    // ->from($_ENV['MAIL_USERNAME'])
+                    ->from(new Address($this->getParameter('mail_username')))
                     ->to(new Address($user->getEmail()))
                     ->subject('Confirmer votre compte')
                     ->htmlTemplate('registration/confirmation_email.html.twig')
@@ -78,6 +77,12 @@ class RegistrationController extends AbstractController
         return $response;
     }
 
+    /**
+     * @param Request $request
+     * @param TranslatorInterface $translator
+     * @return RedirectResponse
+     * @throws VerifyEmailExceptionInterface
+     */
     #[Route(path:'/api/verify/email', name: 'app_verify_email')]
     public function verifyUserEmail(Request $request, TranslatorInterface $translator): RedirectResponse
     {
@@ -101,7 +106,7 @@ class RegistrationController extends AbstractController
      * Permet de vérifier les données
      *
      * @param string $data
-     * @return array
+     * @return string[]
      */
     public function customValidationRegistration(string $data): array
     {
