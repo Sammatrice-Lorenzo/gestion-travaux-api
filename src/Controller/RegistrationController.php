@@ -78,7 +78,7 @@ class RegistrationController extends AbstractController
         return $response;
     }
 
-    #[Route(path:'/verify/email', name: 'app_verify_email')]
+    #[Route(path:'/api/verify/email', name: 'app_verify_email')]
     public function verifyUserEmail(Request $request, TranslatorInterface $translator): RedirectResponse
     {
         $user = $this->em->getRepository(User::class)->findOneBy(['id' => $request->query->get('id')]);

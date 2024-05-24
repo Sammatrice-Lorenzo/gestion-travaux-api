@@ -40,8 +40,6 @@ RUN apt-get update && apt-get upgrade -y \
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-ENV APP_ENV=prod
-
 RUN curl -sS https://get.symfony.com/cli/installer | bash \
     && mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
 
@@ -61,5 +59,4 @@ COPY gestion-travaux-api/docker/prod/symfony.pool.conf /etc/php8.3/php-fpm.d/
 #     && php bin/console cache:warmup --env=prod
 CMD ["php-fpm", "-F"]
 
-
-EXPOSE 9001
+EXPOSE 9000

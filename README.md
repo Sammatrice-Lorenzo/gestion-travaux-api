@@ -32,7 +32,7 @@ docker-compose up -d
 symfony console make:migration
 symfony console doctrine:migrations:migrate
 
-# Cette commande permet de vous connecter dans le container et développeur
+# Cette commande permet de vous connecter dans le container et développer
 docker exec -it gestion-travaux-api bash
 
 # A l’intérieur du container vous pouvez lancer les différentes commandes :

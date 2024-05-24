@@ -16,7 +16,7 @@ final readonly class InvoiceFormService
         $errorMessage = [];
         
         /** @var string[] $properties */
-        $properties = ['nameInvoice', 'invoicesLines', 'idClient'];
+        $properties = ['nameInvoice', 'invoiceLines', 'idClient'];
 
         foreach ($properties as $property) {
             if (!property_exists($invoiceData, $property)) {
