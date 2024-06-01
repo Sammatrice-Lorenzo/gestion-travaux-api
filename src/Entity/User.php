@@ -91,10 +91,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Work::class)]
     private Collection $works;
 
+    /**
+     * @var Collection<int, WorkEventDay>
+     */
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: WorkEventDay::class, orphanRemoval: true)]
+    private Collection $workEventDays;
+
     public function __construct()
     {
         $this->clients = new ArrayCollection();
         $this->works = new ArrayCollection();
+        $this->workEventDays = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -309,10 +316,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         }
 
         $user = $userRepository->find($this->id);
-        if ($email !== $user->getEmail() && $existUserWithThisEmail !== null && $user !== $existUserWithThisEmail) {
+        $isNotSameEmail = $email !== $user->getEmail();
+        $isNotNullEmail = $existUserWithThisEmail !== null;
+        $isNotSameUser = $user !== $existUserWithThisEmail;
+
+        $isEmailNotValid = $isNotSameEmail && $isNotNullEmail;
+        if ($isEmailNotValid && $isNotSameUser) {
             throw $exception;
         }
 
         return null;
+    }
+
+    /**
+     * @return Collection<int, WorkEventDay>
+     */
+    public function getWorkEventDays(): Collection
+    {
+        return $this->workEventDays;
+    }
+
+    public function addWorkEventDay(WorkEventDay $workEventDay): static
+    {
+        if (!$this->workEventDays->contains($workEventDay)) {
+            $this->workEventDays->add($workEventDay);
+            $workEventDay->setUser($this);
+        }
+
+        return $this;
     }
 }
