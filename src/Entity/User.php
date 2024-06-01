@@ -6,6 +6,7 @@ use Exception;
 use App\Entity\Work;
 use App\Entity\Client;
 use ApiPlatform\Metadata\Get;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use App\Controller\UserController;
 use App\Repository\UserRepository;
@@ -75,12 +76,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     #[ORM\Column]
     private ?string $password = null;
 
-    #[ORM\Column(type: 'boolean')]
+    #[ORM\Column(type: Types::BOOLEAN)]
     private bool $isVerified = false;
 
+    /**
+     * @var Collection<int, Client>
+     */
     #[ORM\OneToMany(targetEntity: Client::class, mappedBy: 'user')]
-    private $clients;
+    private Collection $clients;
 
+    /**
+     * @var Collection<int, Work>
+     */
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Work::class)]
     private Collection $works;
 
@@ -126,6 +133,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
     /**
      * @see UserInterface
+     * @return string[]
      */
     public function getRoles(): array
     {
@@ -136,6 +144,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         return array_unique($roles);
     }
 
+    /**
+     * @param string[] $roles
+     * @return self
+     */
     public function setRoles(array $roles): self
     {
         $this->roles = $roles;
@@ -161,7 +173,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     /**
      * @see UserInterface
      */
-    public function eraseCredentials()
+    public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
@@ -276,6 +288,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         return $this;
     }
 
+    /**
+     * @param UserRepository $userRepository
+     * @param string $email
+     * @param boolean $isCreation
+     * @return Exception|null
+     */
     #[Assert\Callback(groups: ['write:User'])]
     public function validateEmail(UserRepository $userRepository, string $email, bool $isCreation = false): ?Exception
     {

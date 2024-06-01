@@ -2,12 +2,13 @@
 
 namespace App\Controller;
 
+use Exception;
 use App\Entity\User;
 use App\Service\ApiService;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
@@ -47,7 +48,7 @@ class UpdateUserController extends AbstractController
 
         try {
             $this->apiService->isValidTokenString($user, $token);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new AuthenticationException('Invalid token');
         }
 

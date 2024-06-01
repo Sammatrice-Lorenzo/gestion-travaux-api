@@ -11,7 +11,7 @@ use ApiPlatform\OpenApi\Model\Parameter;
 use ApiPlatform\OpenApi\Model\RequestBody;
 use ApiPlatform\OpenApi\Factory\OpenApiFactoryInterface;
 
-readonly class OpenApiFactory implements OpenApiFactoryInterface
+class OpenApiFactory implements OpenApiFactoryInterface
 {
     public function __construct(
         private OpenApiFactoryInterface $decorated,
@@ -39,6 +39,7 @@ readonly class OpenApiFactory implements OpenApiFactoryInterface
         $openApi->getPaths()->addPath('/api/logout', $this->getLogoutPath());
         $openApi->getPaths()->addPath('/verify/email', $this->getVerifiedToken());
         $openApi->getPaths()->addPath('/api/user/edit/{id}', $this->getEditUserPath());
+        $openApi->getPaths()->addPath('/api/invoice-file', $this->getInvoiceFile());
 
         return $openApi;
     }
@@ -91,6 +92,16 @@ readonly class OpenApiFactory implements OpenApiFactoryInterface
                         'content' => 'No content'
                     ]
                 ]
+            )
+        );
+    }
+
+    public function getInvoiceFile(): PathItem
+    {
+        return new PathItem(
+            post: new Operation(
+                operationId: 'postInvoiceFile',
+                tags: ['File'],
             )
         );
     }
