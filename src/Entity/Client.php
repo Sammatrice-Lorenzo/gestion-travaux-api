@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Entity\Work;
 use ApiPlatform\Metadata\Get;
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\Traits\ClientTrait;
 use App\Controller\ClientController;
 use App\Repository\ClientRepository;
 use ApiPlatform\Metadata\ApiResource;
@@ -42,6 +43,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiResource]
 class Client
 {
+    use ClientTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -78,6 +81,9 @@ class Client
     #[ORM\JoinColumn(nullable: false)]
     private ?User $user = null;
 
+    /**
+     * @var Collection<int, Work>|null
+     */
     #[ORM\OneToMany(mappedBy: 'client', targetEntity: Work::class)]
     #[ORM\JoinColumn(nullable: true)]
     private ?Collection $works = null;
