@@ -10,6 +10,7 @@ use ApiPlatform\Metadata\GetCollection;
 use App\Controller\WorkEventDayController;
 use App\Repository\WorkEventDayRepository;
 use Symfony\Component\Validator\Constraints\CssColor;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 
 #[ORM\Entity(repositoryClass: WorkEventDayRepository::class)]
@@ -48,6 +49,7 @@ class WorkEventDay
 
     #[ORM\Column(length: 255)]
     #[ORM\JoinColumn(nullable: false)]
+    #[NotBlank]
     private string $title;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -60,6 +62,7 @@ class WorkEventDay
 
     #[ORM\Column(length: 255)]
     #[ORM\JoinColumn(nullable: false)]
+    #[NotBlank]
     #[CssColor(message: 'Le code couleur {{ value }} ne correspond pas à un code valide')]
     private string $color;
 
@@ -76,7 +79,7 @@ class WorkEventDay
         return $this->id;
     }
 
-    public function getTitle(): ?string
+    public function getTitle(): string
     {
         return $this->title;
     }
