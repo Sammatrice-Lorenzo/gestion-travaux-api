@@ -8,6 +8,7 @@ use stdClass;
 use App\Entity\Client;
 use setasign\Fpdi\Fpdi;
 use App\Helper\DateFormatHelper;
+use App\Service\AbstractFileService;
 
 final class InvoiceFileService extends AbstractFileService
 {
