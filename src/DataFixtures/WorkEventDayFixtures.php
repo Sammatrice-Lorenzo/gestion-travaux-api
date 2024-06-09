@@ -7,6 +7,7 @@ use DateInterval;
 use Faker\Factory;
 use App\Entity\User;
 use App\Entity\WorkEventDay;
+use App\Helper\DateFormatHelper;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\FixtureInterface;
@@ -27,10 +28,11 @@ final class WorkEventDayFixtures extends Fixture implements DependentFixtureInte
         $endTime = "18:00";
 
         $colors = ['#ff9800', '#940c0c'];
+        $defaultFormat = DateFormatHelper::DEFAULT_FORMAT;
 
         for ($iDate = $startDate; $iDate < $endDate; $iDate->add(new DateInterval('P1D'))) {
-            $start = new DateTime("{$iDate->format('Y-m-d')} $startTime");
-            $end = new DateTime("{$iDate->format('Y-m-d')} $endTime");
+            $start = new DateTime("{$iDate->format($defaultFormat)} $startTime");
+            $end = new DateTime("{$iDate->format($defaultFormat)} $endTime");
 
             $workEventDay = (new WorkEventDay())
                 ->setTitle("Événement {$faker->title}")

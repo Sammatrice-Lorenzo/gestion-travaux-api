@@ -7,25 +7,18 @@ use Override;
 use stdClass;
 use App\Entity\Client;
 use setasign\Fpdi\Fpdi;
-use App\Interface\InvoiceFileInterface;
+use App\Helper\DateFormatHelper;
 
-final class InvoiceFileService implements InvoiceFileInterface
+final class InvoiceFileService extends AbstractFileService
 {
     private const int WIDTH_COLUMN = 30;
-    private const int ROW_HEIGHT_COLUMN = 5;
     private const int ROW_HEIGHT_COLUMN_INVOICE_NAME = 8;
     private const float SIZE_FONT = 7.5;
-
+    
     private const float TVA_MAINTENANCE_WORK = 10.0;
     private const float TVA_ENERGY_IMPROUVEMENT_WORK = 5.5;
 
-    private Fpdi $fpdi;
-
-    #[Override]
-    public function setFpdi(Fpdi $fpdi): void
-    {
-        $this->fpdi = $fpdi;
-    }
+    public const int ROW_HEIGHT_COLUMN = 5;
 
     public function setupInvoiceParameterFile(string $pdfTemplate): void
     {
@@ -62,7 +55,7 @@ final class InvoiceFileService implements InvoiceFileInterface
 
         $this->fpdi->SetFont('TrebuchetMS-Bold', '', self::SIZE_FONT);
         $this->fpdi->SetXY($startX, $startY);
-        $columnsWidths = self::getColumnsWidth();
+        $columnsWidths = $this->getColumnsWidth();
         $totalColumnsWidth = $this->getTotalColumnsWidth();
 
         self::setElementCenter($this->fpdi, $totalColumnsWidth);
@@ -79,11 +72,6 @@ final class InvoiceFileService implements InvoiceFileInterface
         $this->fpdi->Ln();
     }
 
-    private static function convertTextInUTF8(string $text): string
-    {
-        return iconv('UTF-8', 'windows-1252', $text);
-    }
-
     /**
      * @param array<int, array<string, string>> $invoiceData
      * @return void
@@ -92,7 +80,7 @@ final class InvoiceFileService implements InvoiceFileInterface
     {
         $this->fpdi->SetDrawColor(54, 95, 145);
 
-        $columnsWidths = self::getColumnsWidth();
+        $columnsWidths = $this->getColumnsWidth();
         $totalColumnsWidth = $this->getTotalColumnsWidth();
 
         $this->fpdi->SetFont('TrebuchetMS', '', self::SIZE_FONT);
@@ -123,38 +111,9 @@ final class InvoiceFileService implements InvoiceFileInterface
         $this->fpdi->Ln();
     }
 
-    /**
-     * @param array<string, string> $row
-     * @param int[] $columnsWidths
-     * @return integer
-     */
-    private function calculateMaxHeight(array $row, array $columnsWidths): int
-    {
-        $maxHeight = 0;
-        foreach ($row as $i => $cell) {
-            $value = self::formatFloatValue($cell);
-            $textWidth = $this->fpdi->GetStringWidth($value);
-            $cellWidth = $columnsWidths[$i];
-            $height = ceil($textWidth / $cellWidth) * self::ROW_HEIGHT_COLUMN;
-            $maxHeight = max($maxHeight, $height);
-        }
-
-        return $maxHeight;
-    }
-
-    private function handleMultiLineText(string $value, float $cellWidth, string $position): void
-    {
-        $x = $this->fpdi->GetX();
-        $y = $this->fpdi->GetY();
-        $this->fpdi->MultiCell($cellWidth, self::ROW_HEIGHT_COLUMN, self::convertTextInUTF8($value), 1, $position);
-        $this->fpdi->SetY($y);
-        $this->fpdi->SetX($cellWidth + $x);
-    }
-
-
     private function setTotalOfInvoice(float $sumOfTotal)
     {
-        $columnsWidth = self::getColumnsWidth();
+        $columnsWidth = $this->getColumnsWidth();
         $totalColumnsWidth = $this->getTotalColumnsWidth();
 
         $lineTotal = ['', 'Main-d\'oeuvre et diverses fournitures', 'Ensemble', $sumOfTotal];
@@ -177,7 +136,7 @@ final class InvoiceFileService implements InvoiceFileInterface
 
     private function setTVAInvoice(float $sumOfTotal): void
     {
-        $columnsWidth = self::getColumnsWidth();
+        $columnsWidth = $this->getColumnsWidth();
         $lastColumnsWidth = array_slice($columnsWidth, -2, 2, true);
 
         $lastColumnsWidth = array_values($lastColumnsWidth);
@@ -238,17 +197,10 @@ final class InvoiceFileService implements InvoiceFileInterface
     }
 
     /**
-     * @return integer
-     */
-    private function getTotalColumnsWidth(): int
-    {
-        return array_sum(self::getColumnsWidth());
-    }
-
-    /**
      * @return int[]
      */
-    private static function getColumnsWidth(): array
+    #[Override]
+    public function getColumnsWidth(): array
     {
         return [40, 67, 30, 30];
     }
@@ -261,13 +213,6 @@ final class InvoiceFileService implements InvoiceFileInterface
     private function setElementOfLastColumn(int $lastColumnsWidth): void
     {
         $this->fpdi->SetX(($this->fpdi->GetPageWidth() + $lastColumnsWidth - 3) / 2);
-    }
-
-    private static function formatFloatValue(string $value): string
-    {
-        $floatValue = (float) $value;
-
-        return $floatValue === 0.0 ? $value : number_format($floatValue, 2, ',', '');
     }
 
     /**
@@ -308,8 +253,7 @@ final class InvoiceFileService implements InvoiceFileInterface
         $this->fpdi->SetXY(190, 40);
         $this->fpdi->Cell(5, 5, self::convertTextInUTF8("N °{$date->format('y.m/d')}"), 0, 1, 'R');
         $this->fpdi->SetXY(185, 45);
-        $this->fpdi->Cell(5, 5, "DATE : {$date->format('d/m/y')}", 0, 1, 'R');
-
+        $this->fpdi->Cell(5, 5, "DATE : {$date->format(DateFormatHelper::FRENCH_FORMAT)}", 0, 1, 'R');
     }
 
     /**

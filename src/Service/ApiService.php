@@ -7,7 +7,7 @@ use App\Entity\User;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
-final class ApiService
+final readonly class ApiService
 {
     public function getErrorToken(): JsonResponse
     {
@@ -23,6 +23,15 @@ final class ApiService
             'code' => Response::HTTP_NOT_FOUND,
             'error' => 'Utilisateur non trouvé.'
         ], Response::HTTP_NOT_FOUND);
+    }
+
+    public function getToken(string $token): string
+    {
+        if (strpos($token, 'Bearer ') === 0) {
+            $token = substr($token, 7);
+        }
+
+        return $token;
     }
 
     public function getDecodedTokenByString(string $token): stdClass
