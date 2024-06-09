@@ -49,3 +49,13 @@ php bin/console lexik:jwt:generate-keypair
 symfony server:start
 
 ```
+
+## Exécuter la migration
+```bash
+    php bin/console doctrine:migrations:execute --down DoctrineMigrations\<Version> --quiet
+```
+
+## Lancer toutes les migrations non exécutées
+```bash
+php bin/console doctrine:migrations:migrate --quiet
+```

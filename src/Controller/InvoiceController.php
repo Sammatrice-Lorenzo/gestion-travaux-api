@@ -14,10 +14,10 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 
-class InvoiceController extends AbstractController
+final class InvoiceController extends AbstractController
 {
     #[Route(path: '/api/invoice-file', name: 'app_invoice', methods: ['POST'])]
-    final public function generateInvoicePDF(
+    public function generateInvoicePDF(
         Request $request,
         InvoiceFileService $invoiceFileService,
         InvoiceFormService $invoiceFormService,
