@@ -17,6 +17,11 @@ framework:
     php_errors:
         log: true
 
+    handle_all_throwables: true
+
+    annotations:
+        enabled: false
+
 when@test:
     framework:
         test: true

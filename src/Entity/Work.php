@@ -14,9 +14,11 @@ use App\Controller\WorkController;
 use App\Repository\WorkRepository;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\OpenApi\Model\Operation;
+use ApiPlatform\OpenApi\Model\Parameter;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: WorkRepository::class)]
@@ -29,17 +31,18 @@ use Symfony\Component\Validator\Constraints as Assert;
             controller: WorkController::class,
             read: false,
             security: 'is_granted("ROLE_USER")',
-            openapiContext: [
-                'security' => [['bearerAuth' => []]],
-                'parameters' => [
-                    [
-                        'name' => 'id',
-                        'in' => 'path',
-                        'required' => true,
-                        'description' => 'The user ID',
-                    ]
+            openapi: new Operation(
+                security: [['bearerAuth' => []]],
+                parameters: [
+                    new Parameter(
+                        name: 'id',
+                        in: 'path',
+                        required: true,
+                        description: 'The user ID',
+                        schema: ['type' => 'string']
+                    )
                 ]
-            ]
+            )
         )
     ],
     // normalizationContext: ['groups' => 'read:Work'],
