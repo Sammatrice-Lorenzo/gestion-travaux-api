@@ -43,7 +43,7 @@ final class WorkEventDayFileController extends AbstractController
         $date = (new DateTime(str_replace('/', '-', $data->date)));
         $workEventDays = $this->workEventDayRepository->findByMonth($user, $date);
 
-        $header = ['Date', 'Prestation', 'Début', 'Fin',];
+        $header = ['Date', 'Prestation', 'Début', 'Fin'];
 
         $workEventDayFileService->setFpdi($pdf);
         $workEventDayFileService->generateFile($date, $header, $workEventDays);

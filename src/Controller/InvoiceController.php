@@ -31,6 +31,13 @@ final class InvoiceController extends AbstractController
             return ApiService::getJsonResponseRequestParameters($errorsRequest);
         }
 
+        $client = $clientRepository->findOneBy(['id' => (int) $jsonData->idClient]);
+        if (!$client) {
+            throw new UserNotFoundException();
+        }
+
+        $invoiceFormService->updateForm($jsonData);
+
         $pdfExample = $this->getParameter('invoice_example_directory') . 'test.pdf';
         $pdf = new Fpdi();
         $invoiceFileService->setFpdi($pdf);
@@ -38,10 +45,7 @@ final class InvoiceController extends AbstractController
         $invoiceFileService->setupInvoiceParameterFile($pdfExample);
         $headers = ['LOCALISATION', 'DESCRIPTION DES PRESTATIONS', 'PRIX UNITAIRE', 'TOTAL DE LA LIGNE'];
 
-        $client = $clientRepository->findOneBy(['id' => (int) $jsonData->idClient]);
-        if (!$client) {
-            throw new UserNotFoundException();
-        }
+
         $invoiceFileService->generateInvoiceFile($client, $headers, $jsonData);
 
         $pdfFilePathWithAddedData = 'path_to_save_pdf_with_added_data.pdf';
