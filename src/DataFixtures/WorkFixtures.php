@@ -14,7 +14,7 @@ use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 
-class WorkFixtures extends Fixture implements DependentFixtureInterface
+final class WorkFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
@@ -35,6 +35,7 @@ class WorkFixtures extends Fixture implements DependentFixtureInterface
                     ->setProgression($progression)
                     ->setUser($user)
                     ->setClient($faker->randomElement($clients))
+                    ->setInvoice(null)
                 ;
 
                 $manager->persist($work);
