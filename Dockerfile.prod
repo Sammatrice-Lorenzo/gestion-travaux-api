@@ -57,6 +57,13 @@ COPY gestion-travaux-api/docker/prod/symfony.pool.conf /etc/php8.3/php-fpm.d/
 
 # RUN php bin/console cache:clear --env=prod \
 #     && php bin/console cache:warmup --env=prod
+
+COPY gestion-travaux-api/docker/prod/scripts.sh /usr/local/bin/scripts.sh
+
+RUN chmod +x /usr/local/bin/scripts.sh
+
+ENTRYPOINT ["/usr/local/bin/scripts.sh"]
+
 CMD ["php-fpm", "-F"]
 
 EXPOSE 9000
