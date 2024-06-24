@@ -14,9 +14,11 @@ use App\Controller\WorkController;
 use App\Repository\WorkRepository;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\OpenApi\Model\Operation;
+use ApiPlatform\OpenApi\Model\Parameter;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: WorkRepository::class)]
@@ -29,21 +31,22 @@ use Symfony\Component\Validator\Constraints as Assert;
             controller: WorkController::class,
             read: false,
             security: 'is_granted("ROLE_USER")',
-            openapiContext: [
-                'security' => [['bearerAuth' => []]],
-                'parameters' => [
-                    [
-                        'name' => 'id',
-                        'in' => 'path',
-                        'required' => true,
-                        'description' => 'The user ID',
-                    ]
+            openapi: new Operation(
+                security: [['bearerAuth' => []]],
+                parameters: [
+                    new Parameter(
+                        name: 'id',
+                        in: 'path',
+                        required: true,
+                        description: 'The user ID',
+                        schema: ['type' => 'string']
+                    )
                 ]
-            ]
+            )
         )
     ],
     // normalizationContext: ['groups' => 'read:Work'],
-    normalizationContext: ['groups' => ['read:Work', 'read:Client']],
+    normalizationContext: ['groups' => ['read:Work', 'read:Client', 'read:Invoice']],
 )]
 #[ApiResource]
 class Work
@@ -98,84 +101,89 @@ class Work
     #[ORM\ManyToOne(inversedBy: 'works')]
     #[ORM\JoinColumn(nullable: false)]
     #[ApiProperty(readableLink: true)]
-    private ?Client $client = null;
+    private Client $client;
+    
+    #[ORM\OneToOne(mappedBy: 'work', cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: true)]
+    #[ApiProperty(readableLink: true)]
+    private ?Invoice $invoice = null;
 
     public function __construct()
     {
         $this->typeOfWorks = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    final public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getName(): ?string
+    final public function getName(): ?string
     {
         return $this->name;
     }
 
-    public function setName(string $name): self
+    final public function setName(string $name): self
     {
         $this->name = $name;
 
         return $this;
     }
 
-    public function getCity(): ?string
+    final public function getCity(): ?string
     {
         return $this->city;
     }
 
-    public function setCity(string $city): self
+    final public function setCity(string $city): self
     {
         $this->city = $city;
 
         return $this;
     }
 
-    public function getStart(): ?DateTimeInterface
+    final public function getStart(): ?DateTimeInterface
     {
         return $this->start;
     }
 
-    public function setStart(DateTimeInterface $start): self
+    final public function setStart(DateTimeInterface $start): self
     {
         $this->start = $start;
 
         return $this;
     }
 
-    public function getEnd(): ?DateTimeInterface
+    final public function getEnd(): ?DateTimeInterface
     {
         return $this->end;
     }
 
-    public function setEnd(DateTimeInterface $end): self
+    final public function setEnd(DateTimeInterface $end): self
     {
         $this->end = $end;
 
         return $this;
     }
 
-    public function getProgression(): ?string
+    final public function getProgression(): ?string
     {
         return $this->progression;
     }
 
-    public function setProgression(string $progression): self
+    final public function setProgression(string $progression): self
     {
         $this->progression = $progression;
 
         return $this;
     }
 
-    public function getEquipements(): array
+    final public function getEquipements(): array
     {
         return $this->equipements;
     }
 
-    public function setEquipements(array $equipements): self
+    final public function setEquipements(array $equipements): self
     {
         $this->equipements = $equipements;
 
@@ -185,12 +193,12 @@ class Work
     /**
      * @return Collection<int, TypeOfWork>
      */
-    public function getTypeOfWorks(): Collection
+    final public function getTypeOfWorks(): Collection
     {
         return $this->typeOfWorks;
     }
 
-    public function addTypeOfWork(TypeOfWork $typeOfWork): self
+    final public function addTypeOfWork(TypeOfWork $typeOfWork): self
     {
         if (!$this->typeOfWorks->contains($typeOfWork)) {
             $this->typeOfWorks->add($typeOfWork);
@@ -200,7 +208,7 @@ class Work
         return $this;
     }
 
-    public function removeTypeOfWork(TypeOfWork $typeOfWork): self
+    final public function removeTypeOfWork(TypeOfWork $typeOfWork): self
     {
         if ($this->typeOfWorks->removeElement($typeOfWork) && $typeOfWork->getWork() === $this) {
             // set the owning side to null (unless already changed)
@@ -210,12 +218,12 @@ class Work
         return $this;
     }
 
-    public function getUser(): ?User
+    final public function getUser(): ?User
     {
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    final public function setUser(?User $user): self
     {
         $this->user = $user;
 
@@ -223,14 +231,31 @@ class Work
     }
 
     #[Groups(['read:Work'])]
-    public function getClient(): ?Client
+    final public function getClient(): ?Client
     {
         return $this->client;
     }
 
-    public function setClient(?Client $client): self
+    final public function setClient(?Client $client): self
     {
         $this->client = $client;
+
+        return $this;
+    }
+
+    #[Groups(['read:Work'])]
+    final public function getInvoice(): ?Invoice
+    {
+        return $this->invoice;
+    }
+
+    final public function setInvoice(?Invoice $invoice): static
+    {
+        if ($invoice?->getWork() !== $this) {
+            $invoice?->setWork($this);
+        }
+
+        $this->invoice = $invoice;
 
         return $this;
     }

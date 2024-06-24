@@ -11,9 +11,10 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Controller\UserController;
 use App\Repository\UserRepository;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\OpenApi\Model\Operation;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -29,7 +30,9 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             controller: UserController::class,
             read: false,
             security: 'is_granted("ROLE_USER")',
-            openapiContext: ['security' => [['bearerAuth' => []]]]
+            openapi: new Operation(
+                security: [['bearerAuth' => []]]
+            )
         ),
         new Get(
             name: 'userById',
@@ -37,7 +40,9 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             controller: UserController::class,
             read: true,
             security: 'is_granted("ROLE_USER")',
-            openapiContext: ['security' => [['bearerAuth' => []]]]
+            openapi: new Operation(
+                security: [['bearerAuth' => []]]
+            )
         ),
     ],
     normalizationContext: ['groups' => ['read:UserById']],

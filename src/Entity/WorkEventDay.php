@@ -7,6 +7,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\OpenApi\Model\Operation;
+use ApiPlatform\OpenApi\Model\Parameter;
 use App\Controller\WorkEventDayController;
 use App\Repository\WorkEventDayRepository;
 use Symfony\Component\Validator\Constraints\CssColor;
@@ -22,20 +24,18 @@ use Symfony\Component\Validator\Constraints\NotBlank;
             controller: WorkEventDayController::class,
             read: false,
             security: 'is_granted("ROLE_USER")',
-            openapiContext: [
-                'security' => [['bearerAuth' => []]],
-                'parameters' => [
-                    [
-                        'name' => 'id',
-                        'in' => 'path',
-                        'required' => true,
-                        'description' => 'The user ID',
-                        'schema' => [
-                            'type' => 'string',
-                        ],
-                    ],
-                ],
-            ]
+            openapi: new Operation(
+                security: [['bearerAuth' => []]],
+                parameters: [
+                    new Parameter(
+                        name: 'id',
+                        in: 'path',
+                        required: true,
+                        description: 'The user ID',
+                        schema: ['type' => 'string']
+                    )
+                ]
+            )
         )
     ]
 )]
