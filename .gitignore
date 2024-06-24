@@ -37,3 +37,5 @@ summary_events.pdf
 
 docker/prod/cert.pem
 docker/prod/key.pem
+
+mkcert-v1.4.4-linux-amd64
