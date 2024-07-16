@@ -14,7 +14,7 @@ final class DateHelper
         '04' => 'Avril',
         '05' => 'Mai',
         '06' => 'Juin',
-        '07' => 'Juliet',
+        '07' => 'Juillet',
         '08' => 'Août',
         '09' => 'Septembre',
         '10' => 'Octobre',
