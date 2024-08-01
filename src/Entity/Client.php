@@ -15,6 +15,7 @@ use ApiPlatform\OpenApi\Model\Parameter;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ClientRepository::class)]
@@ -52,37 +53,38 @@ class Client
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
+    
+    #[ORM\Column(length: 255)]
+    #[NotBlank]
     #[Groups (['read:Client', 'read:Work'])]
+    private string $firstname;
 
     #[ORM\Column(length: 255)]
-    private ?string $firstname = null;
     #[Groups(['read:Client', 'read:Work'])]
-
+    private string $lastname;
+    
     #[ORM\Column(length: 255)]
-    private ?string $lastname = null;
     #[Groups(['read:Client', 'read:Work'])]
-
-    #[ORM\Column(length: 255)]
     #[Assert\Regex(pattern: '/^0[1-9](?:[\s.-]?[0-9]{2}){4}$/', message: 'Insérer un numéro de téléphone valide')]
-    private ?string $phoneNumber = null;
-    #[Groups(['read:Client', 'read:Work'])]
+    private string $phoneNumber;
     
     #[ORM\Column(length: 255)]
     #[Assert\Regex(pattern: '/^\d{5}$/', message: 'Insérer un code postale valide')]
-    private ?string $postalCode = null;
     #[Groups(['read:Client', 'read:Work'])]
-
+    private string $postalCode;
+    
     #[ORM\Column(length: 255)]
-    private ?string $city = null;
     #[Groups(['read:Client', 'read:Work'])]
-
+    private string $city;
+    
     #[ORM\Column(length: 255)]
-    private ?string $streetAddress = null;
     #[Groups(['read:Client', 'read:Work'])]
-
+    private string $streetAddress;
+    
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'clients')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?User $user = null;
+    #[Groups(['read:Client', 'read:Work'])]
+    private User $user;
 
     /**
      * @var Collection<int, Work>|null
@@ -101,78 +103,78 @@ class Client
         return $this->id;
     }
 
-    public function getFirstname(): ?string
+    final public function getFirstname(): string
     {
         return $this->firstname;
     }
 
-    public function setFirstname(string $firstname): self
+    final public function setFirstname(string $firstname): self
     {
         $this->firstname = $firstname;
 
         return $this;
     }
 
-    public function getLastname(): ?string
+    final public function getLastname(): string
     {
         return $this->lastname;
     }
 
-    public function setLastname(string $lastname): self
+    final public function setLastname(string $lastname): self
     {
         $this->lastname = $lastname;
 
         return $this;
     }
 
-    public function getPhoneNumber(): ?string
+    final public function getPhoneNumber(): string
     {
         return $this->phoneNumber;
     }
 
-    public function setPhoneNumber(string $phoneNumber): self
+    final public function setPhoneNumber(string $phoneNumber): self
     {
         $this->phoneNumber = $phoneNumber;
 
         return $this;
     }
 
-    public function getStreetAddress(): ?string
+    final public function getStreetAddress(): string
     {
         return $this->streetAddress;
     }
 
-    public function setStreetAddress(?string $streetAddress): void
+    final public function setStreetAddress(string $streetAddress): void
     {
         $this->streetAddress = $streetAddress;
     }
 
-    public function getPostalCode(): ?string
+    final public function getPostalCode(): string
     {
         return $this->postalCode;
     }
 
-    public function setPostalCode(?string $postalCode): void
+    final public function setPostalCode(string $postalCode): void
     {
         $this->postalCode = $postalCode;
     }
 
-    public function getCity(): ?string
+    final public function getCity(): string
     {
         return $this->city;
     }
 
-    public function setCity(?string $city): void
+    final public function setCity(string $city): void
     {
         $this->city = $city;
     }
 
-    public function getUser(): ?User
+    final public function getUser(): User
     {
         return $this->user;
     }
 
-    public function setUser(?User $user): self
+    final public function setUser(User $user): self
     {
         $this->user = $user;
 
@@ -182,12 +184,12 @@ class Client
     /**
      * @return Collection<int, Work>
      */
-    public function getWorks(): Collection
+    final public function getWorks(): Collection
     {
         return $this->works;
     }
 
-    public function addWork(Work $work): self
+    final public function addWork(Work $work): self
     {
         if (!$this->works->contains($work)) {
             $this->works->add($work);
@@ -197,7 +199,7 @@ class Client
         return $this;
     }
 
-    public function removeWork(Work $work): self
+    final public function removeWork(Work $work): self
     {
         if ($this->works->removeElement($work) && $work->getClient() === $this) {
             // set the owning side to null (unless already changed)
