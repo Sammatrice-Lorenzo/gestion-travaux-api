@@ -19,7 +19,8 @@ final class WorkEventDaysFormatter
             $workEventDay->getStartDate()->format(DateFormatHelper::FRENCH_FORMAT),
             $workEventDay->getTitle(),
             $workEventDay->getStartDate()->format($timeFormat),
-            $workEventDay->getEndDate()->format($timeFormat)
+            $workEventDay->getEndDate()->format($timeFormat),
+            $workEventDay->getClient() ? $workEventDay->getClient()->getName() : '',
         ], $workEventDays);
     }
 }

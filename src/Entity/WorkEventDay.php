@@ -5,12 +5,14 @@ namespace App\Entity;
 use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model\Operation;
 use ApiPlatform\OpenApi\Model\Parameter;
 use App\Controller\WorkEventDayController;
 use App\Repository\WorkEventDayRepository;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\CssColor;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
@@ -37,7 +39,8 @@ use Symfony\Component\Validator\Constraints\NotBlank;
                 ]
             )
         )
-    ]
+    ],
+    normalizationContext: ['groups' => ['read:EventDay']],
 )]
 #[ApiResource]
 class WorkEventDay
@@ -45,33 +48,40 @@ class WorkEventDay
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['read:EventDay'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[ORM\JoinColumn(nullable: false)]
     #[NotBlank]
+    #[Groups(['read:EventDay'])]
     private string $title;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['read:EventDay'])]
     private DateTimeInterface $startDate;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['read:EventDay'])]
     private DateTimeInterface $endDate;
 
     #[ORM\Column(length: 255)]
     #[ORM\JoinColumn(nullable: false)]
     #[NotBlank]
     #[CssColor(message: 'Le code couleur {{ value }} ne correspond pas à un code valide')]
+    #[Groups(['read:EventDay'])]
     private string $color;
 
     #[ORM\ManyToOne(inversedBy: 'workEventDays')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['read:EventDay'])]
     private User $user;
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: true)]
+    #[ApiProperty(readableLink: true)]
     private ?Client $client = null;
 
     public function getId(): ?int
@@ -139,6 +149,7 @@ class WorkEventDay
         return $this;
     }
 
+    #[Groups(['read:EventDay'])]
     public function getClient(): ?Client
     {
         return $this->client;

@@ -11,7 +11,7 @@ use App\Helper\DateFormatHelper;
 
 final class WorkEventDayFileService extends AbstractFileService
 {
-    private const int DEFAULT_X = 30;
+    private const int DEFAULT_X = 15;
     public const int ROW_HEIGHT_COLUMN = 10;
 
     /**
@@ -20,7 +20,7 @@ final class WorkEventDayFileService extends AbstractFileService
     #[Override]
     public function getColumnsWidth(): array
     {
-        return [35, 60, 30, 30];
+        return [25, 60, 27, 27, 41];
     }
 
     private function setHeader(DateTime $date): void
@@ -32,6 +32,7 @@ final class WorkEventDayFileService extends AbstractFileService
             0, 10, "Prestations du mois de {$frenchMonth} {$date->format(DateFormatHelper::YEAR_FORMAT)}", 0, 1, 'C'
         );
         $this->fpdi->Ln(10);
+        $this->fpdi->SetFont('Arial', 'B', 12);
     }
 
     /**
@@ -79,28 +80,27 @@ final class WorkEventDayFileService extends AbstractFileService
     private function setData(array $workEventDays): void
     {
         $columnsWidths = $this->getColumnsWidth();
-        $fpdi = $this->fpdi;
         $x = self::DEFAULT_X;
 
-        $fpdi->SetFillColor(224, 235, 255);
-        $fpdi->SetTextColor(0);
-        $fpdi->SetFont('');
+        $this->fpdi->SetFillColor(224, 235, 255);
+        $this->fpdi->SetTextColor(0);
+        $this->fpdi->SetFont('');
 
-        $fpdi->SetX($x);
+        $this->fpdi->SetX($x);
 
         $events = WorkEventDaysFormatter::getWorkDayEventFormattedForFile($workEventDays);
         foreach ($events as $event) {
-            $fpdi->SetX($x);
+            $this->fpdi->SetX($x);
             $maxHeight = $this->calculateMaxHeight($event, $columnsWidths);
 
             foreach ($event as $i => $cell) {
                 $this->setCelles($cell, $columnsWidths[$i], $maxHeight);
             }
-            $fpdi->Ln();
+            $this->fpdi->Ln();
         }
 
-        $fpdi->SetX($x);
-        $fpdi->Cell(self::getTotalColumnsWidth(), 0, '', 'T');
+        $this->fpdi->SetX($x);
+        $this->fpdi->Cell(self::getTotalColumnsWidth(), 0, '', 'T');
     }
 
     /**
