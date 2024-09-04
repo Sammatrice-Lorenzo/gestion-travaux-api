@@ -36,6 +36,7 @@ final class WorkFixtures extends Fixture implements DependentFixtureInterface
                     ->setUser($user)
                     ->setClient($faker->randomElement($clients))
                     ->setInvoice(null)
+                    ->setTotalAmount(round($faker->randomFloat(), 2))
                 ;
 
                 $manager->persist($work);

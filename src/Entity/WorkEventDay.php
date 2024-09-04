@@ -79,70 +79,70 @@ class WorkEventDay
     #[Groups(['read:EventDay'])]
     private User $user;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne]
     #[ORM\JoinColumn(nullable: true)]
     #[ApiProperty(readableLink: true)]
     private ?Client $client = null;
 
-    public function getId(): ?int
+    final public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getTitle(): string
+    final public function getTitle(): string
     {
         return $this->title;
     }
 
-    public function setTitle(string $title): static
+    final public function setTitle(string $title): static
     {
         $this->title = $title;
 
         return $this;
     }
 
-    public function getStartDate(): DateTimeInterface
+    final public function getStartDate(): DateTimeInterface
     {
         return $this->startDate;
     }
 
-    public function setStartDate(DateTimeInterface $date): static
+    final public function setStartDate(DateTimeInterface $date): static
     {
         $this->startDate = $date;
 
         return $this;
     }
 
-    public function getEndDate(): DateTimeInterface
+    final public function getEndDate(): DateTimeInterface
     {
         return $this->endDate;
     }
 
-    public function setEndDate(DateTimeInterface $date): static
+    final public function setEndDate(DateTimeInterface $date): static
     {
         $this->endDate = $date;
 
         return $this;
     }
 
-    public function getColor(): string
+    final public function getColor(): string
     {
         return $this->color;
     }
 
-    public function setColor(string $color): static
+    final public function setColor(string $color): static
     {
         $this->color = $color;
 
         return $this;
     }
 
-    public function getUser(): User
+    final public function getUser(): User
     {
         return $this->user;
     }
 
-    public function setUser(User $user): static
+    final public function setUser(User $user): static
     {
         $this->user = $user;
 
@@ -150,12 +150,12 @@ class WorkEventDay
     }
 
     #[Groups(['read:EventDay'])]
-    public function getClient(): ?Client
+    final public function getClient(): ?Client
     {
         return $this->client;
     }
 
-    public function setClient(?Client $client): static
+    final public function setClient(?Client $client): static
     {
         $this->client = $client;
 

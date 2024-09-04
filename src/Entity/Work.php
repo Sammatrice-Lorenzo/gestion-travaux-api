@@ -45,7 +45,6 @@ use Symfony\Component\Validator\Constraints as Assert;
             )
         )
     ],
-    // normalizationContext: ['groups' => 'read:Work'],
     normalizationContext: ['groups' => ['read:Work', 'read:Client', 'read:Invoice']],
 )]
 #[ApiResource]
@@ -55,38 +54,37 @@ class Work
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
-    #[Groups(['read:Work'])]
-
+    
     #[ORM\Column(length: 255)]
-    private ?string $name = null;
     #[Groups(['read:Work'])]
-
+    private string $name;
+    
     #[ORM\Column(length: 255)]
-    private ?string $city = null;
     #[Groups(['read:Work'])]
-
+    private string $city;
+    
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?DateTimeInterface $start = null;
     #[Groups(['read:Work'])]
-
+    private DateTimeInterface $start;
+    
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['read:Work'])]
     private ?DateTimeInterface $end = null;
-    #[Groups(['read:Work'])]
-
+    
     #[ORM\Column(length: 255)]
     #[Assert\Choice(choices: [
         ProgressionEnum::NOT_STARTED->value,
         ProgressionEnum::IN_PROGRESS->value,
         ProgressionEnum::DONE->value
-    ])]
-    private ?string $progression = null;
+        ])]
     #[Groups(['read:Work'])]
+    private ?string $progression = null;
     /**
      * @var string[]
      */
     #[ORM\Column]
-    private array $equipements = [];
     #[Groups(['read:Work'])]
+    private array $equipements = [];
 
     /**
      * @var Collection<int, TypeOfWork>
@@ -107,6 +105,14 @@ class Work
     #[ORM\JoinColumn(nullable: true)]
     #[ApiProperty(readableLink: true)]
     private ?Invoice $invoice = null;
+
+    #[ORM\Column]
+    #[Groups(['read:Work'])]
+    #[Assert\Range(
+        min: 0,
+        notInRangeMessage: 'Le minimum autorisé est de {{ min }}',
+    )]
+    private float $totalAmount = 0.0;
 
     public function __construct()
     {
@@ -130,7 +136,7 @@ class Work
         return $this;
     }
 
-    final public function getCity(): ?string
+    final public function getCity(): string
     {
         return $this->city;
     }
@@ -142,7 +148,7 @@ class Work
         return $this;
     }
 
-    final public function getStart(): ?DateTimeInterface
+    final public function getStart(): DateTimeInterface
     {
         return $this->start;
     }
@@ -166,7 +172,7 @@ class Work
         return $this;
     }
 
-    final public function getProgression(): ?string
+    final public function getProgression(): string
     {
         return $this->progression;
     }
@@ -256,6 +262,19 @@ class Work
         }
 
         $this->invoice = $invoice;
+
+        return $this;
+    }
+
+    #[Groups(['read:Work'])]
+    final public function getTotalAmount(): float
+    {
+        return $this->totalAmount;
+    }
+
+    final public function setTotalAmount(float $totalAmount): static
+    {
+        $this->totalAmount = $totalAmount;
 
         return $this;
     }
