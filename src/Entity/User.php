@@ -102,31 +102,38 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: WorkEventDay::class, orphanRemoval: true)]
     private Collection $workEventDays;
 
-    public function __construct()
+    /**
+     * @var Collection<int, ProductInvoiceFile>
+     */
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: ProductInvoiceFile::class)]
+    private Collection $productInvoiceFiles;
+
+    final public function __construct()
     {
         $this->clients = new ArrayCollection();
         $this->works = new ArrayCollection();
         $this->workEventDays = new ArrayCollection();
+        $this->productInvoiceFiles = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    final public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function setId(?int $id): self
+    final public function setId(?int $id): self
     {
         $this->id = $id;
 
         return $this;
     }
 
-    public function getEmail(): ?string
+    final public function getEmail(): ?string
     {
         return $this->email;
     }
 
-    public function setEmail(string $email): self
+    final public function setEmail(string $email): self
     {
         $this->email = $email;
 
@@ -138,7 +145,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
      *
      * @see UserInterface
      */
-    public function getUserIdentifier(): string
+    final public function getUserIdentifier(): string
     {
         return (string) $this->email;
     }
@@ -147,7 +154,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
      * @see UserInterface
      * @return string[]
      */
-    public function getRoles(): array
+    final public function getRoles(): array
     {
         $roles = $this->roles;
         // guarantee every user at least has ROLE_USER
@@ -160,7 +167,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
      * @param string[] $roles
      * @return self
      */
-    public function setRoles(array $roles): self
+    final public function setRoles(array $roles): self
     {
         $this->roles = $roles;
 
@@ -170,12 +177,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     /**
      * @see PasswordAuthenticatedUserInterface
      */
-    public function getPassword(): string
+    final public function getPassword(): string
     {
         return $this->password;
     }
 
-    public function setPassword(string $password): self
+    final public function setPassword(string $password): self
     {
         $this->password = $password;
 
@@ -185,18 +192,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     /**
      * @see UserInterface
      */
-    public function eraseCredentials(): void
+    final public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
     }
 
-    public function isVerified(): bool
+    final public function isVerified(): bool
     {
         return $this->isVerified;
     }
 
-    public function setIsVerified(bool $isVerified): self
+    final public function setIsVerified(bool $isVerified): self
     {
         $this->isVerified = $isVerified;
 
@@ -220,24 +227,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         ;
     }
 
-    public function getFirstname(): ?string
+    final public function getFirstname(): ?string
     {
         return $this->firstname;
     }
 
-    public function setFirstname(string $firstname): self
+    final public function setFirstname(string $firstname): self
     {
         $this->firstname = $firstname;
 
         return $this;
     }
 
-    public function getLastname(): ?string
+    final public function getLastname(): ?string
     {
         return $this->lastname;
     }
 
-    public function setLastname(string $lastname): self
+    final public function setLastname(string $lastname): self
     {
         $this->lastname = $lastname;
 
@@ -247,12 +254,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     /**
      * @return Collection<int, Work>
      */
-    public function getWorks(): Collection
+    final public function getWorks(): Collection
     {
         return $this->works;
     }
 
-    public function addWork(Work $work): self
+    final public function addWork(Work $work): self
     {
         if (!$this->works->contains($work)) {
             $this->works->add($work);
@@ -262,7 +269,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         return $this;
     }
 
-    public function removeWork(Work $work): self
+    final public function removeWork(Work $work): self
     {
         if ($this->works->removeElement($work) && $work->getUser() === $this) {
             // set the owning side to null (unless already changed)
@@ -275,12 +282,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     /**
      * @return Collection|Client[]
      */
-    public function getClients(): Collection
+    final public function getClients(): Collection
     {
         return $this->clients;
     }
 
-    public function addClient(Client $client): self
+    final public function addClient(Client $client): self
     {
         if (!$this->clients->contains($client)) {
             $this->clients[] = $client;
@@ -290,7 +297,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         return $this;
     }
 
-    public function removeClient(Client $client): self
+    final public function removeClient(Client $client): self
     {
         if ($this->clients->removeElement($client) && $client->getUser() === $this) {
             // set the owning side to null (unless already changed)
@@ -307,7 +314,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
      * @return Exception|null
      */
     #[Assert\Callback(groups: ['write:User'])]
-    public function validateEmail(UserRepository $userRepository, string $email, bool $isCreation = false): ?Exception
+    final public function validateEmail(UserRepository $userRepository, string $email, bool $isCreation = false): ?Exception
     {
         $exception = new Exception('Il ya déjà un compte avec cette email.');
         $existUserWithThisEmail = $userRepository->findOneBy(['email' => $email]);
@@ -336,16 +343,43 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     /**
      * @return Collection<int, WorkEventDay>
      */
-    public function getWorkEventDays(): Collection
+    final public function getWorkEventDays(): Collection
     {
         return $this->workEventDays;
     }
 
-    public function addWorkEventDay(WorkEventDay $workEventDay): static
+    final public function addWorkEventDay(WorkEventDay $workEventDay): static
     {
         if (!$this->workEventDays->contains($workEventDay)) {
             $this->workEventDays->add($workEventDay);
             $workEventDay->setUser($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ProductInvoiceFile>
+     */
+    final public function getProductInvoiceFiles(): Collection
+    {
+        return $this->productInvoiceFiles;
+    }
+
+    final public function addProductInvoiceFile(ProductInvoiceFile $productInvoiceFile): static
+    {
+        if (!$this->productInvoiceFiles->contains($productInvoiceFile)) {
+            $this->productInvoiceFiles->add($productInvoiceFile);
+            $productInvoiceFile->setUser($this);
+        }
+
+        return $this;
+    }
+
+    final public function removeProductInvoiceFile(ProductInvoiceFile $productInvoiceFile): static
+    {
+        if ($this->productInvoiceFiles->removeElement($productInvoiceFile) && $productInvoiceFile->getUser() === $this) {
+            $productInvoiceFile->setUser(null);
         }
 
         return $this;
