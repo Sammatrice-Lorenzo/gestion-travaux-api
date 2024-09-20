@@ -86,7 +86,7 @@ final readonly class ApiService
         ], Response::HTTP_OK);
     }
 
-    public static function getRequestToken(Request $request): string
+    public static function getRequestToken(Request $request): ?string
     {
         return $request->headers->get('authorization');
     }

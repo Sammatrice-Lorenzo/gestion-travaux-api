@@ -52,8 +52,17 @@ final class ProductInvoiceFileController extends AbstractController
         $productsInvoicesRepository = $this->entityManager->getRepository(ProductInvoiceFile::class);
         $productInvoiceFiles = $productsInvoicesRepository->findByMonth($this->getUser(), $date);
 
-        $data = $this->serializer->serialize($productInvoiceFiles, 'json', ['groups' => 'product_invoice_file:read']);
-
-        return new JsonResponse($data, JsonResponse::HTTP_CREATED, [], true);
+        $response = [
+            '@id' => '/api/product_invoice/month',
+            '@type' => 'ProductInvoice',
+            'hydra:member' => $productInvoiceFiles,
+            'hydra:totalItems' => count($productInvoiceFiles),
+        ];
+    
+        $data = $this->serializer->serialize($response, 'jsonld', ['groups' => 'product_invoice_file:read']);
+    
+        return new JsonResponse($data, JsonResponse::HTTP_OK, [
+            'Content-Type' => 'application/ld+json'
+        ], true);
     }
 }
