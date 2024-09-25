@@ -45,9 +45,8 @@ final readonly class ProductInvoiceRequestChecker
         return new JsonResponse($errorMessage, Response::HTTP_FORBIDDEN);
     }
 
-    public function handleApiGetError(Request $request): JsonResponse
+    public function handleErrorToken(Request $request): ?JsonResponse
     {
-        $date = $request->query->get('date');
         $token = ApiService::getRequestToken($request);
         $isValidToken = ApiService::isValidTokenString($this->security->getUser(), $token);
 
@@ -56,6 +55,16 @@ final readonly class ProductInvoiceRequestChecker
             $responseUser = ApiService::getErrorUser();
 
             return !$token ? $responseToken : $responseUser;
+        }
+
+        return null;
+    }
+
+    public function handleApiGetError(Request $request): JsonResponse
+    {
+        $date = $request->query->get('date');
+        if ($this->handleErrorToken($request)) {
+            return $this->handleErrorToken($request);
         }
 
         $errorMessage = [];

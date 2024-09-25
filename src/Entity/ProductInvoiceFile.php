@@ -6,6 +6,7 @@ use ArrayObject;
 use DateTimeInterface;
 use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
@@ -55,6 +56,25 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
                     ])
                 )
             )
+        ),
+        new Delete(
+            uriTemplate: '/api/product_invoice_delete/{id}',
+            controller: ProductInvoiceFileController::class,
+            openapi: new ModelOperation(
+                summary: 'Supprime un fichier de facture',
+                description: 'Permet de supprimer un fichier de facture spécifique.',
+                security: [['bearerAuth' => []]]
+            )
+        ),
+        new Post(
+            controller: ProductInvoiceFileController::class,
+            uriTemplate: '/api/product_invoice_download/{id}',
+            input: [],
+            openapi: new ModelOperation(
+                summary: 'Télécharge un fichier de facture',
+                description: 'Permet de télécharger un fichier de facture spécifique.',
+                security: [['bearerAuth' => []]]
+            )
         )
     ]
 )]
@@ -75,7 +95,7 @@ class ProductInvoiceFile
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
     #[Groups(['product_invoice_file:read'])]
-    private string $path;
+    private ?string $path = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Groups(['product_invoice_file:read'])]
@@ -107,12 +127,15 @@ class ProductInvoiceFile
         return $this;
     }
 
-    final public function getPath(): string
+    final public function getPath(): ?string
     {
         return $this->path;
     }
 
-    final public function setPath(string $path): static
+    /**
+     * Le path peut être null car avec Vich durant le delete il passe un null
+     */
+    final public function setPath(?string $path): static
     {
         $this->path = $path;
 

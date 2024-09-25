@@ -6,6 +6,7 @@
 parameters:
     invoice_example_directory: '%kernel.project_dir%/public/invoice/'
     font_generator_directory: '%kernel.project_dir%/src/FontPDFGenerator'
+    products_invoice: '%kernel.project_dir%/public/products-invoice/'
     url_front: '%env(URL_GESTION_TRAVAUX_PWA)%'
     mail_username: '%env(MAIL_USERNAME)%'
 

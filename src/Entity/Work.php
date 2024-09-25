@@ -53,6 +53,7 @@ class Work
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['read:Work'])]
     private ?int $id = null;
     
     #[ORM\Column(length: 255)]

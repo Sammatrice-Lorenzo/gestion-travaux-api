@@ -52,6 +52,7 @@ class Client
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups (['read:Client', 'read:Work'])]
     private ?int $id = null;
     
     #[ORM\Column(length: 255)]
@@ -80,7 +81,7 @@ class Client
     #[ORM\Column(length: 255)]
     #[Groups(['read:Client', 'read:Work'])]
     private string $streetAddress;
-    
+
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'clients')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['read:Client', 'read:Work'])]
