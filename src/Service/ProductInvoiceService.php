@@ -55,4 +55,15 @@ final readonly class ProductInvoiceService
 
         return $productInvoiceFiles;
     }
+
+    /**
+     * @param ProductInvoiceFile[] $productInvoice
+     * @return string[]
+     */
+    public function getFiles(array $productInvoice): array
+    {
+        return array_map(function (ProductInvoiceFile $productInvoiceFile): string {
+            return $productInvoiceFile->getPath();
+        }, $productInvoice);
+    }
 }

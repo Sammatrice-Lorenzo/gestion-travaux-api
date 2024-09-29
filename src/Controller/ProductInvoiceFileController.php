@@ -3,11 +3,12 @@
 namespace App\Controller;
 
 use DateTime;
+use App\Service\ZipService;
+use App\Helper\DateFormatHelper;
 use App\Entity\ProductInvoiceFile;
 use App\Service\ProductInvoiceService;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Formatter\ProductInvoiceFormatter;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Repository\ProductInvoiceFileRepository;
@@ -16,6 +17,7 @@ use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use App\Checker\ProductInvoice\ProductInvoiceRequestChecker;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 final class ProductInvoiceFileController extends AbstractController
 {
@@ -24,7 +26,8 @@ final class ProductInvoiceFileController extends AbstractController
         private SerializerInterface $serializer,
         private ProductInvoiceRequestChecker $productInvoiceRequestChecker,
         private ProductInvoiceService $productInvoiceService,
-        private ParameterBagInterface $parameterBagInterface
+        private ParameterBagInterface $parameterBagInterface,
+        private ProductInvoiceFileRepository $productInvoiceFileRepository
     ) {
     }
 
@@ -51,10 +54,7 @@ final class ProductInvoiceFileController extends AbstractController
         }
 
         $date = new DateTime($request->query->get('date'));
-
-        /** @var ProductInvoiceFileRepository $productsInvoicesRepository */
-        $productsInvoicesRepository = $this->entityManager->getRepository(ProductInvoiceFile::class);
-        $productInvoiceFiles = $productsInvoicesRepository->findByMonth($this->getUser(), $date);
+        $productInvoiceFiles = $this->productInvoiceFileRepository->findByMonth($this->getUser(), $date);
 
         $response = ProductInvoiceFormatter::getResponseProductInvoice($productInvoiceFiles);
         $data = $this->serializer->serialize($response, 'jsonld', ['groups' => 'product_invoice_file:read']);
@@ -88,5 +88,32 @@ final class ProductInvoiceFileController extends AbstractController
         $path = $this->parameterBagInterface->get('products_invoice') . $productInvoiceFile->getPath();
 
         return $this->file($path, $productInvoiceFile->getName());
+    }
+
+    #[Route(path: '/api/product_invoice_download_zip', name: 'app_product_invoice_download_zip', methods: ['POST'])]
+    public function downloadZIPProductInvoice(Request $request): JsonResponse|BinaryFileResponse
+    {
+        if ($this->productInvoiceRequestChecker->handleErrorIds($request)) {
+            return $this->productInvoiceRequestChecker->handleErrorIds($request);
+        }
+
+        /** @var string[] */
+        $productInvoiceIds = json_decode($request->getContent())->ids;
+        
+        /** @var ProductInvoiceFile[] */
+        $productInvoices = $this->productInvoiceFileRepository->findBy(['id' => $productInvoiceIds]);
+        
+        /** @var ProductInvoiceFile $productInvoiceFile */
+        $productInvoiceFile = end($productInvoices);
+        $date = $productInvoiceFile->getDate()->format(DateFormatHelper::MONTH_FORMAT . '_' . DateFormatHelper::YEAR_FORMAT);
+        $productInvoiceFiles = $this->productInvoiceService->getFiles($productInvoices);
+        $nameZip = "Factures_{$date}";
+        $zip = ZipService::getZipArchive(
+            $productInvoiceFiles,
+            $nameZip,
+            $this->parameterBagInterface->get('products_invoice')
+        );
+
+        return $this->file($zip, "{$nameZip}.zip");
     }
 }

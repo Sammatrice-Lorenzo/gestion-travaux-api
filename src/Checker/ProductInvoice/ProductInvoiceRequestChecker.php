@@ -74,4 +74,20 @@ final readonly class ProductInvoiceRequestChecker
 
         return new JsonResponse($errorMessage, Response::HTTP_FORBIDDEN);
     }
+
+    public function handleErrorIds(Request $request): ?JsonResponse
+    {
+        $responseToken = $this->handleErrorToken($request);
+
+        if ($responseToken) {
+            return $responseToken;
+        }
+
+        $ids = json_decode($request->getContent());
+        if (!$ids || !property_exists( $ids, 'ids')) {
+            return new JsonResponse(['error' => 'Le paramètre "ids" est obligatoire'], Response::HTTP_BAD_REQUEST);
+        }
+
+        return null;
+    }
 }
