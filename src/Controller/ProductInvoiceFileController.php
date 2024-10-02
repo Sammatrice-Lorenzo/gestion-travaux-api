@@ -99,7 +99,7 @@ final class ProductInvoiceFileController extends AbstractController
 
         /** @var string[] */
         $productInvoiceIds = json_decode($request->getContent())->ids;
-        
+
         /** @var ProductInvoiceFile[] */
         $productInvoices = $this->productInvoiceFileRepository->findBy(['id' => $productInvoiceIds]);
         
@@ -115,5 +115,24 @@ final class ProductInvoiceFileController extends AbstractController
         );
 
         return $this->file($zip, "{$nameZip}.zip");
+    }
+
+    #[Route(path: '/api/product_invoice_update/{id}', name: 'app_product_invoice_update', methods: ['PUT'])]
+    public function update(Request $request, ProductInvoiceFile $productInvoiceFile): JsonResponse
+    {
+        if ($this->productInvoiceRequestChecker->handleErrorBodyForPut($request)) {
+            return $this->productInvoiceRequestChecker->handleErrorBodyForPut($request);
+        }
+
+        $data = json_decode($request->getContent());
+
+        $productInvoiceFile
+            ->setDate(new DateTime($data->date))
+            ->setTotalAmount((float) $data->totalAmount)
+        ;
+
+        $this->entityManager->flush();
+        
+        return new JsonResponse(['success' => true], status: JsonResponse::HTTP_OK);
     }
 }

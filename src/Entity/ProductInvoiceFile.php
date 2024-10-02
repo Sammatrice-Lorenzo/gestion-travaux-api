@@ -4,11 +4,13 @@ namespace App\Entity;
 
 use ArrayObject;
 use DateTimeInterface;
+use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
+use App\Dto\ProductInvoiceUpdateInput;
 use ApiPlatform\Metadata\GetCollection;
 use Symfony\Component\HttpFoundation\File\File;
 use App\Controller\ProductInvoiceFileController;
@@ -75,6 +77,16 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
                 description: 'Permet de télécharger un fichier de facture spécifique.',
                 security: [['bearerAuth' => []]]
             )
+        ),
+        new Put(
+            controller: ProductInvoiceFileController::class,
+            uriTemplate: '/api/product_invoice_update/{id}',
+            input: ProductInvoiceUpdateInput::class,
+            openapi: new ModelOperation(
+                summary: 'Mise à jour de certains champs',
+                description: 'Permet de mettre à jour la date et le montant total de la facture.',
+                security: [['bearerAuth' => []]]
+            )
         )
     ]
 )]
@@ -109,6 +121,10 @@ class ProductInvoiceFile
     #[Groups(['product_invoice_file:write'])]
     #[Vich\UploadableField(mapping: "products_invoice", fileNameProperty: "path")]
     private ?File $file = null;
+
+    #[ORM\Column]
+    #[Groups(['product_invoice_file:read'])]
+    private float $totalAmount;
 
     final public function getId(): ?int
     {
@@ -174,6 +190,18 @@ class ProductInvoiceFile
     final public function setFile(?File $file): self
     {
         $this->file = $file;
+
+        return $this;
+    }
+
+    final public function getTotalAmount(): float
+    {
+        return $this->totalAmount;
+    }
+
+    final public function setTotalAmount(float $totalAmount): static
+    {
+        $this->totalAmount = $totalAmount;
 
         return $this;
     }

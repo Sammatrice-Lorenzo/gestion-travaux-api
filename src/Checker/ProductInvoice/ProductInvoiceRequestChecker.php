@@ -90,4 +90,27 @@ final readonly class ProductInvoiceRequestChecker
 
         return null;
     }
+
+    public function handleErrorBodyForPut(Request $request): ?JsonResponse
+    {
+        $responseToken = $this->handleErrorToken($request);
+        if ($responseToken) {
+            return $responseToken;
+        }
+
+        $data = json_decode($request->getContent());
+        $errorMessage = [];
+        $parameters = ['date', 'totalAmount'];
+
+        foreach ($parameters as $parameter) {
+            if (!property_exists($data, $parameter)) {
+                $errorMessage[] = "Le champ {$parameter} est obligatoire";
+            }
+        }
+
+        return $errorMessage ?
+            new JsonResponse($errorMessage, Response::HTTP_FORBIDDEN)
+            : null
+        ;
+    }
 }
