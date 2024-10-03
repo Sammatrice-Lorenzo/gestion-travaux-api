@@ -19,9 +19,9 @@ final readonly class ProductInvoiceService
     ) {
     }
 
-    private function getFormatDateByPdf(File $file): string
+    private function getFormatDateByPdf(): string
     {
-        $dateExtracted = $this->pdfExtractorService->extractDateFromPdf($file);
+        $dateExtracted = $this->pdfExtractorService->extractDateFromPdf();
         $dateExtracted = array_reverse(explode('/', $dateExtracted));
 
         return str_replace('/', '-', implode('/', $dateExtracted));
@@ -38,11 +38,11 @@ final readonly class ProductInvoiceService
 
         /** @var User $user */
         $user = $this->entityManagerInterface->getRepository(User::class)->find($this->security->getUser()->getId());
-        
+
         foreach ($uploadedFiles as $file) {
             $this->pdfExtractorService->setFile($file);
             $totalAmount = $this->pdfExtractorService->extractTotalFromPdf();
-            $dateExtracted = $this->getFormatDateByPdf($file);
+            $dateExtracted = $this->getFormatDateByPdf();
 
             $productInvoiceFile = (new ProductInvoiceFile())
                 ->setUser($user)
