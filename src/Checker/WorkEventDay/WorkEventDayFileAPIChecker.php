@@ -13,7 +13,6 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 final readonly class WorkEventDayFileAPIChecker
 {
     public function __construct(
-        private ApiService $apiService,
         private Security $security
     ) {
     }
@@ -27,10 +26,10 @@ final readonly class WorkEventDayFileAPIChecker
     public function checkBodyAPI(Request $request): JsonResponse
     {
         $data = json_decode($request->getContent());
-        $tokenRequest = $request->headers->get('authorization');
+        $tokenRequest = ApiService::getRequestToken($request);
 
         if (!$tokenRequest) {
-            return $this->apiService->getErrorToken();
+            return ApiService::getErrorToken();
         }
 
         /** @var string[] $properties */

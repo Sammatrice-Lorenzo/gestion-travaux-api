@@ -79,7 +79,7 @@ class WorkEventDay
     #[Groups(['read:EventDay'])]
     private User $user;
 
-    #[ORM\OneToOne]
+    #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: true)]
     #[ApiProperty(readableLink: true)]
     private ?Client $client = null;

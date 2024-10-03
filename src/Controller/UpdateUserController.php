@@ -14,11 +14,10 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 
-class UpdateUserController extends AbstractController
+final class UpdateUserController extends AbstractController
 {
     public function __construct(
         private readonly UserRepository $userRepository,
-        private readonly ApiService $apiService,
         private readonly JWTTokenManagerInterface $jwtManager,
     ) {}
 
@@ -33,21 +32,19 @@ class UpdateUserController extends AbstractController
     ): JsonResponse
     {
         $data = json_decode($request->getContent());
-        $token = $request->headers->get('authorization');
+        $token = ApiService::getRequestToken($request);
 
         if (!$token || !$user) {
-            $responseToken = $this->apiService->getErrorToken();
-            $responseUser = $this->apiService->getErrorUser();
+            $responseToken = ApiService::getErrorToken();
+            $responseUser = ApiService::getErrorUser();
 
             return !$token ? $responseToken : $responseUser;
         }
-        
-        if (strpos($token, 'Bearer ') === 0) {
-            $token = substr($token, 7);
-        }
+
+        $token = ApiService::getToken($token);
 
         try {
-            $this->apiService->isValidTokenString($user, $token);
+            ApiService::isValidTokenString($user, $token);
         } catch (Exception $e) {
             throw new AuthenticationException('Invalid token');
         }
