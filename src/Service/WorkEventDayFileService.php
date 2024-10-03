@@ -25,7 +25,7 @@ final class WorkEventDayFileService extends AbstractFileService
 
     private function setHeader(DateTime $date): void
     {
-        $frenchMonth = DateHelper::FRENCH_MONTHS[$date->format(DateFormatHelper::MONTH_FORMAT)];
+        $frenchMonth = self::convertTextInUTF8(DateHelper::FRENCH_MONTHS[$date->format(DateFormatHelper::MONTH_FORMAT)]);
 
         $this->fpdi->SetFont('Arial', 'B', 15);
         $this->fpdi->Cell(
