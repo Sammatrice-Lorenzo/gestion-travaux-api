@@ -4,9 +4,12 @@ set -e
 composer install --no-dev --optimize-autoloader --classmap-authoritative
 
 php bin/console doctrine:database:create --if-not-exists
+php bin/console doctrine:migrations:migrate --quiet
 
 php bin/console cache:clear --env=prod
 php bin/console cache:warmup --env=prod
+
+chown -R www-data:www-data /var/www/html/var /var/www/html/public /var/www/html/vendor /var/www/html/config /var/www/html/src
 
 # Copier les ficher des fonts
 if [ ! -f /var/www/html/vendor/setasign/fpdf/font/trebuc.php ]; then
