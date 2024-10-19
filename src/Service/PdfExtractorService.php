@@ -41,8 +41,13 @@ final class PdfExtractorService
         $pdf = $this->getPdf();
         foreach ($pdf->getPages() as $page) {
             $text = $page->getText();
-            if (preg_match('/Total TTC\s*(\d+,\d{2})/', $text, $matches)) {
+            $hasTotalTTCWithComa = preg_match('/Total TTC\s*(\d+,\d{2})/', $text, $matches);
+            $hasTotalTTCWithPoint = preg_match('/Total TTC\s*(\d+.\d{2})/', $text, $matches);
+
+            if ($hasTotalTTCWithComa || $hasTotalTTCWithPoint) {
                 $totalSum += floatval(str_replace(',', '.', $matches[1]));
+            } else {
+                $this->extractAmountInSameRow($text, $totalSum);
             }
         }
 
@@ -53,7 +58,7 @@ final class PdfExtractorService
     {
         $text = $this->getTextPdf();
         $date = '';
-      
+
         if (preg_match('/Date de vente :\s*(\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{1,2}-\d{1,2})/', $text, $matches)) {
             $date = $matches[1];
         }
@@ -66,6 +71,20 @@ final class PdfExtractorService
             $date = $matches[1];
         }
 
+        if (preg_match('/Date du\s+réglement\s*:\s*(?:\n|\r|\s)*(\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{1,2}-\d{1,2})/', $text, $matches)) {
+            $date = $matches[1];
+        }
+
         return $date;
+    }
+
+    private function extractAmountInSameRow(string $text, float &$totalSum): void
+    {
+        if (preg_match('/TOTAL.*/', $text, $matches)) {
+            $totalTTC = $matches[0];
+            if (preg_match('/TOTAL\s+(\d{1,2},\d{2})\s+(\d{1,2},\d{2})\s+(\d{1,2},\d{2})/', $totalTTC, $matches)) {
+                $totalSum += floatval(str_replace(',', '.', end($matches)));
+            }
+        }
     }
 }
