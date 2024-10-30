@@ -14,4 +14,8 @@ final class ProductInvoiceUpdateInput
     #[Assert\NotBlank]
     #[Assert\Type('numeric')]
     public float $totalAmount;
+
+    #[Assert\NotBlank]
+    #[Assert\Type('string')]
+    public string $name;
 }
