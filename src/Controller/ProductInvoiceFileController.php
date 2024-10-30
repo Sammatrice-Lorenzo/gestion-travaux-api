@@ -127,6 +127,7 @@ final class ProductInvoiceFileController extends AbstractController
         $data = json_decode($request->getContent());
 
         $productInvoiceFile
+            ->setName($data->name)
             ->setDate(new DateTime($data->date))
             ->setTotalAmount((float) $data->totalAmount)
         ;

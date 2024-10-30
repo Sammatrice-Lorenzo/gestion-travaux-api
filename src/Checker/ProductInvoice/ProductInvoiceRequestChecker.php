@@ -100,7 +100,7 @@ final readonly class ProductInvoiceRequestChecker
 
         $data = json_decode($request->getContent());
         $errorMessage = [];
-        $parameters = ['date', 'totalAmount'];
+        $parameters = ['date', 'totalAmount', 'name'];
 
         foreach ($parameters as $parameter) {
             if (!property_exists($data, $parameter)) {
