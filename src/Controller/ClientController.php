@@ -2,13 +2,17 @@
 
 namespace App\Controller;
 
+use App\Entity\Client;
 use App\Repository\ClientRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-class ClientController extends AbstractController
+final class ClientController extends AbstractController
 {
-    public function __invoke(Security $security, ClientRepository $clientRepository)
+    /**
+     * @return Client[]
+     */
+    public function __invoke(Security $security, ClientRepository $clientRepository): array    
     {
         return $clientRepository->findBy(['user' => $security->getUser()]);
     }

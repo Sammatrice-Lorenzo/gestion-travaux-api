@@ -13,6 +13,7 @@ use App\DataFixtures\UserFixtures;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
+use Doctrine\Common\DataFixtures\FixtureInterface;
 
 final class WorkFixtures extends Fixture implements DependentFixtureInterface
 {
@@ -46,7 +47,10 @@ final class WorkFixtures extends Fixture implements DependentFixtureInterface
         $manager->flush();
     }
 
-    public function getDependencies()
+    /**
+     * @return array<class-string<FixtureInterface>>
+     */
+    public function getDependencies(): array
     {
         return [
             UserFixtures::class,
