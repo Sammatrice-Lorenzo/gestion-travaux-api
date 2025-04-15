@@ -145,9 +145,11 @@ class Client
         return $this->streetAddress;
     }
 
-    final public function setStreetAddress(string $streetAddress): void
+    final public function setStreetAddress(string $streetAddress): self
     {
         $this->streetAddress = $streetAddress;
+
+        return $this;
     }
 
     final public function getPostalCode(): string
@@ -155,9 +157,11 @@ class Client
         return $this->postalCode;
     }
 
-    final public function setPostalCode(string $postalCode): void
+    final public function setPostalCode(string $postalCode): self
     {
         $this->postalCode = $postalCode;
+
+        return $this;
     }
 
     final public function getCity(): string
@@ -165,9 +169,11 @@ class Client
         return $this->city;
     }
 
-    final public function setCity(string $city): void
+    final public function setCity(string $city): self
     {
         $this->city = $city;
+
+        return $this;
     }
 
     final public function getUser(): User

@@ -9,8 +9,9 @@ use App\DataFixtures\UserFixtures;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
+use Doctrine\Common\DataFixtures\FixtureInterface;
 
-class ClientFixtures extends Fixture implements DependentFixtureInterface
+final class ClientFixtures extends Fixture implements DependentFixtureInterface
 {
     public function load(ObjectManager $manager): void
     {
@@ -18,14 +19,15 @@ class ClientFixtures extends Fixture implements DependentFixtureInterface
 
         foreach ($manager->getRepository(User::class)->findAll() as $user) {
             for ($i = 0; $i < 5; $i++) {
-                $client = (new Client());
-                $client->setFirstname($faker->firstName);
-                $client->setLastname($faker->lastName);
-                $client->setPhoneNumber($faker->phoneNumber);
-                $client->setStreetAddress($faker->streetAddress);
-                $client->setPostalCode($faker->postcode);
-                $client->setCity($faker->city);
-                $client->setUser($user);
+                $client = (new Client())
+                    ->setFirstname($faker->firstName)
+                    ->setLastname($faker->lastName)
+                    ->setPhoneNumber($faker->phoneNumber)
+                    ->setStreetAddress($faker->streetAddress)
+                    ->setPostalCode($faker->postcode)
+                    ->setCity($faker->city)
+                    ->setUser($user)
+                ;
 
                 $manager->persist($client);
             }
@@ -34,7 +36,10 @@ class ClientFixtures extends Fixture implements DependentFixtureInterface
         $manager->flush();
     }
 
-    public function getDependencies()
+    /**
+     * @return array<class-string<FixtureInterface>>
+     */
+    public function getDependencies(): array   
     {
         return [
             UserFixtures::class
