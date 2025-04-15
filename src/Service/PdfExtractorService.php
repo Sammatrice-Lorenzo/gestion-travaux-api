@@ -71,7 +71,7 @@ final class PdfExtractorService
             $date = $matches[1];
         }
 
-        if (preg_match('/Date du\s+réglement\s*:\s*(?:\n|\r|\s)*(\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{1,2}-\d{1,2})/', $text, $matches)) {
+        if (preg_match('/Date du\s+règlement\s*:\s*(?:\n|\r|\s)*(\d{1,2}\/\d{1,2}\/\d{2,4}|\d{4}-\d{1,2}-\d{1,2})/', $text, $matches)) {
             $date = $matches[1];
         }
 
