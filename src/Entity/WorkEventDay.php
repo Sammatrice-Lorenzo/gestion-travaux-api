@@ -53,8 +53,8 @@ class WorkEventDay
 
     #[ORM\Column(length: 255)]
     #[ORM\JoinColumn(nullable: false)]
-    #[NotBlank]
     #[Groups(['read:EventDay'])]
+    #[NotBlank]
     private string $title;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]

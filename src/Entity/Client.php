@@ -56,12 +56,13 @@ class Client
     private ?int $id = null;
     
     #[ORM\Column(length: 255)]
-    #[NotBlank]
     #[Groups (['read:Client', 'read:Work'])]
+    #[NotBlank]
     private string $firstname;
 
     #[ORM\Column(length: 255)]
     #[Groups(['read:Client', 'read:Work'])]
+    #[NotBlank]
     private string $lastname;
     
     #[ORM\Column(length: 255)]
@@ -72,14 +73,17 @@ class Client
     #[ORM\Column(length: 255)]
     #[Assert\Regex(pattern: '/^\d{5}$/', message: 'Insérer un code postale valide')]
     #[Groups(['read:Client', 'read:Work'])]
+    #[NotBlank]
     private string $postalCode;
     
     #[ORM\Column(length: 255)]
     #[Groups(['read:Client', 'read:Work'])]
+    #[NotBlank]
     private string $city;
     
     #[ORM\Column(length: 255)]
     #[Groups(['read:Client', 'read:Work'])]
+    #[NotBlank]
     private string $streetAddress;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'clients')]
@@ -201,16 +205,6 @@ class Client
         if (!$this->works->contains($work)) {
             $this->works->add($work);
             $work->setClient($this);
-        }
-
-        return $this;
-    }
-
-    final public function removeWork(Work $work): self
-    {
-        if ($this->works->removeElement($work) && $work->getClient() === $this) {
-            // set the owning side to null (unless already changed)
-            $work->setClient(null);
         }
 
         return $this;

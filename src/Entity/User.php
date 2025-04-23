@@ -20,6 +20,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 #[ApiResource(
     security: 'is_granted("ROLE_USER")',
@@ -60,16 +61,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
     #[ORM\Column(length: 255)]
     #[Groups(['read:UserById'])]
-    private ?string $firstname = null;
+    #[NotBlank]
+    private string $firstname;
 
     #[ORM\Column(length: 255)]
     #[Groups(['read:UserById'])]
-    private ?string $lastname = null;
+    #[NotBlank]
+    private string $lastname;
 
     #[ORM\Column(length: 180, unique: true)]
     #[Groups(['read:UserById'])]
     #[Assert\Regex(pattern: '/^[^\s@]+@[^\s@]+\.[^\s@]+$/', message: 'Insérer un email valide')]
-    private ?string $email = null;
+    #[NotBlank]
+    private string $email;
 
     #[ORM\Column]
     #[Groups(['read:UserById'])]
@@ -108,7 +112,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: ProductInvoiceFile::class)]
     private Collection $productInvoiceFiles;
 
-    final public function __construct()
+    public function __construct()
     {
         $this->clients = new ArrayCollection();
         $this->works = new ArrayCollection();
@@ -128,7 +132,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         return $this;
     }
 
-    final public function getEmail(): ?string
+    final public function getEmail(): string
     {
         return $this->email;
     }
@@ -227,7 +231,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         ;
     }
 
-    final public function getFirstname(): ?string
+    final public function getFirstname(): string
     {
         return $this->firstname;
     }
@@ -239,7 +243,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         return $this;
     }
 
-    final public function getLastname(): ?string
+    final public function getLastname(): string
     {
         return $this->lastname;
     }
@@ -292,16 +296,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         if (!$this->clients->contains($client)) {
             $this->clients[] = $client;
             $client->setUser($this);
-        }
-
-        return $this;
-    }
-
-    final public function removeClient(Client $client): self
-    {
-        if ($this->clients->removeElement($client) && $client->getUser() === $this) {
-            // set the owning side to null (unless already changed)
-            $client->setUser(null);
         }
 
         return $this;
@@ -371,15 +365,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         if (!$this->productInvoiceFiles->contains($productInvoiceFile)) {
             $this->productInvoiceFiles->add($productInvoiceFile);
             $productInvoiceFile->setUser($this);
-        }
-
-        return $this;
-    }
-
-    final public function removeProductInvoiceFile(ProductInvoiceFile $productInvoiceFile): static
-    {
-        if ($this->productInvoiceFiles->removeElement($productInvoiceFile) && $productInvoiceFile->getUser() === $this) {
-            $productInvoiceFile->setUser(null);
         }
 
         return $this;

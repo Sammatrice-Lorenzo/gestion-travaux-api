@@ -20,6 +20,8 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\NotNull;
 
 #[ORM\Entity(repositoryClass: WorkRepository::class)]
 #[ApiResource(
@@ -58,28 +60,31 @@ class Work
     
     #[ORM\Column(length: 255)]
     #[Groups(['read:Work'])]
+    #[NotBlank]
     private string $name;
-    
+
     #[ORM\Column(length: 255)]
     #[Groups(['read:Work'])]
+    #[NotBlank]
     private string $city;
-    
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Groups(['read:Work'])]
     private DateTimeInterface $start;
-    
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[Groups(['read:Work'])]
     private ?DateTimeInterface $end = null;
-    
+
     #[ORM\Column(length: 255)]
     #[Assert\Choice(choices: [
         ProgressionEnum::NOT_STARTED->value,
         ProgressionEnum::IN_PROGRESS->value,
         ProgressionEnum::DONE->value
-        ])]
+    ])]
     #[Groups(['read:Work'])]
-    private ?string $progression = null;
+    private string $progression;
+
     /**
      * @var string[]
      */
@@ -95,11 +100,13 @@ class Work
     private ?Collection $typeOfWorks = null;
 
     #[ORM\ManyToOne(inversedBy: 'works')]
-    private ?User $user = null;
+    #[NotNull]
+    private User $user;
 
     #[ORM\ManyToOne(inversedBy: 'works')]
     #[ORM\JoinColumn(nullable: false)]
     #[ApiProperty(readableLink: true)]
+    #[NotNull]
     private Client $client;
     
     #[ORM\OneToOne(mappedBy: 'work', cascade: ['persist', 'remove'])]
@@ -125,7 +132,7 @@ class Work
         return $this->id;
     }
 
-    final public function getName(): ?string
+    final public function getName(): string
     {
         return $this->name;
     }
@@ -238,12 +245,12 @@ class Work
     }
 
     #[Groups(['read:Work'])]
-    final public function getClient(): ?Client
+    final public function getClient(): Client
     {
         return $this->client;
     }
 
-    final public function setClient(?Client $client): self
+    final public function setClient(Client $client): self
     {
         $this->client = $client;
 
