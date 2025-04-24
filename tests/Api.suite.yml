@@ -1,0 +1,24 @@
+actor: ApiTester
+suite_namespace: App\Tests\Api
+modules:
+    # enable helpers as array
+    enabled:
+        - REST:
+            url: https://localhost:8000/
+            depends: PhpBrowser
+        - Symfony:
+            app_path: 'src'
+            environment: 'test'
+        - Doctrine:
+            depends: Symfony
+            cleanup: true
+    config:
+        PhpBrowser:
+            url: url
+            headers:
+               Content-Type: application/json
+extensions:
+    enabled:
+        - Codeception\Extension\RunProcess:
+            0: symfony serve
+            sleep: 3
