@@ -9,6 +9,7 @@
 ###< symfony/framework-bundle ###
 /node_modules/
 
+.vscode
 /public/invoice/
 ###> phpunit/phpunit ###
 /phpunit.xml

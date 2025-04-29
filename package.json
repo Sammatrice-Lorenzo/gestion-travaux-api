@@ -6,7 +6,8 @@
         "test": "symfony serve:stop && yarn truncate-database-test && vendor/bin/codecept run",
         "docker build": "docker-compose up --build",
         "prepare": "husky",
-        "prettier": "prettier --check ."
+        "prettier": "prettier --check .",
+        "replace-env": "sed -i 's/^APP_ENV=.*/APP_ENV=dev/' .env"
     },
     "lint-staged": {
         "**/*.php": [

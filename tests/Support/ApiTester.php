@@ -25,4 +25,19 @@ use Codeception\Actor;
 final class ApiTester extends Actor
 {
     use _generated\ApiTesterActions;
+
+    public function loginAs(string $username, string $password): void
+    {
+        $this->sendPOST('/api/login', [
+            'username' => $username,
+            'password' => $password,
+        ]);
+
+        $response = $this->grabResponse();
+        $data = json_decode($response, true);
+        $token = $data['token'] ?? null;
+        $this->haveHttpHeader('Authorization', "Bearer {$token}");
+
+        $this->amBearerAuthenticated($token);
+    }
 }

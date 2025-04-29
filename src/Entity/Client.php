@@ -37,10 +37,10 @@ use Symfony\Component\Validator\Constraints as Assert;
                         required: true,
                         description: 'The user ID',
                         schema: ['type' => 'string']
-                    )
+                    ),
                 ]
             )
-        )
+        ),
     ],
     normalizationContext: ['groups' => 'read:Client'],
 )]
@@ -52,11 +52,11 @@ class Client
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups (['read:Client', 'read:Work', 'read:EventDay'])]
+    #[Groups(['read:Client', 'read:Work', WorkEventDay::GROUP_WORK_EVENT_DAY_READ])]
     private ?int $id = null;
     
     #[ORM\Column(length: 255)]
-    #[Groups (['read:Client', 'read:Work'])]
+    #[Groups(['read:Client', 'read:Work'])]
     #[NotBlank]
     private string $firstname;
 
@@ -92,7 +92,7 @@ class Client
     private User $user;
 
     /**
-     * @var Collection<int, Work>|null
+     * @var null|Collection<int, Work>
      */
     #[ORM\OneToMany(mappedBy: 'client', targetEntity: Work::class)]
     #[ORM\JoinColumn(nullable: true)]

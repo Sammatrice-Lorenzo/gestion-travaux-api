@@ -15,12 +15,12 @@ use ApiPlatform\OpenApi\Model\Operation;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Validator\Constraints\NotBlank;
 
 #[ApiResource(
     security: 'is_granted("ROLE_USER")',
@@ -56,7 +56,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['read:UserById'])]
+    #[Groups(['read:UserById', WorkEventDay::GROUP_WORK_EVENT_DAY_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -156,6 +156,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
     /**
      * @see UserInterface
+     *
      * @return string[]
      */
     final public function getRoles(): array
@@ -169,6 +170,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
     /**
      * @param string[] $roles
+     *
      * @return self
      */
     final public function setRoles(array $roles): self
@@ -215,10 +217,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     }
 
     /**
-     * Depuis JWT Interface
+     * Depuis JWT Interface.
      *
      * @param [type] $username
      * @param array $payload
+     *
      * @return User
      */
     public static function createFromPayload($username, array $payload): User
@@ -284,7 +287,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     }
 
     /**
-     * @return Collection|Client[]
+     * @return Client[]|Collection
      */
     final public function getClients(): Collection
     {
@@ -304,8 +307,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     /**
      * @param UserRepository $userRepository
      * @param string $email
-     * @param boolean $isCreation
-     * @return Exception|null
+     * @param bool $isCreation
+     *
+     * @return null|Exception
      */
     #[Assert\Callback(groups: ['write:User'])]
     final public function validateEmail(UserRepository $userRepository, string $email, bool $isCreation = false): ?Exception
@@ -323,7 +327,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
         $user = $userRepository->find($this->id);
         $isNotSameEmail = $email !== $user->getEmail();
-        $isNotNullEmail = $existUserWithThisEmail !== null;
+        $isNotNullEmail = null !== $existUserWithThisEmail;
         $isNotSameUser = $user !== $existUserWithThisEmail;
 
         $isEmailNotValid = $isNotSameEmail && $isNotNullEmail;

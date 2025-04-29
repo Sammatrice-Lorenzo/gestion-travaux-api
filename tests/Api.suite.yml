@@ -3,22 +3,27 @@ suite_namespace: App\Tests\Api
 modules:
     # enable helpers as array
     enabled:
-        - REST:
-            url: https://localhost:8000/
-            depends: PhpBrowser
+        - Asserts
         - Symfony:
             app_path: 'src'
             environment: 'test'
+        - REST:
+            url: http://localhost:8000
+            environment: 'test'
+            depends: PhpBrowser
         - Doctrine:
+            environment: 'test'
             depends: Symfony
             cleanup: true
     config:
         PhpBrowser:
-            url: url
+            url: http://localhost:8000
+            environment: 'test'
             headers:
                Content-Type: application/json
 extensions:
     enabled:
         - Codeception\Extension\RunProcess:
-            0: symfony serve
+            0: sed -i 's/^APP_ENV=.*/APP_ENV=test/' .env
+            1: symfony serve
             sleep: 3
