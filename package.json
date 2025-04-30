@@ -15,6 +15,9 @@
         ],
         "*.{js,css,scss,json,md}": [
             "prettier --write"
+        ],
+        ".env": [
+            "replace-env"
         ]
     },
     "dependencies": {
