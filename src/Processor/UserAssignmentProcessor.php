@@ -1,35 +1,36 @@
 <?php
 
-namespace App\Processor\WorkEventDay;
+namespace App\Processor;
 
 use App\Entity\User;
-use App\Entity\WorkEventDay;
 use ApiPlatform\Metadata\Post;
 use App\Repository\UserRepository;
 use ApiPlatform\Metadata\Operation;
+use App\Interface\UserOwnerInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use ApiPlatform\State\ProcessorInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use ApiPlatform\Doctrine\Common\State\PersistProcessor;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * @implements ProcessorInterface<WorkEventDay, WorkEventDay|void>
+ * @implements ProcessorInterface<UserOwnerInterface, UserOwnerInterface|void>
  */
-final class WorkEventDayProcessor implements ProcessorInterface
+final class UserAssignmentProcessor implements ProcessorInterface
 {
     public function __construct(
         private readonly Security $security,
-        #[Autowire(service: 'api_platform.doctrine.orm.state.persist_processor')]
+        #[Autowire(service: PersistProcessor::class)]
         private ProcessorInterface $processorInterface,
         private EntityManagerInterface $entityManager,
     ) {}
 
     /**
-     * @return void|WorkEventDay
+     * @return UserOwnerInterface|void
      */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
-        if (!$data instanceof WorkEventDay) {
+        if (!$data instanceof UserOwnerInterface) {
             return $this->processorInterface->process($data, $operation, $uriVariables, $context);
         }
 

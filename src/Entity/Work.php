@@ -42,12 +42,12 @@ use Symfony\Component\Validator\Constraints\NotNull;
                         required: true,
                         description: 'The user ID',
                         schema: ['type' => 'string']
-                    )
+                    ),
                 ]
             )
-        )
+        ),
     ],
-    normalizationContext: ['groups' => ['read:Work', 'read:Client', 'read:Invoice']],
+    normalizationContext: ['groups' => ['read:Work', 'read:Invoice']],
 )]
 #[ApiResource]
 class Work
@@ -80,7 +80,7 @@ class Work
     #[Assert\Choice(choices: [
         ProgressionEnum::NOT_STARTED->value,
         ProgressionEnum::IN_PROGRESS->value,
-        ProgressionEnum::DONE->value
+        ProgressionEnum::DONE->value,
     ])]
     #[Groups(['read:Work'])]
     private string $progression;

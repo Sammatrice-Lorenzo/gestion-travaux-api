@@ -11,11 +11,12 @@ use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use App\Interface\UserOwnerInterface;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model\Operation;
+use App\Processor\UserAssignmentProcessor;
 use App\Repository\WorkEventDayRepository;
 use Symfony\Component\Serializer\Attribute\Groups;
-use App\Processor\WorkEventDay\WorkEventDayProcessor;
 use Symfony\Component\Validator\Constraints\CssColor;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
@@ -35,7 +36,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
         ),
         new Post(
             security: "is_granted('ROLE_USER')",
-            processor: WorkEventDayProcessor::class,
+            processor: UserAssignmentProcessor::class,
         ),
         new Put(
             security: "is_granted('EDIT', object)"
@@ -45,7 +46,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
         ),
     ],
 )]
-class WorkEventDay
+class WorkEventDay implements UserOwnerInterface
 {
     private const string GROUP_WORK_EVENT_DAY_WRITE = 'work_event_day:write';
 
@@ -80,11 +81,10 @@ class WorkEventDay
     #[Groups([self::GROUP_WORK_EVENT_DAY_READ, self::GROUP_WORK_EVENT_DAY_WRITE])]
     private string $color;
 
-    // Null pour le processor et security
     #[ORM\ManyToOne(inversedBy: 'workEventDays')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups([self::GROUP_WORK_EVENT_DAY_READ])]
-    private ?User $user = null;
+    private User $user;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: true)]
@@ -145,7 +145,7 @@ class WorkEventDay
         return $this;
     }
 
-    final public function getUser(): ?User
+    final public function getUser(): User
     {
         return $this->user;
     }
