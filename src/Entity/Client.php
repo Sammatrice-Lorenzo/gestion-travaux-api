@@ -59,43 +59,43 @@ class Client implements UserOwnerInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups([self::GROUP_CLIENT_READ, 'read:Work', WorkEventDay::GROUP_WORK_EVENT_DAY_READ])]
+    #[Groups([self::GROUP_CLIENT_READ, Work::GROUP_WORK_READ, WorkEventDay::GROUP_WORK_EVENT_DAY_READ])]
     private ?int $id = null;
     
     #[ORM\Column(length: 255)]
-    #[Groups([self::GROUP_CLIENT_READ, 'read:Work', self::GROUP_CLIENT_WRITE])]
+    #[Groups([self::GROUP_CLIENT_READ, Work::GROUP_WORK_READ, self::GROUP_CLIENT_WRITE])]
     #[NotBlank]
     private string $firstname;
 
     #[ORM\Column(length: 255)]
-    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
     #[NotBlank]
     private string $lastname;
     
     #[ORM\Column(length: 255)]
-    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
     #[Assert\Regex(pattern: '/^0[1-9](?:[\s.-]?[0-9]{2}){4}$/', message: 'Insérer un numéro de téléphone valide')]
     private string $phoneNumber;
     
     #[ORM\Column(length: 255)]
     #[Assert\Regex(pattern: '/^\d{5}$/', message: 'Insérer un code postale valide')]
-    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
     #[NotBlank]
     private string $postalCode;
     
     #[ORM\Column(length: 255)]
-    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
     #[NotBlank]
     private string $city;
     
     #[ORM\Column(length: 255)]
-    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
     #[NotBlank]
     private string $streetAddress;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'clients')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups([self::GROUP_CLIENT_READ, 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, Work::GROUP_WORK_READ])]
     private User $user;
 
     /**

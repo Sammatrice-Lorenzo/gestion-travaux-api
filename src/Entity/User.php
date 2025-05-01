@@ -68,7 +68,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups([self::GROUP_USER_READ, WorkEventDay::GROUP_WORK_EVENT_DAY_READ, Client::GROUP_CLIENT_READ])]
+    #[Groups([
+        self::GROUP_USER_READ,
+        WorkEventDay::GROUP_WORK_EVENT_DAY_READ,
+        Client::GROUP_CLIENT_READ,
+        Work::GROUP_WORK_READ,
+    ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]

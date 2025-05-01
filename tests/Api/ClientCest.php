@@ -22,7 +22,7 @@ final class ClientCest
 
     public function _before(ApiTester $I): void
     {
-        $I->loginAs('user@test.com', '1234');
+        $I->loginAs();
 
         /** @var User $user */
         $user = $I->grabEntityFromRepository(User::class, ['email' => 'user@test.com']);

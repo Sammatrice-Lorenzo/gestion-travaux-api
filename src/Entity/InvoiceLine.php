@@ -14,31 +14,31 @@ class InvoiceLine
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['read:Invoice', 'read:Work'])]
+    #[Groups(['read:Invoice', Work::GROUP_WORK_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['read:Invoice', 'read:Work'])]
+    #[Groups(['read:Invoice', Work::GROUP_WORK_READ])]
     private ?string $localisation = null;
 
     #[ORM\Column(length: 255)]
     #[NotBlank]
-    #[Groups(['read:Invoice', 'read:Work'])]
+    #[Groups(['read:Invoice', Work::GROUP_WORK_READ])]
     private string $description;
 
     #[ORM\Column(length: 255)]
     #[NotBlank]
-    #[Groups(['read:Invoice', 'read:Work'])]
+    #[Groups(['read:Invoice', Work::GROUP_WORK_READ])]
     private string $unitPrice;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 8, scale: 2)]
     #[NotBlank]
-    #[Groups(['read:Invoice', 'read:Work'])]
+    #[Groups(['read:Invoice', Work::GROUP_WORK_READ])]
     private string $totalPriceLine;
 
     #[ORM\ManyToOne(inversedBy: 'invoiceLines')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['read:Invoice', 'read:Work'])]
+    #[Groups(['read:Invoice', Work::GROUP_WORK_READ])]
     private Invoice $invoice;
 
     final public function getId(): ?int

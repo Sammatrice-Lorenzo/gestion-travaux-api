@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Support;
 
 use Codeception\Actor;
+use App\Tests\Support\Trait\GrabEntityTrait;
 
 /**
  * Inherited Methods.
@@ -25,12 +26,13 @@ use Codeception\Actor;
 final class ApiTester extends Actor
 {
     use _generated\ApiTesterActions;
+    use GrabEntityTrait;
 
-    public function loginAs(string $username, string $password): void
+    public function loginAs(?string $username = null): void
     {
         $this->sendPOST('/api/login', [
-            'username' => $username,
-            'password' => $password,
+            'username' => $username ?? 'user@test.com',
+            'password' => '1234',
         ]);
 
         $response = $this->grabResponse();

@@ -16,18 +16,18 @@ class Invoice
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['read:Invoice', 'read:Work'])]
+    #[Groups(['read:Invoice', Work::GROUP_WORK_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read:Invoice', 'read:Work'])]
+    #[Groups(['read:Invoice', Work::GROUP_WORK_READ])]
     private string $title;
 
     /**
      * @var Collection<int, InvoiceLine>
      */
     #[ORM\OneToMany(mappedBy: 'invoice', targetEntity: InvoiceLine::class, orphanRemoval: true)]
-    #[Groups(['read:Invoice', 'read:Work'])]
+    #[Groups(['read:Invoice', Work::GROUP_WORK_READ])]
     private Collection $invoiceLines;
 
     #[ORM\OneToOne(inversedBy: 'invoice', cascade: ['persist', 'remove'])]
@@ -69,15 +69,6 @@ class Invoice
         if (!$this->invoiceLines->contains($invoiceLine)) {
             $this->invoiceLines->add($invoiceLine);
             $invoiceLine->setInvoice($this);
-        }
-
-        return $this;
-    }
-
-    final public function removeInvoiceLine(InvoiceLine $invoiceLine): static
-    {
-        if ($this->invoiceLines->removeElement($invoiceLine) && $invoiceLine->getInvoice() === $this) {
-            $invoiceLine->setInvoice(null);
         }
 
         return $this;

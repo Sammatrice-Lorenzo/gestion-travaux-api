@@ -24,7 +24,7 @@ final class UserCest
 
     public function testGetUser(ApiTester $I): void
     {
-        $I->loginAs('user@test.com', '1234');
+        $I->loginAs();
 
         $I->sendGet('/api/user');
         $I->seeResponseCodeIsSuccessful();
@@ -50,7 +50,7 @@ final class UserCest
     {
         /** @var User $user */
         $user = $I->grabEntityFromRepository(User::class, ['id' => 2]);
-        $I->loginAs($user->getEmail(), '1234');
+        $I->loginAs($user->getEmail());
 
         $parameters = [
             'firstname' => 'Firstname test update user',

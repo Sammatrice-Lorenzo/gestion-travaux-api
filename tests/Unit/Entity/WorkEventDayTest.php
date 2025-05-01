@@ -2,22 +2,24 @@
 
 namespace App\Tests\Unit\Entity;
 
+use DateTime;
 use App\Entity\User;
 use App\Entity\WorkEventDay;
-use DateTime;
 
 final class WorkEventDayTest extends AbstractEntityTestDefault
 {
     private DateTime $start;
+
     private DateTime $end;
+
     private User $user;
 
     public function _before(): void
     {
         /** @var User $user */
         $user = $this->tester->grabEntity(User::class, ['email' => 'user@test.com']);
-        $this->start = (new DateTime())->setTime(8,0);
-        $this->end = (new DateTime())->setTime(18,0);
+        $this->start = (new DateTime())->setTime(8, 0);
+        $this->end = (new DateTime())->setTime(18, 0);
 
         $this->user = $user;
     }
