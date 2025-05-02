@@ -4,11 +4,9 @@ namespace App\Entity;
 
 use App\Entity\Work;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Metadata\ApiResource;
 use App\Repository\TypeOfWorkRepository;
 
 #[ORM\Entity(repositoryClass: TypeOfWorkRepository::class)]
-#[ApiResource]
 class TypeOfWork
 {
     #[ORM\Id]

@@ -5,10 +5,9 @@ namespace App\Service;
 use DateTime;
 use App\Entity\User;
 use App\Entity\ProductInvoiceFile;
+use App\Dto\ProductInvoiceCreationInput;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\File\File;
 
 final readonly class ProductInvoiceService
 {
@@ -16,8 +15,7 @@ final readonly class ProductInvoiceService
         private EntityManagerInterface $entityManagerInterface,
         private Security $security,
         private PdfExtractorService $pdfExtractorService
-    ) {
-    }
+    ) {}
 
     private function getFormatDateByPdf(): string
     {
@@ -29,12 +27,11 @@ final readonly class ProductInvoiceService
 
     /**
      * @param ProductInvoiceFile[] $productInvoiceFiles
-     * @return void
      */
-    private function createProductInvoice(Request $request, array &$productInvoiceFiles): void
+    private function createProductInvoice(ProductInvoiceCreationInput $productInvoiceCreationInput, array &$productInvoiceFiles): void
     {
-        $uploadedFiles = $request->files->all();
-        $date = $request->request->get('date');
+        $uploadedFiles = $productInvoiceCreationInput->files;
+        $date = $productInvoiceCreationInput->date;
 
         /** @var User $user */
         $user = $this->entityManagerInterface->getRepository(User::class)->find($this->security->getUser()->getId());
@@ -47,7 +44,7 @@ final readonly class ProductInvoiceService
             $productInvoiceFile = (new ProductInvoiceFile())
                 ->setUser($user)
                 ->setName($file->getClientOriginalName())
-                ->setDate(new DateTime($dateExtracted !== '' ? $dateExtracted : $date))
+                ->setDate(new DateTime('' !== $dateExtracted ? $dateExtracted : $date))
                 ->setFile($file)
                 ->setTotalAmount($totalAmount)
             ;
@@ -62,17 +59,18 @@ final readonly class ProductInvoiceService
     /**
      * @return ProductInvoiceFile[]
      */
-    public function getProductInvoicesCreated(Request $request): array
+    public function getProductInvoicesCreated(ProductInvoiceCreationInput $productInvoiceCreationInput): array
     {
         $productInvoiceFiles = [];
 
-        $this->createProductInvoice($request, $productInvoiceFiles);
+        $this->createProductInvoice($productInvoiceCreationInput, $productInvoiceFiles);
 
         return $productInvoiceFiles;
     }
 
     /**
      * @param ProductInvoiceFile[] $productInvoice
+     *
      * @return string[]
      */
     public function getFiles(array $productInvoice): array

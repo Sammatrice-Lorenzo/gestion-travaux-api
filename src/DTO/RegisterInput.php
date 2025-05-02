@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTO;
+namespace App\Dto;
 
 use App\Entity\User;
 use Symfony\Component\Serializer\Attribute\Groups;

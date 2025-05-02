@@ -4,3 +4,7 @@ api_platform:
     jsonld: ['application/ld+json']
     html: ['text/html']
     multipart: ['multipart/form-data']
+    pdf: ['application/pdf']
+    zip: ['application/zip']
+  mapping:
+    paths: ['%kernel.project_dir%/src']

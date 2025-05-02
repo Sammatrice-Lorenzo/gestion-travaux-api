@@ -4,7 +4,7 @@ namespace App\Entity;
 
 use App\Entity\Work;
 use App\Entity\Client;
-use App\DTO\RegisterInput;
+use App\Dto\RegisterInput;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
