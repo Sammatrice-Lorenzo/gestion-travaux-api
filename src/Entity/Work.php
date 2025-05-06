@@ -12,6 +12,7 @@ use App\Enum\ProgressionEnum;
 use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
+use App\Processor\WorkProcessor;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\WorkRepository;
 use ApiPlatform\Metadata\ApiProperty;
@@ -49,7 +50,8 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: "is_granted('EDIT', object)"
         ),
         new Delete(
-            security: "is_granted('EDIT', object)"
+            security: "is_granted('EDIT', object)",
+            processor: WorkProcessor::class
         ),
     ],
 )]
@@ -116,14 +118,14 @@ class Work implements UserOwnerInterface
     #[NotNull]
     #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
     private Client $client;
-    
-    #[ORM\OneToOne(mappedBy: 'work', cascade: ['persist', 'remove'])]
-    #[ORM\JoinColumn(nullable: true)]
+
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
     #[ApiProperty(readableLink: true)]
     private ?Invoice $invoice = null;
 
     #[ORM\Column]
-    #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE,])]
+    #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
     #[Assert\Range(
         min: 0,
         notInRangeMessage: 'Le minimum autorisé est de {{ min }}',

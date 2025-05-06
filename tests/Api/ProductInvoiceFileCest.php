@@ -61,7 +61,7 @@ final class ProductInvoiceFileCest
                     'contents' => '2025-05-05',
                 ],
                 [
-                    'name' => 'files',
+                    'name' => 'files[]',
                     'contents' => fopen($filePath, 'r'),
                     'filename' => self::FILE_NAME,
                 ],

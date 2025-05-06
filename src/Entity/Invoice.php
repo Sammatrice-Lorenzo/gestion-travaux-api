@@ -30,7 +30,7 @@ class Invoice
     #[Groups(['read:Invoice', Work::GROUP_WORK_READ])]
     private Collection $invoiceLines;
 
-    #[ORM\OneToOne(inversedBy: 'invoice', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(inversedBy: 'invoice')]
     #[ORM\JoinColumn(nullable: false)]
     private Work $work;
 

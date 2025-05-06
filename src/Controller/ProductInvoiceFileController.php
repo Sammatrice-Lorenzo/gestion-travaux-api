@@ -23,7 +23,7 @@ final class ProductInvoiceFileController extends AbstractController
     {
         $dto = new ProductInvoiceCreationInput();
         $dto->date = $request->request->get('date');
-        $dto->files = $request->files->all();
+        $dto->files = $request->files->all('files');
 
         $errors = $validatorInterface->validate($dto);
         if (count($errors) > 0) {
