@@ -38,8 +38,6 @@ final class WorkCest
         /** @var Client $client */
         $client = $I->grabEntity(Client::class, ['user' => $user]);
         $this->client = $client;
-
-        $I->amOnPage('/api');
     }
 
     public function testCreateWork(ApiTester $I): void
@@ -123,8 +121,8 @@ final class WorkCest
         return [
             'name' => 'Test work api',
             'city' => 'Paris',
-            'start' => $start->format('c'),
-            'end' => $end->format('c'),
+            'start' => $start->format(DateFormatHelper::TIME_ZONE_FORMAT),
+            'end' => $end->format(DateFormatHelper::TIME_ZONE_FORMAT),
             'progression' => ProgressionEnum::IN_PROGRESS->value,
             'totalAmount' => $totalAmount,
             'client' => [

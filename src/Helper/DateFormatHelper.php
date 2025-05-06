@@ -12,6 +12,8 @@ final class DateFormatHelper
 
     public const string MONTH_FORMAT = 'm';
 
+    public const string TIME_ZONE_FORMAT = 'c';
+
     public const string TIME_FORMAT = 'H:i';
 
     public const string LAST_DAY_FORMAT = 'Y-m-t';

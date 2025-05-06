@@ -19,7 +19,6 @@ final class UserCest
         /** @var User $user */
         $user = $I->grabEntityFromRepository(User::class, ['email' => 'user@test.com']);
         $this->user = $user;
-        $I->amOnPage('/api');
     }
 
     public function testGetUser(ApiTester $I): void

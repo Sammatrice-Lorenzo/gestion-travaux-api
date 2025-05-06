@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Support;
 
 use Codeception\Actor;
+use GuzzleHttp\Client;
 use App\Tests\Support\Trait\GrabEntityTrait;
 
 /**
@@ -41,5 +42,29 @@ final class ApiTester extends Actor
         $this->haveHttpHeader('Authorization', "Bearer {$token}");
 
         $this->amBearerAuthenticated($token);
+        $this->amOnPage('/api');
+    }
+
+    public function loginWithGuzzleHttp(Client $client, ?string $username = null): string
+    {
+        $response = $client->request('POST', '/api/login', [
+            'headers' => ['Content-Type' => 'application/json'],
+            'json' => [
+                'username' => $username ?? 'user@test.com',
+                'password' => '1234',
+            ],
+            'verify' => false,
+        ]);
+
+        $data = json_decode($response->getBody()->getContents(), true);
+
+        return $data['token'];
+    }
+
+    public function removeFile(string $file): void
+    {
+        if (file_exists($file)) {
+            unlink($file);
+        }
     }
 }

@@ -27,7 +27,6 @@ final class WorkEventDayCest
         /** @var User $user */
         $user = $I->grabEntityFromRepository(User::class, ['email' => 'user@test.com']);
         $this->user = $user;
-        $I->amOnPage('/api');
     }
 
     public function testCreateWorkEventDay(ApiTester $I): void
