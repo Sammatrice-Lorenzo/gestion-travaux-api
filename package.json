@@ -15,6 +15,9 @@
         ],
         "*.{js,css,scss,json,md}": [
             "prettier --write"
+        ],
+        ".env": [
+            "sed -i 's/^APP_ENV=.*/APP_ENV=dev/' .env"
         ]
     },
     "dependencies": {

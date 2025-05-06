@@ -61,6 +61,15 @@ final class ApiTester extends Actor
         return $data['token'];
     }
 
+    public function createFile(string $fileName, mixed $file): string
+    {
+        $this->removeFile($fileName);
+
+        file_put_contents($fileName, $file);
+
+        return "./{$fileName}";
+    }
+
     public function removeFile(string $file): void
     {
         if (file_exists($file)) {

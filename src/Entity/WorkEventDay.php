@@ -14,11 +14,14 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Interface\UserOwnerInterface;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model\Operation;
+use App\Dto\WorkEventDayDownloadFileInput;
 use App\Processor\UserAssignmentProcessor;
 use App\Repository\WorkEventDayRepository;
+use App\Controller\WorkEventDayFileController;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\CssColor;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
 
 #[ORM\Entity(repositoryClass: WorkEventDayRepository::class)]
 #[ApiResource(
@@ -43,6 +46,27 @@ use Symfony\Component\Validator\Constraints\NotBlank;
         ),
         new Delete(
             security: "is_granted('EDIT', object)"
+        ),
+        new Post(
+            security: "is_granted('ROLE_USER')",
+            uriTemplate: '/work_event_days/file_download',
+            controller: WorkEventDayFileController::class,
+            input: WorkEventDayDownloadFileInput::class,
+            deserialize: false,
+            openapi: new ModelOperation(
+                security: [['bearerAuth' => []]],
+                summary: 'Téléchargement du fichier PDF',
+                responses: [
+                    '200' => [
+                        'description' => 'Fichier PDF',
+                        'content' => [
+                            'application/pdf' => [
+                                'schema' => ['type' => 'string', 'format' => 'binary'],
+                            ],
+                        ],
+                    ],
+                ]
+            )
         ),
     ],
 )]
