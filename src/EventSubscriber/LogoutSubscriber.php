@@ -9,17 +9,20 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class LogoutSubscriber implements EventSubscriberInterface
 {
-    public function onLogoutEvent($event): void
+    public function onLogoutEvent(LogoutEvent $event): void
     {
         if (in_array('application/json', $event->getRequest()->getAcceptableContentTypes())) {
             $event->setResponse(new JsonResponse(null, Response::HTTP_NO_CONTENT));
         }
     }
 
+    /**
+     * @return string[]
+     */
     public static function getSubscribedEvents(): array
     {
         return [
-            LogoutEvent::class => 'onLogoutEvent'
+            LogoutEvent::class => 'onLogoutEvent',
         ];
     }
 }

@@ -33,8 +33,10 @@ final readonly class ProductInvoiceService
         $uploadedFiles = $productInvoiceCreationInput->files;
         $date = $productInvoiceCreationInput->date;
 
+        /** @var User $currentUser */
+        $currentUser = $this->security->getUser();
         /** @var User $user */
-        $user = $this->entityManagerInterface->getRepository(User::class)->find($this->security->getUser()->getId());
+        $user = $this->entityManagerInterface->getRepository(User::class)->find($currentUser->getId());
 
         foreach ($uploadedFiles as $file) {
             $this->pdfExtractorService->setFile($file);

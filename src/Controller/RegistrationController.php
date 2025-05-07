@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Security\EmailVerifier;
-use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -18,7 +17,6 @@ final class RegistrationController extends AbstractController
     public function __construct(
         private readonly EmailVerifier $emailVerifier,
         private readonly EntityManagerInterface $em,
-        private readonly UserRepository $userRepo,
     ) {}
 
     /**

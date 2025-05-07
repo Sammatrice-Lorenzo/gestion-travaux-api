@@ -9,6 +9,7 @@ use Symfony\Bundle\SecurityBundle\Security;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Doctrine\Orm\Extension\QueryItemExtensionInterface;
 use ApiPlatform\Doctrine\Orm\Extension\QueryCollectionExtensionInterface;
+use App\Entity\User;
 
 final readonly class CurrentUserExtension implements QueryCollectionExtensionInterface, QueryItemExtensionInterface
 {
@@ -29,6 +30,7 @@ final readonly class CurrentUserExtension implements QueryCollectionExtensionInt
     private function addWhere(QueryBuilder $queryBuilder, string $resourceClass): void
     {
         $reflectionClass = new ReflectionClass($resourceClass);
+        /** @var ?User $user */
         $user = $this->security->getUser();
         if (!$user || !$reflectionClass->hasMethod('getUser')) {
             return;

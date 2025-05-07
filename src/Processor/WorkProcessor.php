@@ -7,7 +7,6 @@ use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\EntityManagerInterface;
 use ApiPlatform\State\ProcessorInterface;
-use Symfony\Bundle\SecurityBundle\Security;
 use ApiPlatform\Doctrine\Common\State\PersistProcessor;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -17,7 +16,9 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final class WorkProcessor implements ProcessorInterface
 {
     public function __construct(
-        private readonly Security $security,
+        /**
+         * @var ProcessorInterface<Work, void|Work>
+         */
         #[Autowire(service: PersistProcessor::class)]
         private ProcessorInterface $processorInterface,
         private EntityManagerInterface $entityManager,

@@ -5,7 +5,6 @@ namespace App\Controller;
 use DateTime;
 use App\Entity\User;
 use setasign\Fpdi\Fpdi;
-use App\Service\ApiService;
 use App\Service\WorkEventDayFileService;
 use App\Dto\WorkEventDayDownloadFileInput;
 use App\Repository\WorkEventDayRepository;
@@ -19,7 +18,6 @@ final class WorkEventDayFileController extends AbstractController
 {
     public function __construct(
         private readonly WorkEventDayRepository $workEventDayRepository,
-        private readonly ApiService $apiService
     ) {}
 
     public function __invoke(

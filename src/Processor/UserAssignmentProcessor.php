@@ -19,10 +19,13 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 final class UserAssignmentProcessor implements ProcessorInterface
 {
     public function __construct(
-        private readonly Security $security,
+        /**
+         * @var ProcessorInterface<UserOwnerInterface, UserOwnerInterface|void>
+         */
         #[Autowire(service: PersistProcessor::class)]
         private ProcessorInterface $processorInterface,
-        private EntityManagerInterface $entityManager,
+        private readonly EntityManagerInterface $entityManager,
+        private readonly Security $security,
     ) {}
 
     /**
@@ -34,12 +37,14 @@ final class UserAssignmentProcessor implements ProcessorInterface
             return $this->processorInterface->process($data, $operation, $uriVariables, $context);
         }
 
+        /** @var User $currentUser */
+        $currentUser = $this->security->getUser();
         /** @var UserRepository $userRepository */
         $userRepository = $this->entityManager->getRepository(User::class);
 
         if ($operation instanceof Post) {
             /** @var User $user */
-            $user = $userRepository->find($this->security->getUser()->getId());
+            $user = $userRepository->find($currentUser->getId());
             $data->setUser($user);
 
             $this->entityManager->persist($data);

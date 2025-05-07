@@ -10,9 +10,12 @@ use Symfony\Component\Mime\Address;
 use Doctrine\ORM\EntityManagerInterface;
 use ApiPlatform\State\ProcessorInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
+/**
+ * @implements ProcessorInterface<RegisterInput, User|void>
+ */
 final class RegisterProcessor implements ProcessorInterface
 {
     public function __construct(

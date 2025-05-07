@@ -17,24 +17,21 @@ final readonly class EmailVerifier
         private VerifyEmailHelperInterface $verifyEmailHelper,
         private MailerInterface $mailer,
         private EntityManagerInterface $entityManager
-    ) {
-    }
+    ) {}
 
     /**
      * @param string $verifyEmailRouteName
      * @param User $user
      * @param TemplatedEmail $email
-     * @return void
      */
     public function sendEmailConfirmation(
         string $verifyEmailRouteName,
         UserInterface $user,
         TemplatedEmail $email
-    ): void
-    {
+    ): void {
         $signatureComponents = $this->verifyEmailHelper->generateSignature(
             $verifyEmailRouteName,
-            $user->getId(),
+            (string) $user->getId(),
             $user->getEmail(),
             ['id' => $user->getId()]
         );
@@ -51,7 +48,7 @@ final readonly class EmailVerifier
     /**
      * @param Request $request
      * @param User $user
-     * @return void
+     *
      * @throws VerifyEmailExceptionInterface
      */
     public function handleEmailConfirmation(Request $request, UserInterface $user): void

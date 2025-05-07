@@ -92,6 +92,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     #[NotBlank]
     private string $email;
 
+    /**
+     * @var string[]
+     */
     #[ORM\Column]
     private array $roles = [];
 
@@ -292,18 +295,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         return $this;
     }
 
-    final public function removeWork(Work $work): self
-    {
-        if ($this->works->removeElement($work) && $work->getUser() === $this) {
-            // set the owning side to null (unless already changed)
-            $work->setUser(null);
-        }
-
-        return $this;
-    }
-
     /**
-     * @return Client[]|Collection
+     * @return Collection<int, Client>
      */
     final public function getClients(): Collection
     {

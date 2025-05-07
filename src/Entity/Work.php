@@ -202,11 +202,19 @@ class Work implements UserOwnerInterface
         return $this;
     }
 
+    /**
+     * @return string[]
+     */
     final public function getEquipements(): array
     {
         return $this->equipements;
     }
 
+    /**
+     * @param string[] $equipements
+     *
+     * @return Work
+     */
     final public function setEquipements(array $equipements): self
     {
         $this->equipements = $equipements;

@@ -12,6 +12,7 @@ use App\Helper\DateFormatHelper;
 final class WorkEventDayFileService extends AbstractFileService
 {
     private const int DEFAULT_X = 15;
+
     public const int ROW_HEIGHT_COLUMN = 10;
 
     /**
@@ -25,11 +26,16 @@ final class WorkEventDayFileService extends AbstractFileService
 
     private function setHeader(DateTime $date): void
     {
-        $frenchMonth = self::convertTextInUTF8(DateHelper::FRENCH_MONTHS[$date->format(DateFormatHelper::MONTH_FORMAT)]);
+        $frenchMonth = self::convertTextInUTF8(DateHelper::FRENCH_MONTHS[(string) $date->format(DateFormatHelper::MONTH_FORMAT)]);
 
         $this->fpdi->SetFont('Arial', 'B', 15);
         $this->fpdi->Cell(
-            0, 10, "Prestations du mois de {$frenchMonth} {$date->format(DateFormatHelper::YEAR_FORMAT)}", 0, 1, 'C'
+            0,
+            10,
+            "Prestations du mois de {$frenchMonth} {$date->format(DateFormatHelper::YEAR_FORMAT)}",
+            0,
+            1,
+            'C'
         );
         $this->fpdi->Ln(10);
         $this->fpdi->SetFont('Arial', 'B', 12);
@@ -38,7 +44,6 @@ final class WorkEventDayFileService extends AbstractFileService
     /**
      * @param string[] $header
      * @param WorkEventDay[] $workEventDays
-     * @return void
      */
     private function setTableEvents(array $header, array $workEventDays): void
     {
@@ -53,7 +58,7 @@ final class WorkEventDayFileService extends AbstractFileService
         // En-tête
         $columnsWidths = $this->getColumnsWidth();
 
-        for ($i = 0; $i < count($header); $i++) {
+        for ($i = 0; $i < count($header); ++$i) {
             $this->fpdi->Cell($columnsWidths[$i], 7, self::convertTextInUTF8($header[$i]), 1, 0, 'C', true);
         }
         $this->fpdi->Ln();
@@ -75,7 +80,6 @@ final class WorkEventDayFileService extends AbstractFileService
 
     /**
      * @param WorkEventDay[] $workEventDays
-     * @return void
      */
     private function setData(array $workEventDays): void
     {
@@ -107,7 +111,6 @@ final class WorkEventDayFileService extends AbstractFileService
      * @param DateTime $date
      * @param string[] $header
      * @param WorkEventDay[] $workEventDays
-     * @return void
      */
     public function generateFile(DateTime $date, array $header, array $workEventDays): void
     {

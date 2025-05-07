@@ -43,8 +43,10 @@ security:
         api:
             pattern: ^/api
             stateless: true
+            provider: app_user_provider
             jwt: ~
-            provider: jwt
+            logout:
+                path: api/logout
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:

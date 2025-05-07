@@ -10,6 +10,9 @@ use App\Dto\ProductInvoiceUpdateInput;
 use Doctrine\ORM\EntityManagerInterface;
 use ApiPlatform\State\ProcessorInterface;
 
+/**
+ * @implements ProcessorInterface<ProductInvoiceUpdateInput, ProductInvoiceFile|void>
+ */
 final class ProductInvoiceProcessor implements ProcessorInterface
 {
     public function __construct(

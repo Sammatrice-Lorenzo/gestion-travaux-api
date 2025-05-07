@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 final readonly class ApiService
 {
     /**
-     * @param string $errors
+     * @param string[] $errors
      *
      * @return JsonResponse
      */

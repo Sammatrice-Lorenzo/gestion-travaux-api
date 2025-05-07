@@ -11,6 +11,9 @@ use Symfony\Bundle\SecurityBundle\Security;
 use App\Repository\ProductInvoiceFileRepository;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
+/**
+ * @implements ProviderInterface<ProductInvoiceFile>
+ */
 final class ProductInvoiceProvider implements ProviderInterface
 {
     public function __construct(

@@ -12,11 +12,9 @@ use App\Repository\ProductInvoiceFileRepository;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
-#[AsController]
 final class ProductInvoiceFileZipController extends AbstractController
 {
     public function __construct(

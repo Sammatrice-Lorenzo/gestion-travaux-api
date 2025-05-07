@@ -90,7 +90,7 @@ final class WorkEventDayCest
 
         $text = preg_replace("/\r|\n|\t/", ' ', (new Parser())->parseFile(realpath($fileTest))->getText());
 
-        $assertFormatDate = DateHelper::FRENCH_MONTHS[$date->format(DateFormatHelper::MONTH_FORMAT)];
+        $assertFormatDate = DateHelper::FRENCH_MONTHS[(string) $date->format(DateFormatHelper::MONTH_FORMAT)];
         $I->assertStringContainsString($assertFormatDate, $text);
         $I->assertStringContainsString(self::TITLE_EVENT_DAY, $text);
         $I->removeFile($fileName);

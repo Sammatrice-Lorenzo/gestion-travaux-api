@@ -12,11 +12,11 @@ final readonly class InvoiceFormService
 {
     public function __construct(
         private EntityManagerInterface $entityManagerInterface,
-    ) {
-    }
+    ) {}
 
     /**
      * @param stdClass $invoiceData
+     *
      * @return string[]
      */
     public function checkInvoiceData(stdClass $invoiceData): array
@@ -54,8 +54,7 @@ final readonly class InvoiceFormService
     /**
      * @param Work $work
      * @param string $title
-     * @param array<int, array<string, string>> $invoiceLines
-     * @return void
+     * @param array<int, array<int, string>> $invoiceLines
      */
     private function createInvoice(Work $work, string $title, array $invoiceLines): void
     {
@@ -72,8 +71,7 @@ final readonly class InvoiceFormService
 
     /**
      * @param Invoice $invoice
-     * @param array<int, array<string, string>> $invoiceLines
-     * @return void
+     * @param array<int, array<int, string>> $invoiceLines
      */
     private function createInvoiceLine(Invoice $invoice, array $invoiceLines): void
     {
