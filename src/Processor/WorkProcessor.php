@@ -33,8 +33,7 @@ final class WorkProcessor implements ProcessorInterface
             return $this->processorInterface->process($data, $operation, $uriVariables, $context);
         }
 
-        if ($operation instanceof Delete) {
-            $data->getInvoice();
+        if ($operation instanceof Delete && $data->getInvoice()) {
             $this->entityManager->remove($data->getInvoice());
             $data->setInvoice(null);
             $this->entityManager->flush();

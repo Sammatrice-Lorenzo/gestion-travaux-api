@@ -77,6 +77,7 @@ final class WorkEventDayCest
         }
     }
 
+    #[Depends('testGetWorkEventDay')]
     public function testPostWorkEventDayDownloadFile(ApiTester $I): void
     {
         $fileName = 'workEventDayTest.pdf';
@@ -91,12 +92,13 @@ final class WorkEventDayCest
         $text = preg_replace("/\r|\n|\t/", ' ', (new Parser())->parseFile(realpath($fileTest))->getText());
 
         $assertFormatDate = DateHelper::FRENCH_MONTHS[(string) $date->format(DateFormatHelper::MONTH_FORMAT)];
-        $I->assertStringContainsString($assertFormatDate, $text);
-        $I->assertStringContainsString(self::TITLE_EVENT_DAY, $text);
+        $I->assertNotFalse(strpos($text, $assertFormatDate));
+        $I->assertNotFalse(strpos($text, self::TITLE_EVENT_DAY));
+
         $I->removeFile($fileName);
     }
 
-    #[Depends('testGetWorkEventDay')]
+    #[Depends('testPostWorkEventDayDownloadFile')]
     public function testDeleteWorkEventDayByUser(ApiTester $I): void
     {
         $I->sendDelete(self::URL_API . "/{$this->workEventId}");

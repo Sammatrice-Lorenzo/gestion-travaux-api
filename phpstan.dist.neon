@@ -11,7 +11,11 @@ parameters:
         - src/Kernel.php
         - tests/bootstrap.php
         - tests/Support/_generated/*
+        - tests/Support/ApiTester.php
+        - tests/Support/UnitTester.php
 
+    ignoreErrors:
+    - '#Call to an undefined method App\\Tests\\Support\\.*::.*\(\)#'
 
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml

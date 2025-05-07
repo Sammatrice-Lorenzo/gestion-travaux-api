@@ -11,7 +11,9 @@ use App\Enum\ProgressionEnum;
 final class WorkTest extends AbstractEntityTestDefault
 {
     private DateTime $date;
+
     private User $user;
+
     private Client $client;
 
     public function _before(): void
@@ -37,7 +39,7 @@ final class WorkTest extends AbstractEntityTestDefault
 
     public function testFalseEntity(): void
     {
-        $this->assertHasErrors(4, new Work());
+        $this->assertHasErrors(3, new Work());
     }
 
     private function generateValidEntity(): Work

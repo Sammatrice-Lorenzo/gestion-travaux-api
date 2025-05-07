@@ -23,14 +23,26 @@ jobs:
           - 3306:3306
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
 
-      - uses: php-actions/composer@v6
+      - name: Setup PHP extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: gd, sodium, curl, zip, pdo_mysql
+          tools: composer
+
       - uses: ./.github/actions/set-database-url
         with:
           mysql_database: ${{ secrets.MYSQL_DATABASE }}
           mysql_root_password: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+
+      - name: Configure Git safe.directory
+        run: git config --global --add safe.directory /home/runner/work/${{ github.repository }}
+
+      - name: Install dependencies with Composer
+        run: composer install --prefer-dist --no-progress --no-suggest --no-scripts
 
       - name: Update permissions on vendor
         run: sudo chmod -R 777 vendor/
@@ -42,7 +54,9 @@ jobs:
         run: |
           curl -sS https://get.symfony.com/cli/installer | bash
           mv ~/.symfony*/bin/symfony /usr/local/bin/symfony
+
+      - name: Install JWT keys
+        run : php bin/console lexik:jwt:generate-keypair
+
       - name: Run tests
         run: yarn test && yarn replace-env
-
-

@@ -44,30 +44,20 @@ final class ProductInvoiceFileCest
 
     public function testAddProductInvoiceFile(ApiTester $I): void
     {
-        $I->haveHttpHeader('Content-Type', 'mutltipart/form-data');
         $filePath = codecept_data_dir(self::FILE_NAME);
 
-        $client = new \GuzzleHttp\Client(['base_uri' => 'https://localhost:8000', 'verify' => false]);
-
-        $token = $I->loginWithGuzzleHttp($client);
-
-        $client->request('POST', '/api/product_invoice_files', [
-            'headers' => [
-                'Authorization' => "Bearer {$token}",
-            ],
-            'multipart' => [
-                [
-                    'name' => 'date',
-                    'contents' => '2025-05-05',
-                ],
-                [
-                    'name' => 'files[]',
-                    'contents' => fopen($filePath, 'r'),
-                    'filename' => self::FILE_NAME,
-                ],
+        $I->haveHttpHeader('Content-Type', '');
+        $I->sendPost('/api/product_invoice_files', [
+            'date' => (new DateTime())->format(DateFormatHelper::DEFAULT_FORMAT),
+        ], [
+            'files[]' => [
+                'name' => self::FILE_NAME,
+                'type' => 'application/pdf',
+                'error' => UPLOAD_ERR_OK,
+                'size' => filesize($filePath),
+                'tmp_name' => $filePath,
             ],
         ]);
-
         $I->seeResponseCodeIsSuccessful();
     }
 
