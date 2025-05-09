@@ -28,7 +28,7 @@ final class ProductInvoiceFileController extends AbstractController
         $errors = $validatorInterface->validate($dto);
         if (count($errors) > 0) {
             return new JsonResponse([
-                'errors' => $errors->__tostring(),
+                'errors' => $this->productInvoiceService->getErrosSeralizationInput($errors),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 

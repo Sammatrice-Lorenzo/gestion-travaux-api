@@ -8,6 +8,7 @@ use App\Entity\ProductInvoiceFile;
 use App\Dto\ProductInvoiceCreationInput;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 final readonly class ProductInvoiceService
 {
@@ -80,5 +81,20 @@ final readonly class ProductInvoiceService
         return array_map(function (ProductInvoiceFile $productInvoiceFile): string {
             return $productInvoiceFile->getPath();
         }, $productInvoice);
+    }
+
+    /**
+     * @param ConstraintViolationListInterface $errors
+     *
+     * @return array<string|\Stringable>
+     */
+    public function getErrosSeralizationInput(ConstraintViolationListInterface $errors)
+    {
+        $errorsMessage = [];
+        foreach ($errors as $error) {
+            $errorsMessage[] = $error->getMessage();
+        }
+
+        return $errorsMessage;
     }
 }

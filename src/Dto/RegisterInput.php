@@ -32,7 +32,6 @@ final class RegisterInput
     public string $password;
 
     #[Assert\NotBlank]
-    #[Assert\PasswordStrengthValidator]
     #[Assert\EqualTo(propertyPath: 'password', message: 'Le deux mots de passes ne correspondants pas !')]
     #[Groups([User::GROUP_USER_WRITE])]
     public string $confirmPassword;

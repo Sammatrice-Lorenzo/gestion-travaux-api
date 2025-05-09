@@ -15,6 +15,11 @@ final class OpenApiFactory implements OpenApiFactoryInterface
         private OpenApiFactoryInterface $decorated,
     ) {}
 
+    /**
+     * @param mixed[] $context
+     *
+     * @return OpenApi
+     */
     public function __invoke(array $context = []): OpenApi
     {
         $openApi = $this->decorated->__invoke($context);
@@ -39,21 +44,27 @@ final class OpenApiFactory implements OpenApiFactoryInterface
         return $openApi;
     }
 
-    private function getCredential(): ArrayObject
+    /**
+     * @return array<string, array<string, array<string, string>>|string>
+     */
+    private function getCredential(): array
     {
-        return new ArrayObject([
+        return [
             'type' => 'object',
             'properties' => [
                 'token' => [
                     'type' => 'string',
                 ],
             ],
-        ]);
+        ];
     }
 
-    private function getLinkForVerifiedEmail(): ArrayObject
+    /**
+     * @return array<string, array<string, array<string, string>>|string>
+     */
+    private function getLinkForVerifiedEmail(): array
     {
-        return new ArrayObject([
+        return [
             'type' => 'object',
             'properties' => [
                 'token' => [
@@ -63,7 +74,7 @@ final class OpenApiFactory implements OpenApiFactoryInterface
                     'type' => 'string',
                 ],
             ],
-        ]);
+        ];
     }
 
     public function getVerifiedToken(): PathItem
@@ -101,9 +112,12 @@ final class OpenApiFactory implements OpenApiFactoryInterface
         );
     }
 
-    private function getEditUser(): ArrayObject
+    /**
+     * @return array<string, array<string, array<string, string>>|string>
+     */
+    private function getEditUser(): array
     {
-        return new ArrayObject([
+        return [
             'type' => 'object',
             'properties' => [
                 'firstname' => [
@@ -119,7 +133,7 @@ final class OpenApiFactory implements OpenApiFactoryInterface
                     'exemple' => 'test@test.com',
                 ],
             ],
-        ]);
+        ];
     }
 
     private function getLogoutPath(): PathItem

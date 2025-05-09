@@ -8,9 +8,6 @@ use DateInterval;
 
 final class DateHelper
 {
-    /**
-     * @var array<string, string>
-     */
     public const array FRENCH_MONTHS = [
         '01' => 'Janvier',
         '02' => 'Février',
