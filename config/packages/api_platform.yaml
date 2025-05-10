@@ -1,6 +1,10 @@
 api_platform:
-  formats:
-    json: ['application/json']
-    jsonld: ['application/ld+json']
-    html: ['text/html']
-    multipart: ['multipart/form-data']
+    formats:
+        json: ['application/json']
+        jsonld: ['application/ld+json']
+        html: ['text/html']
+        multipart: ['multipart/form-data']
+        pdf: ['application/pdf']
+        zip: ['application/zip']
+    mapping:
+        paths: ['%kernel.project_dir%/src']

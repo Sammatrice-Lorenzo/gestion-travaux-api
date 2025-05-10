@@ -9,6 +9,7 @@
 ###< symfony/framework-bundle ###
 /node_modules/
 
+.vscode
 /public/invoice/
 ###> phpunit/phpunit ###
 /phpunit.xml
@@ -40,3 +41,7 @@ docker/prod/cert.pem
 docker/prod/key.pem
 
 mkcert-v1.4.4-linux-amd64
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+###< friendsofphp/php-cs-fixer ###

@@ -1,0 +1,64 @@
+name: Code quality
+on:
+    push:
+        branches: [dev]
+    pull_request:
+        branches: [dev]
+
+jobs:
+    quality-check:
+        name: Code Quality Checks
+        runs-on: ubuntu-latest
+
+        services:
+            mysql:
+                image: mysql:8.4
+                env:
+                    MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+                    MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+                ports:
+                    - 3306:3306
+
+        steps:
+            - uses: actions/checkout@v4
+            - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+
+            - name: Setup dependencies
+              uses: ./.github/actions/set-dependencies
+              with:
+                mysql_database: ${{ secrets.MYSQL_DATABASE }}
+                mysql_root_password: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+
+            - name: Run cache clear Symfony
+              run: |
+                  php bin/console cache:clear --env=test
+                  php bin/console cache:warmup --env=test
+
+            # review dog
+            - uses: reviewdog/action-setup@e04ffabe3898a0af8d0fb1af00c188831c4b5893
+              with:
+                  reviewdog_version: latest
+
+              # php stan
+            - name: Run PHPStan
+              continue-on-error: true
+              run: vendor/bin/phpstan analyze --error-format=raw > phpstan.result.txt
+
+            - name: Run reviewdog with PHPStan output
+              env:
+                  REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  cat phpstan.result.txt | reviewdog -f=phpstan -reporter=github-pr-review -fail-level=none -level=warning -filter-mode=nofilter
+
+            - name: Get changed files
+              id: changed-files
+              uses: tj-actions/changed-files@v46
+
+            - name: Run Prettier
+              if: steps.changed-files.outputs.all_changed_files != ''
+              run: yarn prettier --check ${{ steps.changed-files.outputs.all_changed_files }}
+              continue-on-error: true
+            - uses: EPMatt/reviewdog-action-prettier@v1
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  reporter: github-pr-review

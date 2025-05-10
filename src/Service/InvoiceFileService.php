@@ -13,11 +13,12 @@ use App\Service\AbstractFileService;
 final class InvoiceFileService extends AbstractFileService
 {
     private const int WIDTH_COLUMN = 30;
+
     private const int ROW_HEIGHT_COLUMN_INVOICE_NAME = 8;
+
     private const float SIZE_FONT = 7.5;
     
     private const float TVA_MAINTENANCE_WORK = 10.0;
-    private const float TVA_ENERGY_IMPROUVEMENT_WORK = 5.5;
 
     public const int ROW_HEIGHT_COLUMN = 5;
 
@@ -25,8 +26,8 @@ final class InvoiceFileService extends AbstractFileService
     {
         $this->fpdi->AddPage();
 
-        $this->fpdi->AddFont('TrebuchetMS', '', "trebuc.php");
-        $this->fpdi->AddFont('TrebuchetMS-Bold', '', "Trebuchet-MS-Bold.php");
+        $this->fpdi->AddFont('TrebuchetMS', '', 'trebuc.php');
+        $this->fpdi->AddFont('TrebuchetMS-Bold', '', 'Trebuchet-MS-Bold.php');
 
         $pageCount = $this->fpdi->setSourceFile($pdfTemplate);
         $tplIdx = $this->fpdi->importPage($pageCount);
@@ -47,7 +48,6 @@ final class InvoiceFileService extends AbstractFileService
 
     /**
      * @param string[]  $headers
-     * @return void
      */
     public function setHeaderInvoice(array $headers): void
     {
@@ -75,7 +75,6 @@ final class InvoiceFileService extends AbstractFileService
 
     /**
      * @param array<int, array<string, string>> $invoiceData
-     * @return void
      */
     public function setValuesTable(array $invoiceData): void
     {
@@ -94,7 +93,7 @@ final class InvoiceFileService extends AbstractFileService
 
             foreach ($row as $i => $cell) {
                 $value = self::formatFloatValue($cell);
-                $position = self::getPositionTextInCell($i, $row);
+                $position = self::getPositionTextInCell((int) $i, $row);
                 $cellWidth = $columnsWidths[$i];
 
                 if ($this->fpdi->GetStringWidth($value) > $cellWidth) {
@@ -112,7 +111,7 @@ final class InvoiceFileService extends AbstractFileService
         $this->fpdi->Ln();
     }
 
-    private function setTotalOfInvoice(float $sumOfTotal)
+    private function setTotalOfInvoice(float $sumOfTotal): void
     {
         $columnsWidth = $this->getColumnsWidth();
         $totalColumnsWidth = $this->getTotalColumnsWidth();
@@ -127,7 +126,10 @@ final class InvoiceFileService extends AbstractFileService
             $this->fpdi->Cell(
                 $columnsWidth[$index],
                 self::ROW_HEIGHT_COLUMN,
-                self::convertTextInUTF8($value), 1, 0, $position
+                self::convertTextInUTF8($value),
+                1,
+                0,
+                $position
             );
         }
         $this->fpdi->Ln();
@@ -147,7 +149,7 @@ final class InvoiceFileService extends AbstractFileService
         $prices = [
             ['SOUS-TOTAL', ''],
             ['T.V.A ' . self::TVA_MAINTENANCE_WORK . ' %', $priceOfTVA],
-            ['TOTAL', $sumTotalWithTVA]
+            ['TOTAL', $sumTotalWithTVA],
         ];
         foreach ($prices as $price) {
             $this->setElementOfLastColumn(array_sum($lastColumnsWidth));
@@ -158,7 +160,10 @@ final class InvoiceFileService extends AbstractFileService
                 $this->fpdi->Cell(
                     $lastColumnsWidth[$key],
                     self::ROW_HEIGHT_COLUMN,
-                    $value, $border, 0, 'R'
+                    $value,
+                    $border,
+                    0,
+                    'R'
                 );
             }
             $this->fpdi->Ln();
@@ -217,8 +222,9 @@ final class InvoiceFileService extends AbstractFileService
     }
 
     /**
-     * @param integer $key
+     * @param int $key
      * @param mixed[] $elements
+     *
      * @return string
      */
     private static function getPositionTextInCell(int $key, array $elements): string
@@ -260,7 +266,6 @@ final class InvoiceFileService extends AbstractFileService
     /**
      * @param string[] $headers
      * @param stdClass $invoiceData
-     * @return void
      */
     public function generateInvoiceFile(Client $client, array $headers, stdClass $invoiceData): void
     {

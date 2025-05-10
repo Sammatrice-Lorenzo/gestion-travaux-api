@@ -3,84 +3,116 @@
 namespace App\Entity;
 
 use DateTimeInterface;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use App\Interface\UserOwnerInterface;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model\Operation;
-use ApiPlatform\OpenApi\Model\Parameter;
-use App\Controller\WorkEventDayController;
+use App\Dto\WorkEventDayDownloadFileInput;
+use App\Processor\UserAssignmentProcessor;
 use App\Repository\WorkEventDayRepository;
+use App\Controller\WorkEventDayFileController;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\CssColor;
 use Symfony\Component\Validator\Constraints\NotBlank;
-
+use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
 
 #[ORM\Entity(repositoryClass: WorkEventDayRepository::class)]
 #[ApiResource(
-    security: 'is_granted("ROLE_USER")',
+    openapi: new Operation(
+        security: [['bearerAuth' => []]],
+    ),
+    denormalizationContext: ['groups' => ['work_event_day:write']],
+    normalizationContext: ['groups' => ['work_event_day:read']],
     operations: [
         new GetCollection(
-            uriTemplate: '/work/event/day/{id}',
-            controller: WorkEventDayController::class,
-            read: false,
-            security: 'is_granted("ROLE_USER")',
-            openapi: new Operation(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Get(
+            security: "is_granted('VIEW', object)"
+        ),
+        new Post(
+            security: "is_granted('ROLE_USER')",
+            processor: UserAssignmentProcessor::class,
+        ),
+        new Put(
+            security: "is_granted('EDIT', object)"
+        ),
+        new Delete(
+            security: "is_granted('EDIT', object)"
+        ),
+        new Post(
+            security: "is_granted('ROLE_USER')",
+            uriTemplate: '/work_event_days/file_download',
+            controller: WorkEventDayFileController::class,
+            input: WorkEventDayDownloadFileInput::class,
+            deserialize: false,
+            openapi: new ModelOperation(
                 security: [['bearerAuth' => []]],
-                parameters: [
-                    new Parameter(
-                        name: 'id',
-                        in: 'path',
-                        required: true,
-                        description: 'The user ID',
-                        schema: ['type' => 'string']
-                    )
+                summary: 'Téléchargement du fichier PDF',
+                responses: [
+                    '200' => [
+                        'description' => 'Fichier PDF',
+                        'content' => [
+                            'application/pdf' => [
+                                'schema' => ['type' => 'string', 'format' => 'binary'],
+                            ],
+                        ],
+                    ],
                 ]
             )
-        )
+        ),
     ],
-    normalizationContext: ['groups' => ['read:EventDay']],
 )]
-#[ApiResource]
-class WorkEventDay
+class WorkEventDay implements UserOwnerInterface
 {
+    private const string GROUP_WORK_EVENT_DAY_WRITE = 'work_event_day:write';
+
+    public const string GROUP_WORK_EVENT_DAY_READ = 'work_event_day:read';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['read:EventDay'])]
+    #[Groups([self::GROUP_WORK_EVENT_DAY_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups([self::GROUP_WORK_EVENT_DAY_READ, self::GROUP_WORK_EVENT_DAY_WRITE])]
     #[NotBlank]
-    #[Groups(['read:EventDay'])]
     private string $title;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['read:EventDay'])]
+    #[Groups([self::GROUP_WORK_EVENT_DAY_READ, self::GROUP_WORK_EVENT_DAY_WRITE])]
     private DateTimeInterface $startDate;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['read:EventDay'])]
+    #[Groups([self::GROUP_WORK_EVENT_DAY_READ, self::GROUP_WORK_EVENT_DAY_WRITE])]
     private DateTimeInterface $endDate;
 
     #[ORM\Column(length: 255)]
     #[ORM\JoinColumn(nullable: false)]
     #[NotBlank]
     #[CssColor(message: 'Le code couleur {{ value }} ne correspond pas à un code valide')]
-    #[Groups(['read:EventDay'])]
+    #[Groups([self::GROUP_WORK_EVENT_DAY_READ, self::GROUP_WORK_EVENT_DAY_WRITE])]
     private string $color;
 
     #[ORM\ManyToOne(inversedBy: 'workEventDays')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['read:EventDay'])]
+    #[Groups([self::GROUP_WORK_EVENT_DAY_READ])]
     private User $user;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups([self::GROUP_WORK_EVENT_DAY_READ, self::GROUP_WORK_EVENT_DAY_WRITE])]
     #[ApiProperty(readableLink: true)]
     private ?Client $client = null;
 
@@ -149,7 +181,7 @@ class WorkEventDay
         return $this;
     }
 
-    #[Groups(['read:EventDay'])]
+    #[Groups([self::GROUP_WORK_EVENT_DAY_READ])]
     final public function getClient(): ?Client
     {
         return $this->client;

@@ -4,113 +4,170 @@ namespace App\Entity;
 
 use ArrayObject;
 use DateTimeInterface;
+use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use App\Interface\UserOwnerInterface;
+use App\State\ProductInvoiceProvider;
 use App\Dto\ProductInvoiceUpdateInput;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\OpenApi\Model\Operation;
+use App\Dto\ProductInvoiceCreationInput;
+use App\Processor\ProductInvoiceProcessor;
+use App\Dto\ProductInvoiceDownloadZipInput;
 use Symfony\Component\HttpFoundation\File\File;
 use App\Controller\ProductInvoiceFileController;
 use App\Repository\ProductInvoiceFileRepository;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
+use App\Controller\ProductInvoiceFileZipController;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Controller\ProductInvoiceFileDownloadController;
 use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
 use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
 
 #[ORM\Entity(repositoryClass: ProductInvoiceFileRepository::class)]
 #[ApiResource(
+    openapi: new Operation(
+        security: [['bearerAuth' => []]],
+    ),
     normalizationContext: ['groups' => ['product_invoice_file:read']],
     denormalizationContext: ['groups' => ['product_invoice_file:write']],
-    types: ['https://schema.org/MediaObject'],
-    outputFormats: ['jsonld' => ['application/ld+json']],
     operations: [
         new GetCollection(
-            description: 'Récupère les factures des produits selon le moi en paramètre',
-            uriTemplate: '/api/product_invoice/month',
-            controller: ProductInvoiceFileController::class,
-            read: true,
-            openapi: new ModelOperation(
-                security: [['bearerAuth' => []]]
-            )
+            security: "is_granted('ROLE_USER')",
+            provider: ProductInvoiceProvider::class,
         ),
         new Post(
+            security: "is_granted('ROLE_USER')",
             controller: ProductInvoiceFileController::class,
+            input: ProductInvoiceCreationInput::class,
             inputFormats: ['multipart' => ['multipart/form-data']],
             deserialize: false,
             openapi: new ModelOperation(
+                security: [['bearerAuth' => []]],
                 requestBody: new ModelRequestBody(
                     content: new ArrayObject([
                         'multipart/form-data' => [
                             'schema' => [
                                 'type' => 'object',
                                 'properties' => [
-                                    'file' => [
-                                        'type' => 'string',
-                                        'format' => 'binary'
-                                    ]
-                                ]
-                            ]
-                        ]
+                                    'date' => ['type' => 'string', 'format' => 'date'],
+                                    'files' => [
+                                        'type' => 'array',
+                                        'items' => ['type' => 'string', 'format' => 'binary'],
+                                    ],
+                                ],
+                                'required' => ['date', 'files'],
+                            ],
+                        ],
                     ])
                 )
             )
         ),
         new Delete(
-            uriTemplate: '/api/product_invoice_delete/{id}',
-            controller: ProductInvoiceFileController::class,
+            security: "is_granted('EDIT', object)",
+        ),
+        new Get(
+            security: "is_granted('ROLE_USER')",
+            uriTemplate: '/product_invoice_files/{id}/download',
+            controller: ProductInvoiceFileDownloadController::class,
+            read: true,
+            deserialize: false,
             openapi: new ModelOperation(
-                summary: 'Supprime un fichier de facture',
-                description: 'Permet de supprimer un fichier de facture spécifique.',
-                security: [['bearerAuth' => []]]
+                security: [['bearerAuth' => []]],
+                summary: 'Téléchargement du fichier PDF',
+                responses: [
+                    '200' => [
+                        'description' => 'Fichier PDF',
+                        'content' => [
+                            'application/pdf' => [
+                                'schema' => ['type' => 'string', 'format' => 'binary'],
+                            ],
+                        ],
+                    ],
+                ]
             )
         ),
         new Post(
-            controller: ProductInvoiceFileController::class,
-            uriTemplate: '/api/product_invoice_download/{id}',
-            input: [],
+            security: "is_granted('ROLE_USER')",
+            uriTemplate: '/product_invoice_files_download_zip',
+            controller: ProductInvoiceFileZipController::class,
+            input: ProductInvoiceDownloadZipInput::class,
+            read: false,
+            write: false,
+            output: false,
             openapi: new ModelOperation(
-                summary: 'Télécharge un fichier de facture',
-                description: 'Permet de télécharger un fichier de facture spécifique.',
-                security: [['bearerAuth' => []]]
+                security: [['bearerAuth' => []]],
+                summary: 'Télécharge un zip de factures',
+                requestBody: new ModelRequestBody(
+                    description: 'Liste des IDs',
+                    content: new ArrayObject([
+                        'application/json' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'properties' => [
+                                    'ids' => [
+                                        'type' => 'array',
+                                        'items' => ['type' => 'integer'],
+                                    ],
+                                ],
+                                'required' => ['ids'],
+                            ],
+                        ],
+                    ])
+                ),
+                responses: [
+                    '200' => [
+                        'description' => 'Fichier ZIP',
+                        'content' => [
+                            'application/zip' => [
+                                'schema' => ['type' => 'string', 'format' => 'binary'],
+                            ],
+                        ],
+                    ],
+                ]
             )
         ),
         new Put(
-            controller: ProductInvoiceFileController::class,
-            uriTemplate: '/api/product_invoice_update/{id}',
+            security: "is_granted('EDIT', object)",
             input: ProductInvoiceUpdateInput::class,
-            openapi: new ModelOperation(
-                summary: 'Mise à jour de certains champs',
-                description: 'Permet de mettre à jour la date et le montant total de la facture.',
-                security: [['bearerAuth' => []]]
-            )
-        )
+            processor: ProductInvoiceProcessor::class
+        ),
     ]
 )]
 #[Vich\Uploadable]
-class ProductInvoiceFile
+class ProductInvoiceFile implements UserOwnerInterface
 {
+    public const string GROUP_PRODUCT_INVOICE_FILE_READ = 'product_invoice_file:read';
+
+    public const string GROUP_PRODUCT_INVOICE_FILE_WRITE = 'product_invoice_file:write';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['product_invoice_file:read'])]
+    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    #[Groups(['product_invoice_file:read', 'product_invoice_file:write'])]
+    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ, self::GROUP_PRODUCT_INVOICE_FILE_WRITE])]
     private string $name;
     
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    #[Groups(['product_invoice_file:read'])]
+    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
     private ?string $path = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['product_invoice_file:read'])]
+    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
+    #[ApiFilter(SearchFilter::class, properties: ['date' => 'exact'])]
     private DateTimeInterface $date;
 
     #[ORM\ManyToOne(inversedBy: 'productInvoiceFiles')]
@@ -118,12 +175,12 @@ class ProductInvoiceFile
     private User $user;
 
     #[Assert\File(mimeTypes: ['application/pdf', ['application/x-pdf']])]
-    #[Groups(['product_invoice_file:write'])]
-    #[Vich\UploadableField(mapping: "products_invoice", fileNameProperty: "path")]
+    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_WRITE])]
+    #[Vich\UploadableField(mapping: 'products_invoice', fileNameProperty: 'path')]
     private ?File $file = null;
 
     #[ORM\Column]
-    #[Groups(['product_invoice_file:read'])]
+    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
     private float $totalAmount;
 
     final public function getId(): ?int
@@ -149,7 +206,7 @@ class ProductInvoiceFile
     }
 
     /**
-     * Le path peut être null car avec Vich durant le delete il passe un null
+     * Le path peut être null car avec Vich durant le delete il passe un null.
      */
     final public function setPath(?string $path): static
     {

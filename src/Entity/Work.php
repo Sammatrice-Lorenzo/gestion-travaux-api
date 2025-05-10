@@ -7,84 +7,98 @@ use App\Entity\Client;
 use DateTimeInterface;
 use App\Entity\TypeOfWork;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
 use App\Enum\ProgressionEnum;
+use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
+use ApiPlatform\Metadata\Delete;
+use App\Processor\WorkProcessor;
 use Doctrine\ORM\Mapping as ORM;
-use App\Controller\WorkController;
 use App\Repository\WorkRepository;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
+use App\Interface\UserOwnerInterface;
+use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model\Operation;
-use ApiPlatform\OpenApi\Model\Parameter;
+use App\Processor\UserAssignmentProcessor;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints\NotNull;
+use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: WorkRepository::class)]
 #[ApiResource(
-    security: 'is_granted("ROLE_USER")',
+    openapi: new Operation(
+        security: [['bearerAuth' => []]],
+    ),
+    denormalizationContext: ['groups' => ['work:write']],
+    normalizationContext: ['groups' => ['work:read']],
     operations: [
+        new GetCollection(
+            security: "is_granted('ROLE_USER')"
+        ),
         new Get(
-            name: 'getWorksByUser',
-            uriTemplate: '/worksByUser/{id}',
-            controller: WorkController::class,
-            read: false,
-            security: 'is_granted("ROLE_USER")',
-            openapi: new Operation(
-                security: [['bearerAuth' => []]],
-                parameters: [
-                    new Parameter(
-                        name: 'id',
-                        in: 'path',
-                        required: true,
-                        description: 'The user ID',
-                        schema: ['type' => 'string']
-                    )
-                ]
-            )
-        )
+            security: "is_granted('VIEW', object)"
+        ),
+        new Post(
+            security: "is_granted('ROLE_USER')",
+            processor: UserAssignmentProcessor::class,
+        ),
+        new Put(
+            security: "is_granted('EDIT', object)"
+        ),
+        new Delete(
+            security: "is_granted('EDIT', object)",
+            processor: WorkProcessor::class
+        ),
     ],
-    normalizationContext: ['groups' => ['read:Work', 'read:Client', 'read:Invoice']],
 )]
-#[ApiResource]
-class Work
+class Work implements UserOwnerInterface
 {
+    private const string GROUP_WORK_WRITE = 'work:write';
+
+    public const string GROUP_WORK_READ = 'work:read';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['read:Work'])]
+    #[Groups([self::GROUP_WORK_READ])]
     private ?int $id = null;
     
     #[ORM\Column(length: 255)]
-    #[Groups(['read:Work'])]
+    #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
+    #[NotBlank]
     private string $name;
-    
+
     #[ORM\Column(length: 255)]
-    #[Groups(['read:Work'])]
+    #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
+    #[NotBlank]
     private string $city;
-    
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['read:Work'])]
+    #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
     private DateTimeInterface $start;
-    
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups(['read:Work'])]
+    #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
     private ?DateTimeInterface $end = null;
-    
+
     #[ORM\Column(length: 255)]
     #[Assert\Choice(choices: [
         ProgressionEnum::NOT_STARTED->value,
         ProgressionEnum::IN_PROGRESS->value,
-        ProgressionEnum::DONE->value
-        ])]
-    #[Groups(['read:Work'])]
-    private ?string $progression = null;
+        ProgressionEnum::DONE->value,
+    ])]
+    #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
+    private string $progression;
+
     /**
      * @var string[]
      */
     #[ORM\Column]
-    #[Groups(['read:Work'])]
+    #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
     private array $equipements = [];
 
     /**
@@ -95,20 +109,23 @@ class Work
     private ?Collection $typeOfWorks = null;
 
     #[ORM\ManyToOne(inversedBy: 'works')]
-    private ?User $user = null;
+    #[Groups([self::GROUP_WORK_READ])]
+    private User $user;
 
     #[ORM\ManyToOne(inversedBy: 'works')]
     #[ORM\JoinColumn(nullable: false)]
     #[ApiProperty(readableLink: true)]
+    #[NotNull]
+    #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
     private Client $client;
-    
-    #[ORM\OneToOne(mappedBy: 'work', cascade: ['persist', 'remove'])]
-    #[ORM\JoinColumn(nullable: true)]
+
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
     #[ApiProperty(readableLink: true)]
     private ?Invoice $invoice = null;
 
     #[ORM\Column]
-    #[Groups(['read:Work'])]
+    #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
     #[Assert\Range(
         min: 0,
         notInRangeMessage: 'Le minimum autorisé est de {{ min }}',
@@ -125,7 +142,7 @@ class Work
         return $this->id;
     }
 
-    final public function getName(): ?string
+    final public function getName(): string
     {
         return $this->name;
     }
@@ -185,11 +202,19 @@ class Work
         return $this;
     }
 
+    /**
+     * @return string[]
+     */
     final public function getEquipements(): array
     {
         return $this->equipements;
     }
 
+    /**
+     * @param string[] $equipements
+     *
+     * @return Work
+     */
     final public function setEquipements(array $equipements): self
     {
         $this->equipements = $equipements;
@@ -225,32 +250,31 @@ class Work
         return $this;
     }
 
-    final public function getUser(): ?User
+    final public function getUser(): User
     {
         return $this->user;
     }
 
-    final public function setUser(?User $user): self
+    final public function setUser(User $user): self
     {
         $this->user = $user;
 
         return $this;
     }
 
-    #[Groups(['read:Work'])]
-    final public function getClient(): ?Client
+    final public function getClient(): Client
     {
         return $this->client;
     }
 
-    final public function setClient(?Client $client): self
+    final public function setClient(Client $client): self
     {
         $this->client = $client;
 
         return $this;
     }
 
-    #[Groups(['read:Work'])]
+    #[Groups([self::GROUP_WORK_READ])]
     final public function getInvoice(): ?Invoice
     {
         return $this->invoice;
@@ -267,7 +291,6 @@ class Work
         return $this;
     }
 
-    #[Groups(['read:Work'])]
     final public function getTotalAmount(): float
     {
         return $this->totalAmount;

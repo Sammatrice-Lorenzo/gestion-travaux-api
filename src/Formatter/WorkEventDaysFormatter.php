@@ -9,7 +9,8 @@ final class WorkEventDaysFormatter
 {
     /**
      * @param WorkEventDay[] $workEventDays
-     * @return array<int, array<string, string>>
+     *
+     * @return array<array<int, string>>
      */
     public static function getWorkDayEventFormattedForFile(array $workEventDays): array
     {

@@ -4,11 +4,9 @@ namespace App\Entity;
 
 use App\Entity\Work;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Metadata\ApiResource;
 use App\Repository\TypeOfWorkRepository;
 
 #[ORM\Entity(repositoryClass: TypeOfWorkRepository::class)]
-#[ApiResource]
 class TypeOfWork
 {
     #[ORM\Id]
@@ -17,8 +15,11 @@ class TypeOfWork
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $name = null;
+    private string $name;
 
+    /**
+     * @var string[]
+     */
     #[ORM\Column]
     private array $equipements = [];
 
@@ -30,7 +31,7 @@ class TypeOfWork
         return $this->id;
     }
 
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->name;
     }
@@ -42,11 +43,19 @@ class TypeOfWork
         return $this;
     }
 
+    /**
+     * @return string[]
+     */
     public function getEquipements(): array
     {
         return $this->equipements;
     }
 
+    /**
+     * @param string[] $equipements
+     *
+     * @return TypeOfWork
+     */
     public function setEquipements(array $equipements): self
     {
         $this->equipements = $equipements;

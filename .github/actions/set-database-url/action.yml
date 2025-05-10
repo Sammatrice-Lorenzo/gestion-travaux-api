@@ -1,0 +1,23 @@
+name: Checkout and Set DATABASE_URL
+
+inputs:
+    mysql_root_password:
+        required: true
+        description: MySQL root password
+    mysql_database:
+        required: true
+        description: MySQL database name
+
+description: Checkout the repository and set the DATABASE_URL
+runs:
+    using: 'composite'
+    steps:
+        - name: Set DATABASE_URL
+          shell: bash
+          env:
+              MYSQL_ROOT_PASSWORD: ${{ inputs.mysql_root_password }}
+              MYSQL_DATABASE: ${{ inputs.mysql_database }}
+          run: |
+              echo "DATABASE_URL=mysql://root:${MYSQL_ROOT_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}" > .env.test.local
+              echo "APP_ENV=test" >> .env.test.local
+              echo "DATABASE_SERVER_VERSION=8.4" >> .env.test.local

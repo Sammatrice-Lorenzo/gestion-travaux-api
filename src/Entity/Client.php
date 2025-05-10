@@ -5,13 +5,17 @@ namespace App\Entity;
 use App\Entity\User;
 use App\Entity\Work;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use App\Entity\Traits\ClientTrait;
-use App\Controller\ClientController;
 use App\Repository\ClientRepository;
 use ApiPlatform\Metadata\ApiResource;
+use App\Interface\UserOwnerInterface;
+use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model\Operation;
-use ApiPlatform\OpenApi\Model\Parameter;
+use App\Processor\UserAssignmentProcessor;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -20,75 +24,82 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ClientRepository::class)]
 #[ApiResource(
-    security: 'is_granted("ROLE_USER")',
+    openapi: new Operation(
+        security: [['bearerAuth' => []]],
+    ),
+    denormalizationContext: ['groups' => ['client:write']],
+    normalizationContext: ['groups' => ['client:read']],
     operations: [
+        new GetCollection(
+            security: "is_granted('ROLE_USER')"
+        ),
         new Get(
-            name: 'getClientsByUser',
-            uriTemplate: '/clientsByUser/{id}',
-            controller: ClientController::class,
-            read: false,
-            security: 'is_granted("ROLE_USER")',
-            openapi: new Operation(
-                security: [['bearerAuth' => []]],
-                parameters: [
-                    new Parameter(
-                        name: 'id',
-                        in: 'path',
-                        required: true,
-                        description: 'The user ID',
-                        schema: ['type' => 'string']
-                    )
-                ]
-            )
-        )
+            security: "is_granted('VIEW', object)"
+        ),
+        new Post(
+            security: "is_granted('ROLE_USER')",
+            processor: UserAssignmentProcessor::class,
+        ),
+        new Put(
+            security: "is_granted('EDIT', object)"
+        ),
+        new Delete(
+            security: "is_granted('EDIT', object)"
+        ),
     ],
-    normalizationContext: ['groups' => 'read:Client'],
 )]
-#[ApiResource]
-class Client
+class Client implements UserOwnerInterface
 {
     use ClientTrait;
+
+    private const string GROUP_CLIENT_WRITE = 'client:write';
+
+    public const string GROUP_CLIENT_READ = 'client:read';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups (['read:Client', 'read:Work', 'read:EventDay'])]
+    #[Groups([self::GROUP_CLIENT_READ, Work::GROUP_WORK_READ, WorkEventDay::GROUP_WORK_EVENT_DAY_READ])]
     private ?int $id = null;
     
     #[ORM\Column(length: 255)]
+    #[Groups([self::GROUP_CLIENT_READ, Work::GROUP_WORK_READ, self::GROUP_CLIENT_WRITE])]
     #[NotBlank]
-    #[Groups (['read:Client', 'read:Work'])]
     private string $firstname;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read:Client', 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
+    #[NotBlank]
     private string $lastname;
     
     #[ORM\Column(length: 255)]
-    #[Groups(['read:Client', 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
     #[Assert\Regex(pattern: '/^0[1-9](?:[\s.-]?[0-9]{2}){4}$/', message: 'Insérer un numéro de téléphone valide')]
     private string $phoneNumber;
     
     #[ORM\Column(length: 255)]
     #[Assert\Regex(pattern: '/^\d{5}$/', message: 'Insérer un code postale valide')]
-    #[Groups(['read:Client', 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
+    #[NotBlank]
     private string $postalCode;
     
     #[ORM\Column(length: 255)]
-    #[Groups(['read:Client', 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
+    #[NotBlank]
     private string $city;
     
     #[ORM\Column(length: 255)]
-    #[Groups(['read:Client', 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
+    #[NotBlank]
     private string $streetAddress;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'clients')]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['read:Client', 'read:Work'])]
+    #[Groups([self::GROUP_CLIENT_READ, Work::GROUP_WORK_READ])]
     private User $user;
 
     /**
-     * @var Collection<int, Work>|null
+     * @var null|Collection<int, Work>
      */
     #[ORM\OneToMany(mappedBy: 'client', targetEntity: Work::class)]
     #[ORM\JoinColumn(nullable: true)]
@@ -201,16 +212,6 @@ class Client
         if (!$this->works->contains($work)) {
             $this->works->add($work);
             $work->setClient($this);
-        }
-
-        return $this;
-    }
-
-    final public function removeWork(Work $work): self
-    {
-        if ($this->works->removeElement($work) && $work->getClient() === $this) {
-            // set the owning side to null (unless already changed)
-            $work->setClient(null);
         }
 
         return $this;

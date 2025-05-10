@@ -2,19 +2,23 @@
 
 namespace App\Entity;
 
-use Exception;
 use App\Entity\Work;
 use App\Entity\Client;
+use App\Dto\RegisterInput;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use App\Controller\UserController;
 use App\Repository\UserRepository;
+use App\Processor\RegisterProcessor;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\OpenApi\Model\Operation;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -22,7 +26,9 @@ use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ApiResource(
-    security: 'is_granted("ROLE_USER")',
+    openapi: new Operation(
+        security: [['bearerAuth' => []]]
+    ),
     operations: [
         new Get(
             name: 'user',
@@ -32,47 +38,64 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
             security: 'is_granted("ROLE_USER")',
             openapi: new Operation(
                 security: [['bearerAuth' => []]]
-            )
+            ),
         ),
-        new Get(
-            name: 'userById',
-            uriTemplate: '/user/{id}',
-            controller: UserController::class,
-            read: true,
-            security: 'is_granted("ROLE_USER")',
+        new Put(
+            security: "is_granted('EDIT_USER', object)",
             openapi: new Operation(
                 security: [['bearerAuth' => []]]
-            )
+            ),
+        ),
+        new Post(
+            uriTemplate: '/register',
+            name: 'register_user',
+            input: RegisterInput::class,
+            processor: RegisterProcessor::class,
         ),
     ],
-    normalizationContext: ['groups' => ['read:UserById']],
+    normalizationContext: ['groups' => ['user:read']],
+    denormalizationContext: ['groups' => ['user:write']]
 )]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-#[UniqueEntity(fields: ['id'], message: 'Un utilisateur ne peut avoir un seul et unique id')]
+#[UniqueEntity(fields: ['email'], message: 'Un utilisateur ne peut avoir un seul unique email')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUserInterface
 {
+    private const string GROUP_USER_READ = 'user:read';
+
+    public const string GROUP_USER_WRITE = 'user:write';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(['read:UserById'])]
+    #[Groups([
+        self::GROUP_USER_READ,
+        WorkEventDay::GROUP_WORK_EVENT_DAY_READ,
+        Client::GROUP_CLIENT_READ,
+        Work::GROUP_WORK_READ,
+    ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read:UserById'])]
-    private ?string $firstname = null;
+    #[Groups([self::GROUP_USER_READ, self::GROUP_USER_WRITE])]
+    #[NotBlank]
+    private string $firstname;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read:UserById'])]
-    private ?string $lastname = null;
+    #[Groups([self::GROUP_USER_READ, self::GROUP_USER_WRITE])]
+    #[NotBlank]
+    private string $lastname;
 
     #[ORM\Column(length: 180, unique: true)]
-    #[Groups(['read:UserById'])]
+    #[Groups([self::GROUP_USER_READ, self::GROUP_USER_WRITE])]
     #[Assert\Regex(pattern: '/^[^\s@]+@[^\s@]+\.[^\s@]+$/', message: 'Insérer un email valide')]
-    private ?string $email = null;
+    #[NotBlank]
+    private string $email;
 
+    /**
+     * @var string[]
+     */
     #[ORM\Column]
-    #[Groups(['read:UserById'])]
     private array $roles = [];
 
     /**
@@ -108,7 +131,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: ProductInvoiceFile::class)]
     private Collection $productInvoiceFiles;
 
-    final public function __construct()
+    public function __construct()
     {
         $this->clients = new ArrayCollection();
         $this->works = new ArrayCollection();
@@ -128,7 +151,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         return $this;
     }
 
-    final public function getEmail(): ?string
+    final public function getEmail(): string
     {
         return $this->email;
     }
@@ -152,6 +175,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
     /**
      * @see UserInterface
+     *
      * @return string[]
      */
     final public function getRoles(): array
@@ -165,6 +189,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
     /**
      * @param string[] $roles
+     *
      * @return self
      */
     final public function setRoles(array $roles): self
@@ -211,10 +236,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     }
 
     /**
-     * Depuis JWT Interface
+     * Depuis JWT Interface.
      *
-     * @param [type] $username
-     * @param array $payload
+     * @param string $username
+     * @param array<string, int|string> $payload
+     *
      * @return User
      */
     public static function createFromPayload($username, array $payload): User
@@ -227,7 +253,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         ;
     }
 
-    final public function getFirstname(): ?string
+    final public function getFirstname(): string
     {
         return $this->firstname;
     }
@@ -239,7 +265,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         return $this;
     }
 
-    final public function getLastname(): ?string
+    final public function getLastname(): string
     {
         return $this->lastname;
     }
@@ -269,18 +295,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         return $this;
     }
 
-    final public function removeWork(Work $work): self
-    {
-        if ($this->works->removeElement($work) && $work->getUser() === $this) {
-            // set the owning side to null (unless already changed)
-            $work->setUser(null);
-        }
-
-        return $this;
-    }
-
     /**
-     * @return Collection|Client[]
+     * @return Collection<int, Client>
      */
     final public function getClients(): Collection
     {
@@ -295,49 +311,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         }
 
         return $this;
-    }
-
-    final public function removeClient(Client $client): self
-    {
-        if ($this->clients->removeElement($client) && $client->getUser() === $this) {
-            // set the owning side to null (unless already changed)
-            $client->setUser(null);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param UserRepository $userRepository
-     * @param string $email
-     * @param boolean $isCreation
-     * @return Exception|null
-     */
-    #[Assert\Callback(groups: ['write:User'])]
-    final public function validateEmail(UserRepository $userRepository, string $email, bool $isCreation = false): ?Exception
-    {
-        $exception = new Exception('Il ya déjà un compte avec cette email.');
-        $existUserWithThisEmail = $userRepository->findOneBy(['email' => $email]);
-        
-        if ($isCreation && !$existUserWithThisEmail) {
-            return null;
-        }
-
-        if ($isCreation && $existUserWithThisEmail) {
-            throw $exception;
-        }
-
-        $user = $userRepository->find($this->id);
-        $isNotSameEmail = $email !== $user->getEmail();
-        $isNotNullEmail = $existUserWithThisEmail !== null;
-        $isNotSameUser = $user !== $existUserWithThisEmail;
-
-        $isEmailNotValid = $isNotSameEmail && $isNotNullEmail;
-        if ($isEmailNotValid && $isNotSameUser) {
-            throw $exception;
-        }
-
-        return null;
     }
 
     /**
@@ -371,15 +344,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         if (!$this->productInvoiceFiles->contains($productInvoiceFile)) {
             $this->productInvoiceFiles->add($productInvoiceFile);
             $productInvoiceFile->setUser($this);
-        }
-
-        return $this;
-    }
-
-    final public function removeProductInvoiceFile(ProductInvoiceFile $productInvoiceFile): static
-    {
-        if ($this->productInvoiceFiles->removeElement($productInvoiceFile) && $productInvoiceFile->getUser() === $this) {
-            $productInvoiceFile->setUser(null);
         }
 
         return $this;

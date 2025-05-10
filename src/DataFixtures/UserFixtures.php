@@ -8,44 +8,41 @@ use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-class UserFixtures extends Fixture
+final class UserFixtures extends Fixture
 {
     public function __construct(
         private readonly UserPasswordHasherInterface $userPasswordHasher
-    ) {
-    }
+    ) {}
 
     public function load(ObjectManager $manager): void
     {
+        $this->generateUser($manager, 'user@test.com');
+
+        for ($i = 0; $i < 5; ++$i) {
+            $this->generateUser($manager);
+        }
+
+        $manager->flush();
+    }
+
+    private function generateUser(ObjectManager $manager, ?string $email = null): void
+    {
         $faker = Factory::create('fr_FR');
 
-        $simpleUser = (new User())
-            ->setFirstname($faker->firstName)
-            ->setLastname($faker->lastName)
-            ->setEmail('user@test.com')
+        $user = (new User())
+            ->setFirstname($faker->firstName())
+            ->setLastname($faker->lastName())
+            ->setEmail($email ?? $faker->email())
             ->setRoles(['ROLE_USER'])
             ->setIsVerified(true)
         ;
-        $simpleUser->setPassword($this->userPasswordHasher->hashPassword($simpleUser, '1234'));
 
-        for ($i = 0; $i < 5; $i++) {
-            $user = (new User())
-                ->setFirstname($faker->firstName)
-                ->setLastname($faker->lastName)
-                ->setEmail($faker->email())
-                ->setRoles(['ROLE_USER'])
-                ->setIsVerified(true)
-            ;
-            $user->setPassword(
-                $this->userPasswordHasher->hashPassword(
-                    $user,
-                    '1234'
-                )
-            );
-            $manager->persist($user);
-        }
-
-        $manager->persist($simpleUser);
-        $manager->flush();
+        $user->setPassword(
+            $this->userPasswordHasher->hashPassword(
+                $user,
+                '1234'
+            )
+        );
+        $manager->persist($user);
     }
 }

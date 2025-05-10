@@ -9,7 +9,7 @@ parameters:
     products_invoice: '%kernel.project_dir%/public/products-invoice/'
     url_front: '%env(URL_GESTION_TRAVAUX_PWA)%'
     mail_username: '%env(MAIL_USERNAME)%'
-
+    env: '%env(APP_ENV)%'
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -24,6 +24,10 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\EventListener\UniqueConstraintViolationListener:
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception }
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

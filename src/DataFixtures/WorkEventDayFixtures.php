@@ -17,22 +17,29 @@ final class WorkEventDayFixtures extends Fixture implements DependentFixtureInte
 {
     public function load(ObjectManager $manager): void
     {
-        $faker = Factory::create('fr_FR');
-
+        /** @var User $defaultUser */
+        $defaultUser = $manager->getRepository(User::class)->findOneBy(['email' => 'user@test.com']);
         /** @var User $user */
-        $user = $manager->getRepository(User::class)->findOneBy(['email' => 'user@test.com']);
-        $startDate = new DateTime();
-        $endDate = (clone $startDate)->add(new DateInterval('P5D'));
+        $user = $manager->getRepository(User::class)->find(2);
 
-        $startTime = "08:00";
-        $endTime = "18:00";
+        $this->generateDefaultWorkEventDay($defaultUser, $manager);
+        $this->generateDefaultWorkEventDay($user, $manager);
 
+        $manager->flush();
+    }
+
+    private function generateDefaultWorkEventDay(User $user, ObjectManager $manager): void
+    {
+        $faker = Factory::create('fr_FR');
         $colors = ['#ff9800', '#940c0c'];
         $defaultFormat = DateFormatHelper::DEFAULT_FORMAT;
 
+        $startDate = new DateTime();
+        $endDate = (clone $startDate)->add(new DateInterval('P5D'));
+
         for ($iDate = $startDate; $iDate < $endDate; $iDate->add(new DateInterval('P1D'))) {
-            $start = new DateTime("{$iDate->format($defaultFormat)} $startTime");
-            $end = new DateTime("{$iDate->format($defaultFormat)} $endTime");
+            $start = new DateTime("{$iDate->format($defaultFormat)} 08:00:00");
+            $end = new DateTime("{$iDate->format($defaultFormat)} 18:00:00");
 
             $workEventDay = (new WorkEventDay())
                 ->setTitle("Événement {$faker->title}")
@@ -44,8 +51,6 @@ final class WorkEventDayFixtures extends Fixture implements DependentFixtureInte
 
             $manager->persist($workEventDay);
         }
-
-        $manager->flush();
     }
 
     /**
@@ -55,7 +60,7 @@ final class WorkEventDayFixtures extends Fixture implements DependentFixtureInte
     {
         return [
             UserFixtures::class,
-            ClientFixtures::class
+            ClientFixtures::class,
         ];
     }
 }
