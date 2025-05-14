@@ -7,7 +7,8 @@
         "docker build": "docker-compose up --build",
         "prepare": "husky",
         "prettier": "prettier --check .",
-        "replace-env": "sed -i 's/^APP_ENV=.*/APP_ENV=dev/' .env"
+        "replace-env": "sed -i 's/^APP_ENV=.*/APP_ENV=dev/' .env",
+        "test-front": "sed -i 's/^APP_ENV=.*/APP_ENV=test/' .env && yarn truncate-database-test && symfony serve --port=8001 --no-tls"
     },
     "lint-staged": {
         "**/*.php": [
