@@ -1,0 +1,56 @@
+name: Setup & Test Symfony Backend
+description: Installe les dépendances, configure l'env et lance les tests
+
+inputs:
+    mysql_database:
+        required: true
+    mysql_root_password:
+        required: true
+    repository_backend_path:
+        required: true
+
+runs:
+    using: 'composite'
+    steps:
+        - name: Setup PHP extensions
+          uses: shivammathur/setup-php@v2
+          with:
+              php-version: '8.3'
+              extensions: gd, sodium, curl, zip, pdo_mysql
+              tools: composer
+        - name: Set DATABASE_URL
+          shell: bash
+          env:
+              MYSQL_ROOT_PASSWORD: ${{ inputs.mysql_root_password }}
+              MYSQL_DATABASE: ${{ inputs.mysql_database }}
+          run: |
+              echo "DATABASE_URL=mysql://root:${MYSQL_ROOT_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}" > ${{ inputs.backend_path }}/.env.test.local
+              echo "APP_ENV=test" >> ${{ inputs.backend_path }}/.env.test.local
+              echo "DATABASE_SERVER_VERSION=8.4" >> ${{ inputs.backend_path }}/.env.test.local
+
+        - name: Configure Git safe.directory
+          shell: bash
+          run: git config --global --add safe.directory ${{ inputs.backend_path }}
+
+        - name: Composer install
+          shell: bash
+          run: composer install --prefer-dist --no-progress --no-scripts --working-dir=${{ inputs.backend_path }}
+
+        - name: Update permissions on vendor
+          run: sudo chmod -R 777 ${{ inputs.backend_path }}/vendor/
+          shell: bash
+
+        - name: Install dependencies with Yarn
+          shell: bash
+          run: yarn
+
+        - name: Install Symfony CLI
+          shell: bash
+          run: |
+              curl -sS https://get.symfony.com/cli/installer | bash
+              mv ~/.symfony*/bin/symfony /usr/local/bin/symfony
+
+        - name: Install JWT keys
+          shell: bash
+          run: php bin/console lexik:jwt:generate-keypair
+          working-directory: ${{ inputs.backend_path }}
