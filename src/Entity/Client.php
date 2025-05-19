@@ -105,6 +105,12 @@ class Client implements UserOwnerInterface
     #[ORM\JoinColumn(nullable: true)]
     private ?Collection $works = null;
 
+    #[ORM\Column(length: 255)]
+    #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
+    #[Assert\Regex(pattern: '/^[^\s@]+@[^\s@]+\.[^\s@]+$/', message: 'Insérer un email valide')]
+    #[NotBlank]
+    private string $email;
+
     public function __construct()
     {
         $this->works = new ArrayCollection();
@@ -213,6 +219,18 @@ class Client implements UserOwnerInterface
             $this->works->add($work);
             $work->setClient($this);
         }
+
+        return $this;
+    }
+
+    final public function getEmail(): string
+    {
+        return $this->email;
+    }
+
+    final public function setEmail(string $email): static
+    {
+        $this->email = $email;
 
         return $this;
     }

@@ -18,10 +18,14 @@ final class ClientFixtures extends Fixture implements DependentFixtureInterface
         $faker = Factory::create('fr_FR');
 
         foreach ($manager->getRepository(User::class)->findAll() as $user) {
-            for ($i = 0; $i < 5; $i++) {
+            for ($i = 0; $i < 5; ++$i) {
+
+                $firstanme = $faker->firstName;
+                $lastname = $faker->firstName;
                 $client = (new Client())
-                    ->setFirstname($faker->firstName)
-                    ->setLastname($faker->lastName)
+                    ->setFirstname($firstanme)
+                    ->setLastname($lastname)
+                    ->setEmail("{$firstanme}-{$lastname}@test.com")
                     ->setPhoneNumber($faker->phoneNumber)
                     ->setStreetAddress($faker->streetAddress)
                     ->setPostalCode($faker->postcode)
@@ -39,10 +43,10 @@ final class ClientFixtures extends Fixture implements DependentFixtureInterface
     /**
      * @return array<class-string<FixtureInterface>>
      */
-    public function getDependencies(): array   
+    public function getDependencies(): array
     {
         return [
-            UserFixtures::class
+            UserFixtures::class,
         ];
     }
 }

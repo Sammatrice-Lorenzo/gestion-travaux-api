@@ -88,6 +88,7 @@ final class ClientCest
         return [
             'firstname' => self::FIRST_NAME_CLIENT,
             'lastname' => 'Lastname Client Test',
+            'email' => 'client@test.com',
             'phoneNumber' => $phoneNumber,
             'postalCode' => $postalCode,
             'city' => 'Paris',
