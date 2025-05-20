@@ -28,7 +28,7 @@ final class ClientTest extends AbstractEntityTestDefault
 
     public function testFalseEntity(): void
     {
-        $this->assertHasErrors(5, new Client());
+        $this->assertHasErrors(6, new Client());
     }
 
     private function generateValidEntity(): Client
@@ -36,6 +36,7 @@ final class ClientTest extends AbstractEntityTestDefault
         return (new Client())
             ->setFirstname('Client first name test')
             ->setLastname('Client last name test')
+            ->setEmail('client@test.com')
             ->setCity(self::CITY)
             ->setPostalCode('75001')
             ->setStreetAddress('80 rue du Test')
