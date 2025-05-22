@@ -7,19 +7,20 @@ use DateTimeInterface;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
+use App\State\MonthlyProvider;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use App\Interface\UserOwnerInterface;
-use App\State\ProductInvoiceProvider;
 use App\Dto\ProductInvoiceUpdateInput;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model\Operation;
 use App\Dto\ProductInvoiceCreationInput;
 use App\Processor\ProductInvoiceProcessor;
 use App\Dto\ProductInvoiceDownloadZipInput;
+use App\Interface\MonthlyProviderInterface;
 use Symfony\Component\HttpFoundation\File\File;
 use App\Controller\ProductInvoiceFileController;
 use App\Repository\ProductInvoiceFileRepository;
@@ -42,7 +43,7 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
     operations: [
         new GetCollection(
             security: "is_granted('ROLE_USER')",
-            provider: ProductInvoiceProvider::class,
+            provider: MonthlyProvider::class,
         ),
         new Post(
             security: "is_granted('ROLE_USER')",
@@ -143,7 +144,7 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
     ]
 )]
 #[Vich\Uploadable]
-class ProductInvoiceFile implements UserOwnerInterface
+class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
 {
     public const string GROUP_PRODUCT_INVOICE_FILE_READ = 'product_invoice_file:read';
 
@@ -159,7 +160,7 @@ class ProductInvoiceFile implements UserOwnerInterface
     #[Assert\NotBlank]
     #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ, self::GROUP_PRODUCT_INVOICE_FILE_WRITE])]
     private string $name;
-    
+
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
     #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
