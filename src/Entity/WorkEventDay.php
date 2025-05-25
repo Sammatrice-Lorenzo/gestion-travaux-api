@@ -6,9 +6,11 @@ use DateTimeInterface;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
+use App\State\MonthlyProvider;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use App\Interface\UserOwnerInterface;
@@ -17,7 +19,9 @@ use ApiPlatform\OpenApi\Model\Operation;
 use App\Dto\WorkEventDayDownloadFileInput;
 use App\Processor\UserAssignmentProcessor;
 use App\Repository\WorkEventDayRepository;
+use App\Interface\MonthlyProviderInterface;
 use App\Controller\WorkEventDayFileController;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\CssColor;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -32,7 +36,8 @@ use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
     normalizationContext: ['groups' => ['work_event_day:read']],
     operations: [
         new GetCollection(
-            security: "is_granted('ROLE_USER')"
+            security: "is_granted('ROLE_USER')",
+            provider: MonthlyProvider::class
         ),
         new Get(
             security: "is_granted('VIEW', object)"
@@ -70,7 +75,7 @@ use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
         ),
     ],
 )]
-class WorkEventDay implements UserOwnerInterface
+class WorkEventDay implements UserOwnerInterface, MonthlyProviderInterface
 {
     private const string GROUP_WORK_EVENT_DAY_WRITE = 'work_event_day:write';
 
@@ -91,6 +96,7 @@ class WorkEventDay implements UserOwnerInterface
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups([self::GROUP_WORK_EVENT_DAY_READ, self::GROUP_WORK_EVENT_DAY_WRITE])]
+    #[ApiFilter(SearchFilter::class, properties: ['startDate' => 'exact', 'date' => 'exact'])]
     private DateTimeInterface $startDate;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]

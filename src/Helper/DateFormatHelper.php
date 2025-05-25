@@ -12,6 +12,8 @@ final class DateFormatHelper
 
     public const string MONTH_FORMAT = 'm';
 
+    public const string YEAR_MONTH_FORMAT = self::YEAR_FORMAT . '-' . self::MONTH_FORMAT;
+
     public const string TIME_ZONE_FORMAT = 'c';
 
     public const string TIME_FORMAT = 'H:i';

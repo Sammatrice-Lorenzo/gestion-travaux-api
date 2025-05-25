@@ -7,10 +7,12 @@ namespace App\Tests\Api;
 use DateTime;
 use App\Entity\User;
 use App\Helper\DateHelper;
+use App\Entity\WorkEventDay;
 use Smalot\PdfParser\Parser;
 use App\Helper\DateFormatHelper;
 use App\Tests\Support\ApiTester;
 use Codeception\Attribute\Depends;
+use Symfony\Component\Serializer\SerializerInterface;
 
 final class WorkEventDayCest
 {
@@ -68,12 +70,26 @@ final class WorkEventDayCest
     #[Depends('testCreateWorkEventDay')]
     public function testGetCollectionWorkEventDayByUser(ApiTester $I): void
     {
+        $yearMonthFormat = DateFormatHelper::YEAR_MONTH_FORMAT;
+        /** @var SerializerInterface $serializerInterface */
+        $serializerInterface = $I->grabService(SerializerInterface::class);
+
         $response = $I->sendGet(self::URL_API);
         $I->seeResponseCodeIsSuccessful();
 
-        $workEventDays = json_decode($response);
+        /** @var WorkEventDay[] $workEventDays */
+        $workEventDays = $serializerInterface->deserialize($response, WorkEventDay::class, 'json');
         foreach ($workEventDays as $workEventDay) {
-            $I->assertEquals($workEventDay->user->id, $this->user->getId());
+            $I->assertEquals($workEventDay->getUser()->getId(), $this->user->getId());
+        }
+        
+        $date = new DateTime();
+        $response = $I->sendGet(self::URL_API . "?date={$date->format(DateFormatHelper::DEFAULT_FORMAT)}");
+
+        /** @var WorkEventDay[] $workEventDays */
+        $workEventDays = $serializerInterface->deserialize($response, WorkEventDay::class, 'json');
+        foreach ($workEventDays as $workEventDay) {
+            $I->assertEquals($workEventDay->getStartDate()->format($yearMonthFormat), $date->format($yearMonthFormat));
         }
     }
 

@@ -7,17 +7,18 @@ use App\Entity\User;
 use App\Entity\WorkEventDay;
 use App\Helper\DateFormatHelper;
 use Doctrine\Persistence\ManagerRegistry;
+use App\Interface\MonthlyProviderRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 
 /**
  * @extends ServiceEntityRepository<WorkEventDay>
  *
- * @method WorkEventDay|null find($id, $lockMode = null, $lockVersion = null)
- * @method WorkEventDay|null findOneBy(array $criteria, array $orderBy = null)
+ * @method null|WorkEventDay find($id, $lockMode = null, $lockVersion = null)
+ * @method null|WorkEventDay findOneBy(array $criteria, array $orderBy = null)
  * @method WorkEventDay[]    findAll()
  * @method WorkEventDay[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-final class WorkEventDayRepository extends ServiceEntityRepository
+final class WorkEventDayRepository extends ServiceEntityRepository implements MonthlyProviderRepositoryInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -27,6 +28,7 @@ final class WorkEventDayRepository extends ServiceEntityRepository
     /**
      * @param User $user
      * @param DateTime $month
+     *
      * @return WorkEventDay[]
      */
     public function findByMonth(User $user, DateTime $month): array
@@ -35,14 +37,14 @@ final class WorkEventDayRepository extends ServiceEntityRepository
         $lastDayOfMonth = new DateTime("{$month->format(DateFormatHelper::LAST_DAY_FORMAT)}");
 
         return $this->createQueryBuilder('w')
-           ->andWhere('w.startDate BETWEEN :start AND :end')
-           ->andWhere('w.user = :user')
-           ->setParameter('start', $firstDayOfMonth)
-           ->setParameter('end', $lastDayOfMonth)
-           ->setParameter('user', $user)
-           ->orderBy('w.startDate', 'ASC')
-           ->getQuery()
-           ->getResult()
+            ->andWhere('w.startDate BETWEEN :start AND :end')
+            ->andWhere('w.user = :user')
+            ->setParameter('start', $firstDayOfMonth)
+            ->setParameter('end', $lastDayOfMonth)
+            ->setParameter('user', $user)
+            ->orderBy('w.startDate', 'ASC')
+            ->getQuery()
+            ->getResult()
         ;
     }
 }

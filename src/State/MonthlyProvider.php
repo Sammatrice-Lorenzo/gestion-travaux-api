@@ -4,21 +4,26 @@ namespace App\State;
 
 use DateTime;
 use App\Entity\User;
-use App\Entity\ProductInvoiceFile;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use App\Interface\MonthlyProviderInterface;
 use Symfony\Bundle\SecurityBundle\Security;
-use App\Repository\ProductInvoiceFileRepository;
+use App\Interface\MonthlyProviderRepositoryInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
- * @implements ProviderInterface<ProductInvoiceFile>
+ * @implements ProviderInterface<MonthlyProviderInterface>
  */
-final class ProductInvoiceProvider implements ProviderInterface
+final class MonthlyProvider implements ProviderInterface
 {
+    private const string SEARCH_KEY_DATE = 'date';
+
+    private const string SEARCH_KEY_START_DATE = 'startDate';
+
     public function __construct(
-        private readonly ProductInvoiceFileRepository $productInvoiceFileRepository,
         private readonly Security $security,
+        private readonly EntityManagerInterface $entityManagerInterface
     ) {}
 
     private function presetDate(string $date): string
@@ -32,7 +37,7 @@ final class ProductInvoiceProvider implements ProviderInterface
     /**
      * @throws AccessDeniedHttpException
      *
-     * @return ProductInvoiceFile[]
+     * @return MonthlyProviderInterface[]
      */
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): array
     {
@@ -43,13 +48,21 @@ final class ProductInvoiceProvider implements ProviderInterface
             throw new AccessDeniedHttpException();
         }
 
+        /** @var class-string<MonthlyProviderInterface> */
+        $entity = $context['resource_class'];
+        /** @var MonthlyProviderRepositoryInterface $repository */
+        $repository = $this->entityManagerInterface->getRepository($entity);
+
         $date = new DateTime();
-        $contextDate = $context['filters']['date'];
-        if ($contextDate) {
+        $filters = $context['filters'] ?? [];
+        $isStartDateKey = array_key_exists(self::SEARCH_KEY_START_DATE, $filters);
+
+        if ($isStartDateKey || array_key_exists(self::SEARCH_KEY_DATE, $filters)) {
+            $contextDate = $filters[$isStartDateKey ? self::SEARCH_KEY_START_DATE : self::SEARCH_KEY_DATE];
             $contextDate = is_array($contextDate) ? $contextDate[0] : $contextDate;
             $date = new DateTime($this->presetDate($contextDate));
         }
 
-        return $this->productInvoiceFileRepository->findByMonth($user, $date);
+        return $repository->findByMonth($user, $date);
     }
 }
