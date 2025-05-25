@@ -77,16 +77,19 @@ final class WorkEventDayCest
         $response = $I->sendGet(self::URL_API);
         $I->seeResponseCodeIsSuccessful();
 
+        /** @var WorkEventDay[] $workEventDays */
         $workEventDays = $serializerInterface->deserialize($response, WorkEventDay::class, 'json');
         foreach ($workEventDays as $workEventDay) {
-            $I->assertEquals($workEventDay->user->id, $this->user->getId());
+            $I->assertEquals($workEventDay->getUser()->getId(), $this->user->getId());
         }
         
         $date = new DateTime();
         $response = $I->sendGet(self::URL_API . "?date={$date->format(DateFormatHelper::DEFAULT_FORMAT)}");
+
+        /** @var WorkEventDay[] $workEventDays */
         $workEventDays = $serializerInterface->deserialize($response, WorkEventDay::class, 'json');
         foreach ($workEventDays as $workEventDay) {
-            $I->assertEquals($workEventDay->getStart()->format($yearMonthFormat), $date->format($yearMonthFormat));
+            $I->assertEquals($workEventDay->getStartDate()->format($yearMonthFormat), $date->format($yearMonthFormat));
         }
     }
 
