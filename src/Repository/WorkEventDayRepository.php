@@ -34,7 +34,7 @@ final class WorkEventDayRepository extends ServiceEntityRepository implements Mo
     public function findByMonth(User $user, DateTime $month): array
     {
         $firstDayOfMonth = new DateTime("{$month->format('Y-m')}-01");
-        $lastDayOfMonth = new DateTime("{$month->format(DateFormatHelper::LAST_DAY_FORMAT)}");
+        $lastDayOfMonth = new DateTime("{$month->format(DateFormatHelper::LAST_DAY_FORMAT)} 23:59:59");
 
         return $this->createQueryBuilder('w')
             ->andWhere('w.startDate BETWEEN :start AND :end')
