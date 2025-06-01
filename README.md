@@ -1,61 +1,130 @@
-# Gestion des travaux
+# 🔧 Backend – Gestion Travaux (API Platform + Symfony)
 
-Ce projet est la partie back-end de l'application Gestion Travaux PWA
+Ce projet représente la partie back-end de l'application Gestion Travaux PWA.
+Il expose une API RESTful générée automatiquement avec API Platform à partir des entités Symfony.
 
-Le projet continent les différentes APIs.
-La documentation des api es accessible une fois lancé le serveur de l'application http://127.0.0.1:8000/api
+Une fois le projet lancé, la documentation interactive (Swagger UI) est accessible à :
+📍 http://127.0.0.1:8000/api
 
-## Installation
+## 📦 Stack technique
 
-Pour utiliser cette fonctionnalité, il vous faut avoir installé [Docker]
+- Symfony 6
 
-Sinon vous devez seteup à un wamp/mamp ect ...
+- API Platform – Génération automatique d’API REST & documentation
 
-Si vous avez docker vous pouvez la commande suivante :
-```bash
-yarn docker build
-```
-Cela permet d'installer les images docker
+- MySQL – Base de données relationnelle
 
-Il faudra créer un ficher .env.local à la racine du projet et ajouter la ligne suivante :
-DATABASE_URL="mysql://root:password@database/gestion_travaux?sslmode=disable&charset=utf8mb4"
+- JWT Auth – Authentification sécurisée
 
-Pour communiquer avec la base de données
+- Docker – Conteneurisation de l’environnement
 
+## 🚀 Installation
 
+### ✅ Option 1 – Avec Docker (recommandé)
 
-## Commandes
-```bash
-php bin/console make:docker:database
-docker-compose up -d
-
-symfony console make:migration
-symfony console doctrine:migrations:migrate
-
-# Cette commande permet de vous connecter dans le container et développer
-docker exec -it gestion-travaux-api bash
-
-# A l’intérieur du container vous pouvez lancer les différentes commandes :
-# Installe les dépendances
-composer install
-
-# Permet de créer la base de données et load les fixtures
-yarn truncate-database
-
-# Il faut installer les clés jwt:
-php bin/console lexik:jwt:generate-keypair
-
-# Une fois que vous tout installé vous pouvez lancer le serveur il sera accessible au http://127.0.0.1:8000/api (la doc de API Platform)
-symfony server:start
+1. Cloner le repo
 
 ```
-
-## Exécuter la migration
-```bash
-    php bin/console doctrine:migrations:execute --down DoctrineMigrations\<Version> --quiet
+    git clone <repo-url>
+    cd gestion-travaux-backend
 ```
 
-## Lancer toutes les migrations non exécutées
-```bash
-php bin/console doctrine:migrations:migrate --quiet
+2. Créer un fichier .env.local
+
+    DATABASE_URL="mysql://root:password@database/gestion_travaux?sslmode=disable&charset=utf8mb4"
+
+3. Construire et lancer les conteneurs
+
 ```
+    yarn docker build
+    docker-compose up -d
+```
+
+4. Générer les clés JWT
+
+```
+    php bin/console lexik:jwt:generate-keypair
+```
+
+5. Installer les dépendances (dans le conteneur)
+
+```
+    docker exec -it gestion-travaux-api bash
+    composer install
+```
+
+6. Préparer la base de données
+
+```
+    symfony console doctrine:database:create
+    symfony console doctrine:migrations:migrate
+    yarn truncate-database # (fixtures + reset)
+```
+
+7. Démarrer le serveur
+
+`symfony server:start`
+
+### 🔧 Option 2 – Sans Docker
+
+Installez manuellement :
+
+    PHP ≥ 8.1
+
+    Composer
+
+    MySQL
+
+    Symfony CLI
+
+Configurez ensuite .env.local et suivez les étapes 4–7 ci-dessus.
+
+### 🧰 Commandes utiles
+
+Action Commande
+Accès conteneur :
+
+```
+    docker exec -it gestion-travaux-api bash
+```
+
+Lancer le serveur Symfony:
+
+```
+    symfony server:start
+```
+
+Générer migration :
+
+```
+    symfony console make:migration
+```
+
+Appliquer migration :
+
+```
+    symfony console doctrine:migrations:migrate
+```
+
+Revenir à une migration :
+
+```
+    php bin/console doctrine:migrations:execute --down DoctrineMigrations\\<Version>
+```
+
+Réinitialiser la base + fixtures:
+
+```
+    yarn truncate-database
+```
+
+## 🔐 Authentification
+
+    JWT via LexikJWTAuthenticationBundle
+
+    Nécessite génération de clés RSA (cf. étape 4)
+
+## 🔗 Lien avec le frontend
+
+Ce backend alimente l’application Gestion Travaux PWA.
+L’interface utilisateur est développée avec Framework7 + Javascript/TypeScript, et consomme cette API REST.
