@@ -30,6 +30,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: WorkRepository::class)]
 #[ApiResource(
+    order: ['start' => 'DESC'],
+    paginationItemsPerPage: 10,
+    paginationMaximumItemsPerPage: 30,
     openapi: new Operation(
         security: [['bearerAuth' => []]],
     ),
@@ -106,7 +109,7 @@ class Work implements UserOwnerInterface
      */
     #[ORM\OneToMany(targetEntity: TypeOfWork::class, mappedBy: 'work', cascade: ['remove'])]
     #[ORM\JoinColumn(nullable: true)]
-    private ?Collection $typeOfWorks = null;
+    private ?Collection $typeOfWorks;
 
     #[ORM\ManyToOne(inversedBy: 'works')]
     #[Groups([self::GROUP_WORK_READ])]
