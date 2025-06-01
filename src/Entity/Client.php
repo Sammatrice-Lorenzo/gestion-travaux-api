@@ -99,11 +99,11 @@ class Client implements UserOwnerInterface
     private User $user;
 
     /**
-     * @var null|Collection<int, Work>
+     * @var Collection<int, Work>
      */
     #[ORM\OneToMany(mappedBy: 'client', targetEntity: Work::class)]
     #[ORM\JoinColumn(nullable: true)]
-    private ?Collection $works = null;
+    private ?Collection $works;
 
     #[ORM\Column(length: 255)]
     #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
