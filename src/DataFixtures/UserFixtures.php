@@ -4,6 +4,7 @@ namespace App\DataFixtures;
 
 use Faker\Factory;
 use App\Entity\User;
+use App\Tests\Enum\UserFixturesEnum;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -16,7 +17,7 @@ final class UserFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        $this->generateUser($manager, 'user@test.com');
+        $this->generateUser($manager, UserFixturesEnum::DEFAULT_USER->value);
 
         for ($i = 0; $i < 5; ++$i) {
             $this->generateUser($manager);

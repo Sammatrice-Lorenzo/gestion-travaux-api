@@ -4,6 +4,7 @@ namespace App\Tests\Unit\Entity;
 
 use App\Entity\User;
 use App\Entity\Client;
+use App\Tests\Enum\UserFixturesEnum;
 
 final class ClientTest extends AbstractEntityTestDefault
 {
@@ -14,7 +15,7 @@ final class ClientTest extends AbstractEntityTestDefault
     public function _before(): void
     {
         /** @var User $user */
-        $user = $this->tester->grabEntity(User::class, ['email' => 'user@test.com']);
+        $user = $this->tester->grabEntity(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);
         $this->user = $user;
     }
 

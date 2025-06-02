@@ -7,6 +7,7 @@ namespace App\Tests\Api;
 use App\Entity\User;
 use App\Tests\Support\ApiTester;
 use Codeception\Attribute\Depends;
+use App\Tests\Enum\UserFixturesEnum;
 
 final class ClientCest
 {
@@ -25,7 +26,7 @@ final class ClientCest
         $I->loginAs();
 
         /** @var User $user */
-        $user = $I->grabEntityFromRepository(User::class, ['email' => 'user@test.com']);
+        $user = $I->grabEntityFromRepository(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);
         $this->user = $user;
     }
 

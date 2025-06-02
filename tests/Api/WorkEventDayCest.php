@@ -12,6 +12,7 @@ use Smalot\PdfParser\Parser;
 use App\Helper\DateFormatHelper;
 use App\Tests\Support\ApiTester;
 use Codeception\Attribute\Depends;
+use App\Tests\Enum\UserFixturesEnum;
 use Symfony\Component\Serializer\SerializerInterface;
 
 final class WorkEventDayCest
@@ -31,7 +32,7 @@ final class WorkEventDayCest
         $I->loginAs();
 
         /** @var User $user */
-        $user = $I->grabEntityFromRepository(User::class, ['email' => 'user@test.com']);
+        $user = $I->grabEntityFromRepository(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);
         $this->user = $user;
     }
 

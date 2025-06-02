@@ -12,6 +12,7 @@ use App\Enum\ProgressionEnum;
 use App\Helper\DateFormatHelper;
 use App\Tests\Support\ApiTester;
 use Codeception\Attribute\Depends;
+use App\Tests\Enum\UserFixturesEnum;
 
 final class WorkCest
 {
@@ -32,7 +33,7 @@ final class WorkCest
         $I->loginAs();
 
         /** @var User $user */
-        $user = $I->grabEntity(User::class, ['email' => 'user@test.com']);
+        $user = $I->grabEntity(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);
         $this->user = $user;
 
         /** @var Client $client */

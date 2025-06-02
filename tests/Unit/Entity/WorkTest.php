@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Entity\Work;
 use App\Entity\Client;
 use App\Enum\ProgressionEnum;
+use App\Tests\Enum\UserFixturesEnum;
 
 final class WorkTest extends AbstractEntityTestDefault
 {
@@ -19,7 +20,7 @@ final class WorkTest extends AbstractEntityTestDefault
     public function _before(): void
     {
         /** @var User $user */
-        $user = $this->tester->grabEntity(User::class, ['email' => 'user@test.com']);
+        $user = $this->tester->grabEntity(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);
         /** @var Client $client */
         $client = $this->tester->grabEntity(Client::class);
         $this->date = new DateTime();
