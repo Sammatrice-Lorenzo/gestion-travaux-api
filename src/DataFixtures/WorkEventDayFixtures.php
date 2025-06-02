@@ -8,6 +8,7 @@ use Faker\Factory;
 use App\Entity\User;
 use App\Entity\WorkEventDay;
 use App\Helper\DateFormatHelper;
+use App\Tests\Enum\UserFixturesEnum;
 use Doctrine\Persistence\ObjectManager;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\FixtureInterface;
@@ -18,7 +19,9 @@ final class WorkEventDayFixtures extends Fixture implements DependentFixtureInte
     public function load(ObjectManager $manager): void
     {
         /** @var User $defaultUser */
-        $defaultUser = $manager->getRepository(User::class)->findOneBy(['email' => 'user@test.com']);
+        $defaultUser = $manager->getRepository(User::class)->findOneBy([
+            'email' => UserFixturesEnum::DEFAULT_USER->value,
+        ]);
         /** @var User $user */
         $user = $manager->getRepository(User::class)->find(2);
 

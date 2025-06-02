@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Api\Controller;
 
 use App\Tests\Support\ApiTester;
+use App\Tests\Enum\UserFixturesEnum;
 
 final class SecurityControllerCest
 {
@@ -12,7 +13,7 @@ final class SecurityControllerCest
     {
         $I->amOnPage('/');
         $I->sendPost('/api/login', [
-            'username' => 'user@test.com',
+            'username' => UserFixturesEnum::DEFAULT_USER->value,
             'password' => '1234',
         ]);
         $I->seeResponseCodeIsSuccessful();

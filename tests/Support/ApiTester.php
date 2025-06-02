@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Support;
 
 use Codeception\Actor;
+use App\Tests\Enum\UserFixturesEnum;
 use App\Tests\Support\Trait\GrabEntityTrait;
 
 /**
@@ -31,7 +32,7 @@ final class ApiTester extends Actor
     public function loginAs(?string $username = null): void
     {
         $this->sendPOST('/api/login', [
-            'username' => $username ?? 'user@test.com',
+            'username' => $username ?? UserFixturesEnum::DEFAULT_USER->value,
             'password' => '1234',
         ]);
 

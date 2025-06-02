@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Api;
 
 use App\Entity\User;
-use App\Tests\Support\ApiTester;
 use Codeception\Util\HttpCode;
+use App\Tests\Support\ApiTester;
+use App\Tests\Enum\UserFixturesEnum;
 
 final class UserCest
 {
@@ -17,7 +18,7 @@ final class UserCest
     public function _before(ApiTester $I): void
     {
         /** @var User $user */
-        $user = $I->grabEntityFromRepository(User::class, ['email' => 'user@test.com']);
+        $user = $I->grabEntityFromRepository(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);
         $this->user = $user;
     }
 
@@ -73,14 +74,18 @@ final class UserCest
     private function assertConstraintUniqueEmailInPut(User $user, ApiTester $I): void
     {
         $I->sendPut("/api/users/{$user->getId()}", [
-            'email' => 'user@test.com',
+            'email' => UserFixturesEnum::DEFAULT_USER->value,
         ]);
         $this->assertUnprocessableEntity($I);
     }
 
     private function assertConstraintUniqueEmailInCreation(ApiTester $I): void
     {
-        $parameters = $this->getParametersCreationUser('user@test.com', self::PASSWORD, self::PASSWORD);
+        $parameters = $this->getParametersCreationUser(
+            UserFixturesEnum::DEFAULT_USER->value,
+            self::PASSWORD,
+            self::PASSWORD
+        );
         $I->sendPost('/api/register', $parameters);
 
         $I->seeResponseContainsJson([

@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Helper\DateFormatHelper;
 use App\Tests\Support\ApiTester;
 use App\Entity\ProductInvoiceFile;
+use App\Tests\Enum\UserFixturesEnum;
 use Codeception\Attribute\Depends;
 
 final class ProductInvoiceFileCest
@@ -27,7 +28,7 @@ final class ProductInvoiceFileCest
     public function _before(ApiTester $I): void
     {
         /** @var User $user */
-        $user = $I->grabEntity(User::class, ['email' => 'user@test.com']);
+        $user = $I->grabEntity(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);
         $this->user = $user;
         $this->date = new DateTime();
 
