@@ -6,3 +6,7 @@ vich_uploader:
             uri_prefix: /products-invoice
             upload_destination: '%kernel.project_dir%/public/products-invoice'
             namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+        work_images:
+            uri_prefix: /work-images
+            upload_destination: '%kernel.project_dir%/public/work-images'
+            namer: Vich\UploaderBundle\Naming\SmartUniqueNamer

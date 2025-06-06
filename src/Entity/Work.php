@@ -135,9 +135,16 @@ class Work implements UserOwnerInterface
     )]
     private float $totalAmount = 0.0;
 
+    /**
+     * @var Collection<int, WorkImage>
+     */
+    #[ORM\OneToMany(mappedBy: 'work', targetEntity: WorkImage::class, cascade: ['persist', 'remove'])]
+    private Collection $workImages;
+
     public function __construct()
     {
         $this->typeOfWorks = new ArrayCollection();
+        $this->workImages = new ArrayCollection();
     }
 
     final public function getId(): ?int
@@ -302,6 +309,33 @@ class Work implements UserOwnerInterface
     final public function setTotalAmount(float $totalAmount): static
     {
         $this->totalAmount = $totalAmount;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, WorkImage>
+     */
+    final public function getWorkImages(): Collection
+    {
+        return $this->workImages;
+    }
+
+    final public function addWorkImage(WorkImage $workImage): static
+    {
+        if (!$this->workImages->contains($workImage)) {
+            $this->workImages->add($workImage);
+            $workImage->setWork($this);
+        }
+
+        return $this;
+    }
+
+    final public function removeWorkImage(WorkImage $workImage): static
+    {
+        if ($this->workImages->removeElement($workImage) && $workImage->getWork() === $this) {
+            $workImage->setWork(null);
+        }
 
         return $this;
     }

@@ -34,6 +34,7 @@ phpstan.neon
 path_to_save_pdf_with_added_data.pdf
 summary_events.pdf
 public/products-invoice/*
+public/work-images/*
 
 *.crt
 
