@@ -7,6 +7,7 @@ namespace App\Tests\Support;
 use Codeception\Actor;
 use App\Tests\Enum\UserFixturesEnum;
 use App\Tests\Support\Trait\GrabEntityTrait;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 /**
  * Inherited Methods.
@@ -60,5 +61,19 @@ final class ApiTester extends Actor
         if (file_exists($file)) {
             unlink($file);
         }
+    }
+
+    public function assertFileIsUploaded(string $directory, string $fileName): void
+    {
+        /** @var ParameterBagInterface $parameterBagInterface */
+        $parameterBagInterface = $this->grabService(ParameterBagInterface::class);
+        $this->assertFileExists($parameterBagInterface->get($directory) . $fileName);
+    }
+
+    public function assertFileIsDeleted(string $directory, string $fileName): void
+    {
+        /** @var ParameterBagInterface $parameterBagInterface */
+        $parameterBagInterface = $this->grabService(ParameterBagInterface::class);
+        $this->assertFileDoesNotExist($parameterBagInterface->get($directory) . $fileName);
     }
 }

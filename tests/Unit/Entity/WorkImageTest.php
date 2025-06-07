@@ -19,13 +19,13 @@ final class WorkImageTest extends AbstractEntityTestDefault
     {
         $workImage = $this->generateValidEntity();
 
-        $this->tester->assertEquals($workImage->getUpdateAt(), $this->date);
+        $this->tester->assertEquals($workImage->getUpdatedAt(), $this->date);
         $this->assertInstanceOf(File::class, $workImage->getImageFile());
     }
 
     public function testFalseEntity(): void
     {
-        $this->assertHasErrors(3, new WorkImage());
+        $this->assertHasErrors(2, new WorkImage());
     }
 
     private function generateValidEntity(): WorkImage
@@ -34,7 +34,7 @@ final class WorkImageTest extends AbstractEntityTestDefault
 
         return (new WorkImage())
             ->setImageName('Fake Image')
-            ->setUpdateAt($this->date)
+            ->setUpdatedAt($this->date)
             ->setImageFile(new File($imagePath))
         ;
     }
