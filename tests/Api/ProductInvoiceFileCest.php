@@ -10,12 +10,14 @@ use App\Entity\User;
 use App\Helper\DateFormatHelper;
 use App\Tests\Support\ApiTester;
 use App\Entity\ProductInvoiceFile;
-use App\Tests\Enum\UserFixturesEnum;
 use Codeception\Attribute\Depends;
+use App\Tests\Enum\UserFixturesEnum;
 
 final class ProductInvoiceFileCest
 {
     private const string FILE_NAME = 'InvoiceTemplate.pdf';
+
+    private const string DIRECTORY_FILES = 'product_invoices';
 
     private User $user;
 
@@ -48,7 +50,7 @@ final class ProductInvoiceFileCest
         $filePath = codecept_data_dir(self::FILE_NAME);
 
         $I->haveHttpHeader('Content-Type', '');
-        $I->sendPost('/api/product_invoice_files', [
+        $response = $I->sendPost(self::URL_API, [
             'date' => (new DateTime())->format(DateFormatHelper::DEFAULT_FORMAT),
         ], [
             'files[]' => [
@@ -60,6 +62,10 @@ final class ProductInvoiceFileCest
             ],
         ]);
         $I->seeResponseCodeIsSuccessful();
+        $data = json_decode($response, true);
+        $fileName = $data[0]['name'];
+
+        $I->assertFileIsUploaded(self::DIRECTORY_FILES, $fileName);
     }
 
     #[Depends('testAddProductInvoiceFile')]
@@ -122,10 +128,11 @@ final class ProductInvoiceFileCest
     }
 
     #[Depends('testPutProductInvoiceFile')]
-    public function testDeleteWorkByUser(ApiTester $I): void
+    public function testDeleteProductInvoiceFile(ApiTester $I): void
     {
         $I->sendDelete(self::URL_API . "/{$this->productInvoiceFile->getId()}");
         $I->seeResponseCodeIsSuccessful();
+        $I->assertFileIsDeleted(self::DIRECTORY_FILES, $this->productInvoiceFile->getName());
     }
 
     /**
