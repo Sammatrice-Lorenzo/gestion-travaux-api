@@ -6,14 +6,18 @@ use DateTimeImmutable;
 use App\Entity\WorkImage;
 use App\Repository\WorkRepository;
 use App\Dto\WorkImageCreationInput;
+use App\Helper\ImageHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\InvalidEntityRepository;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\File\File;
 
 final readonly class WorkImageCreationService
 {
     public function __construct(
         private EntityManagerInterface $entityManagerInterface,
         private WorkRepository $workRepository,
+        private ParameterBagInterface $parameterBagInterface
     ) {}
 
     /**
@@ -27,6 +31,8 @@ final readonly class WorkImageCreationService
             throw new InvalidEntityRepository();
         }
 
+        /** @var string $path */
+        $path = $this->parameterBagInterface->get('work_images');
         foreach ($uploadedImages as $image) {
             $workImage = (new WorkImage())
                 ->setImageName($image->getClientOriginalName())
@@ -35,6 +41,8 @@ final readonly class WorkImageCreationService
                 ->setWork($work)
             ;
             $this->entityManagerInterface->persist($workImage);
+            
+            ImageHelper::compress($workImage->getImageName(), $path, 75);
 
             $workImages[] = $workImage;
         }

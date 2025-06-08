@@ -36,7 +36,7 @@ final class WorkImageVoter extends Voter
         $work = $subject->getWork();
 
         return match ($attribute) {
-            self::EDIT_WORK_IMAGE => $work->getUser()?->getId() === $user->getId(),
+            self::EDIT_WORK_IMAGE => $work->getUser()->getId() === $user->getId(),
             default => false,
         };
     }

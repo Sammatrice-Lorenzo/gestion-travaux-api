@@ -17,7 +17,7 @@ final class ProductInvoiceFileCest
 {
     private const string FILE_NAME = 'InvoiceTemplate.pdf';
 
-    private const string DIRECTORY_FILES = 'product_invoices';
+    private const string DIRECTORY_FILES = 'products_invoice';
 
     private User $user;
 
@@ -63,7 +63,7 @@ final class ProductInvoiceFileCest
         ]);
         $I->seeResponseCodeIsSuccessful();
         $data = json_decode($response, true);
-        $fileName = $data[0]['name'];
+        $fileName = $data[0]['path'];
 
         $I->assertFileIsUploaded(self::DIRECTORY_FILES, $fileName);
     }

@@ -32,7 +32,8 @@ final class WorkImageCest
         /**
          * @var Work $work
          */
-        $this->work = $I->grabEntity(Work::class, ['user' => $this->user]);
+        $work = $I->grabEntity(Work::class, ['user' => $this->user]);
+        $this->work = $work;
 
         $I->loginAs();
     }
@@ -41,7 +42,7 @@ final class WorkImageCest
     {
         $filePath = codecept_data_dir(self::IMAGE_NAME);
         $I->haveHttpHeader('Content-Type', '');
-        $response = $I->sendPost(self::URL_API, [
+        $I->sendPost(self::URL_API, [
             'workId' => $this->work->getId(),
         ], [
             'images[]' => [
