@@ -10,6 +10,7 @@ use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Doctrine\Orm\Extension\QueryItemExtensionInterface;
 use ApiPlatform\Doctrine\Orm\Extension\QueryCollectionExtensionInterface;
 use App\Entity\User;
+use App\Entity\WorkImage;
 
 final readonly class CurrentUserExtension implements QueryCollectionExtensionInterface, QueryItemExtensionInterface
 {
@@ -36,8 +37,24 @@ final readonly class CurrentUserExtension implements QueryCollectionExtensionInt
             return;
         }
 
+        if (WorkImage::class === $resourceClass) {
+            $this->filterByWorkImage($user, $queryBuilder);
+
+            return;
+        }
+
         $rootAlias = $queryBuilder->getRootAliases()[0];
         $queryBuilder->andWhere(sprintf('%s.user = :current_user', $rootAlias));
         $queryBuilder->setParameter('current_user', $user->getId());
+    }
+
+    private function filterByWorkImage(User $user, QueryBuilder $queryBuilder): void
+    {
+        $rootAlias = $queryBuilder->getRootAliases()[0];
+        $queryBuilder
+            ->join("{$rootAlias}.work", 'w')
+            ->andWhere('w.user = :current_user')
+            ->setParameter('current_user', $user->getId())
+        ;
     }
 }

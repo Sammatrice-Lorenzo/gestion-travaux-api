@@ -2,29 +2,29 @@
 
 namespace App\Controller;
 
+use App\Entity\WorkImage;
 use App\Service\ApiErrorsService;
-use App\Entity\ProductInvoiceFile;
-use App\Service\ProductInvoiceService;
-use App\Dto\ProductInvoiceCreationInput;
+use App\Dto\WorkImageCreationInput;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use App\Service\WorkImage\WorkImageCreationService;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-final class ProductInvoiceFileController extends AbstractController
+final class WorkImageController extends AbstractController
 {
     public function __construct(
         private SerializerInterface $serializer,
-        private ProductInvoiceService $productInvoiceService,
+        private WorkImageCreationService $workImageCreationService,
     ) {}
 
     public function __invoke(Request $request, ValidatorInterface $validatorInterface): JsonResponse
     {
-        $dto = new ProductInvoiceCreationInput();
-        $dto->date = $request->request->get('date');
-        $dto->files = $request->files->all('files');
+        $dto = new WorkImageCreationInput();
+        $dto->images = $request->files->all('images');
+        $dto->workId = $request->request->get('workId');
 
         $errors = $validatorInterface->validate($dto);
         if (count($errors) > 0) {
@@ -33,10 +33,9 @@ final class ProductInvoiceFileController extends AbstractController
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $productInvoiceFiles = $this->productInvoiceService->getProductInvoicesCreated($dto);
-
-        $data = $this->serializer->serialize($productInvoiceFiles, 'json', [
-            'groups' => ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_READ,
+        $workImages = $this->workImageCreationService->getWorkImagesCreated($dto);
+        $data = $this->serializer->serialize($workImages, 'json', [
+            'groups' => WorkImage::GROUP_WORK_IMAGE_READ,
         ]);
 
         return new JsonResponse($data, JsonResponse::HTTP_CREATED, [], true);
