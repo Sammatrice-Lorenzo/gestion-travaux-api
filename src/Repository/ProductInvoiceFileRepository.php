@@ -33,7 +33,7 @@ final class ProductInvoiceFileRepository extends ServiceEntityRepository impleme
             ->setParameter('start', $period->getStartDate())
             ->setParameter('end', $period->getEndDate())
             ->setParameter('user', $user)
-            ->orderBy('p.date', 'ASC')
+            ->orderBy('p.date', 'DESC')
             ->getQuery()
             ->getResult()
         ;
