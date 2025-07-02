@@ -37,6 +37,7 @@ public/products-invoice/*
 public/work-images/*
 
 *.crt
+config/gestion-travaux-firebase-admin.json
 
 docker/prod/cert.pem
 docker/prod/key.pem
