@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Tests\Enum\UserFixturesEnum;
 use App\Entity\TokenNotificationPush;
 use App\Tests\Support\FunctionalTester;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
 
 final class NotificationPushCommandCest
@@ -59,6 +60,10 @@ final class NotificationPushCommandCest
 
     private function generateTokenPushNotification(FunctionalTester $I, User $user): void
     {
+        $em = $I->grabEntityManagerInterface();
+
+        $this->removeNotification($I, $em);
+
         $faker = Factory::create('fr_FR');
         $tokenNotificatioPush = (new TokenNotificationPush())
             ->setToken($faker->linuxPlatformToken())
@@ -66,8 +71,16 @@ final class NotificationPushCommandCest
             ->setUser($user)
         ;
 
-        $em = $I->grabEntityManagerInterface();
         $em->persist($tokenNotificatioPush);
         $em->flush();
+    }
+
+    private function removeNotification(FunctionalTester $I, EntityManagerInterface $em): void
+    {
+        /** @var TokenNotificationPush[] $tokenNotificationPushs */
+        $tokenNotificationPushs = $I->grabEntities(TokenNotificationPush::class);
+        foreach ($tokenNotificationPushs as $tokenNotificationPush) {
+            $em->remove($tokenNotificationPush);
+        }
     }
 }

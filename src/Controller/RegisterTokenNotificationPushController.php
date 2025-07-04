@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Entity\TokenNotificationPush;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,7 +22,7 @@ final class RegisterTokenNotificationPushController extends AbstractController
     {
         $tokenNotificationPushData = $this->tokenNotificationPushManagerService->deserializeRequestContent($request);
 
-        /** * @var User $user  */
+        /** @var User $user */
         $user = $this->getUser();
 
         $response = new JsonResponse();
@@ -41,7 +42,7 @@ final class RegisterTokenNotificationPushController extends AbstractController
         );
 
         return $response
-            ->setData($data)
+            ->setJson($data)
             ->setStatusCode(Response::HTTP_OK)
         ;
     }

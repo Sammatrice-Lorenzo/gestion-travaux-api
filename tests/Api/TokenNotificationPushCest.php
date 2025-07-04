@@ -44,7 +44,7 @@ final class TokenNotificationPushCest
     {
         $faker = Factory::create('fr_FR');
         $parameters = [
-            'token' => $faker->linuxPlatformToken(),
+            'token' => "{$faker->linuxPlatformToken()}-123",
             'userAgent' => $faker->userAgent(),
         ];
 
