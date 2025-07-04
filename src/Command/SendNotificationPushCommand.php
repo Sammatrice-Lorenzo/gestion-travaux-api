@@ -2,7 +2,6 @@
 
 namespace App\Command;
 
-use App\Service\FirebaseNotificationService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -10,6 +9,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use App\Repository\TokenNotificationPushRepository;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use App\Interface\Firebase\FirebaseNotificationServiceInterface;
 
 #[AsCommand(
     name: 'app:send-notification-push',
@@ -18,7 +18,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 final class SendNotificationPushCommand extends Command
 {
     public function __construct(
-        private readonly FirebaseNotificationService $firebaseNotificationService,
+        private readonly FirebaseNotificationServiceInterface $firebaseNotificationService,
         private readonly TokenNotificationPushRepository $tokenNotificationPushRepository
     ) {
         parent::__construct();

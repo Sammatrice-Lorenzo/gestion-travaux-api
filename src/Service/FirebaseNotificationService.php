@@ -7,9 +7,10 @@ use RuntimeException;
 use App\Dto\FirebaseServiceAccount;
 use App\Factory\FirebaseServiceAccountFactory;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use App\Interface\Firebase\FirebaseNotificationServiceInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
-final class FirebaseNotificationService
+final class FirebaseNotificationService implements FirebaseNotificationServiceInterface
 {
     private FirebaseServiceAccount $serviceAccount;
 
@@ -23,7 +24,7 @@ final class FirebaseNotificationService
     /**
      * @throws RuntimeException
      *
-     * @return array<string, string>
+     * @return array<string, array<string, int|string>|string>
      */
     public function sendNotification(string $token, string $title, string $body): array
     {

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\TokenNotificationPush;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use App\Repository\TokenNotificationPushRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -23,13 +24,15 @@ final class RegisterTokenNotificationPushController extends AbstractController
         /** * @var User $user  */
         $user = $this->getUser();
 
+        $response = new JsonResponse();
+
         $userAgent = $tokenNotificationPushData->getUserAgent();
         $token = $tokenNotificationPushData->getToken();
         /** @var ?TokenNotificationPush $tokenNotificationPush */
         $tokenNotificationPush = $this->tokenNotificationPushRepository->findOneBy(['user' => $user, 'userAgent' => $userAgent]);
 
         if ($tokenNotificationPush && $tokenNotificationPush->getToken() === $token) {
-            return new JsonResponse([], JsonResponse::HTTP_NO_CONTENT, [], true);
+            return $response->setStatusCode(Response::HTTP_NO_CONTENT);
         }
 
         $data = $this->tokenNotificationPushManagerService->serializeTokenNotificationPush(
@@ -37,6 +40,9 @@ final class RegisterTokenNotificationPushController extends AbstractController
             $tokenNotificationPush
         );
 
-        return new JsonResponse($data, JsonResponse::HTTP_OK, [], true);
+        return $response
+            ->setData($data)
+            ->setStatusCode(Response::HTTP_OK)
+        ;
     }
 }
