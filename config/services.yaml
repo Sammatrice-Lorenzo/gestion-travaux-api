@@ -11,6 +11,7 @@ parameters:
     url_front: '%env(URL_GESTION_TRAVAUX_PWA)%'
     mail_username: '%env(MAIL_USERNAME)%'
     env: '%env(APP_ENV)%'
+    firebase_admin: '%kernel.project_dir%/config/gestion-travaux-firebase-admin.json'
 services:
     # default configuration for services in *this* file
     _defaults:

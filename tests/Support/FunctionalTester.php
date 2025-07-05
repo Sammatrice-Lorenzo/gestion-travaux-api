@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Support;
 
 use Codeception\Actor;
+use App\Tests\Support\Trait\GrabEntityTrait;
 
 /**
- * Inherited Methods
+ * Inherited Methods.
  *
  * @method void wantTo($text)
  * @method void wantToTest($text)
@@ -21,8 +22,9 @@ use Codeception\Actor;
  * @method void pause($vars = [])
  *
  * @SuppressWarnings(PHPMD)
-*/
+ */
 final class FunctionalTester extends Actor
 {
     use _generated\FunctionalTesterActions;
+    use GrabEntityTrait;
 }

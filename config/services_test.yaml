@@ -1,0 +1,4 @@
+services:
+    App\Interface\Firebase\FirebaseNotificationServiceInterface: '@App\Tests\Support\Fake\FakeFirebaseNotificationService'
+
+    App\Tests\Support\Fake\FakeFirebaseNotificationService: ~
