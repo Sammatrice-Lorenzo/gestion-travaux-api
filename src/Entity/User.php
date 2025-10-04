@@ -131,12 +131,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: ProductInvoiceFile::class)]
     private Collection $productInvoiceFiles;
 
+    /**
+     * @var Collection<int, Supplier>
+     */
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Supplier::class, orphanRemoval: true)]
+    private Collection $suppliers;
+
     public function __construct()
     {
         $this->clients = new ArrayCollection();
         $this->works = new ArrayCollection();
         $this->workEventDays = new ArrayCollection();
         $this->productInvoiceFiles = new ArrayCollection();
+        $this->suppliers = new ArrayCollection();
     }
 
     final public function getId(): ?int
@@ -344,6 +351,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         if (!$this->productInvoiceFiles->contains($productInvoiceFile)) {
             $this->productInvoiceFiles->add($productInvoiceFile);
             $productInvoiceFile->setUser($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Supplier>
+     */
+    public function getSuppliers(): Collection
+    {
+        return $this->suppliers;
+    }
+
+    public function addSupplier(Supplier $supplier): static
+    {
+        if (!$this->suppliers->contains($supplier)) {
+            $this->suppliers->add($supplier);
+            $supplier->setUser($this);
         }
 
         return $this;
