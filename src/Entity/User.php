@@ -73,6 +73,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
         WorkEventDay::GROUP_WORK_EVENT_DAY_READ,
         Client::GROUP_CLIENT_READ,
         Work::GROUP_WORK_READ,
+        Supplier::GROUP_SUPPLIER_READ,
     ])]
     private ?int $id = null;
 

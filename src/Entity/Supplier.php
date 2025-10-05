@@ -2,54 +2,101 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use App\Repository\SupplierRepository;
 use DateTimeImmutable;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use App\Interface\UserOwnerInterface;
+use App\Repository\SupplierRepository;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\OpenApi\Model\Operation;
+use App\Processor\UserAssignmentProcessor;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\NotBlank;
-use Symfony\Component\Validator\Constraints\NotNull;
-use Symfony\Component\Validator\Constraints\Time;
+use Symfony\Component\Validator\Constraints\Regex;
 
 #[ORM\Entity(repositoryClass: SupplierRepository::class)]
-#[ApiResource]
-class Supplier
+#[ApiResource(
+    openapi: new Operation(
+        security: [['bearerAuth' => []]],
+    ),
+    denormalizationContext: ['groups' => ['supplier:write']],
+    normalizationContext: ['groups' => ['supplier:read']],
+    operations: [
+        new GetCollection(
+            security: "is_granted('ROLE_USER')"
+        ),
+        new Get(
+            security: "is_granted('VIEW', object)"
+        ),
+        new Post(
+            security: "is_granted('ROLE_USER')",
+            processor: UserAssignmentProcessor::class,
+        ),
+        new Put(
+            security: "is_granted('EDIT', object)"
+        ),
+        new Delete(
+            security: "is_granted('EDIT', object)"
+        ),
+    ],
+)]
+
+class Supplier implements UserOwnerInterface
 {
+    private const string GROUP_SUPPLIER_WRITE = 'supplier:write';
+
+    public const string GROUP_SUPPLIER_READ = 'supplier:read';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups([self::GROUP_SUPPLIER_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[NotBlank]
+    #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
     private string $name;
 
     #[ORM\Column(length: 255)]
     #[NotBlank]
+    #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
     private string $address;
 
     #[ORM\Column(length: 255)]
     #[NotBlank]
+    #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
     private string $city;
 
     #[ORM\Column(length: 255)]
     #[NotBlank]
+    #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
     private string $country;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Regex(
+        pattern: '/^(\+|00)[1-9]{1}[0-9]{0,2}[\s.-]?([0-9]{1,4}[\s.-]?){1,12}[0-9]{1,4}$/',
+        message: 'Insérer un numéro de téléphone valide'
+    )]
+    #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
     private ?string $phone = null;
 
     #[ORM\Column(length: 50, nullable: true)]
+    #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
     private ?string $vatNumber = null;
 
-    #[ORM\Column]
-    #[Time]
+    #[ORM\Column(type: 'datetime_immutable')]
     private DateTimeImmutable $createdAt;
 
     #[ORM\ManyToOne(inversedBy: 'suppliers')]
     #[ORM\JoinColumn(nullable: false)]
-    #[NotNull]
+    #[Groups([self::GROUP_SUPPLIER_READ])]
     private User $user;
 
     /**
@@ -146,11 +193,12 @@ class Supplier
         return $this->createdAt;
     }
 
-    public function setCreatedAt(DateTimeImmutable $createdAt): static
+    #[ORM\PrePersist]
+    public function setCreatedAtValue(): void
     {
-        $this->createdAt = $createdAt;
-
-        return $this;
+        if (null === $this->createdAt) {
+            $this->createdAt = new DateTimeImmutable();
+        }
     }
 
     public function getUser(): User
