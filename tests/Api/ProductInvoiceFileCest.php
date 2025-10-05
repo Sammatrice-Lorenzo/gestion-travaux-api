@@ -7,6 +7,7 @@ namespace App\Tests\Api;
 use DateTime;
 use ZipArchive;
 use App\Entity\User;
+use App\Entity\Supplier;
 use App\Helper\DateFormatHelper;
 use App\Tests\Support\ApiTester;
 use App\Entity\ProductInvoiceFile;
@@ -118,16 +119,35 @@ final class ProductInvoiceFileCest
     #[Depends('testPostDownloadZip')]
     public function testPutProductInvoiceFile(ApiTester $I): void
     {
-        $parameters = $this->getPameters('Test product invoice file');
-        $parametersWithDate = $parameters;
-        $parametersWithDate['date'] = (new DateTime())->format(DateFormatHelper::DEFAULT_FORMAT);
+        $parameters = $this->getPutParameters('Test product invoice file');
 
-        $I->sendPut(self::URL_API . "/{$this->productInvoiceFile->getId()}", $parametersWithDate);
+        $I->sendPut(self::URL_API . "/{$this->productInvoiceFile->getId()}", $parameters);
         $I->seeResponseCodeIsSuccessful();
-        $I->seeResponseContainsJson($parameters);
+        $I->seeResponseContainsJson($this->getPameters('Test product invoice file'));
     }
 
     #[Depends('testPutProductInvoiceFile')]
+    public function testPutProductInvoiceFileWithSupplier(ApiTester $I): void
+    {
+        /** @var Supplier $supplier */
+        $supplier = $I->grabEntity(Supplier::class);
+
+        $supplier->getId();
+
+        $parameters = $this->getPutParameters('Test product invoice file with supplier');
+        $parameters['supplierId'] = $supplier->getId();
+        
+        $I->sendPut(self::URL_API . "/{$this->productInvoiceFile->getId()}", $parameters);
+        $I->seeResponseCodeIsSuccessful();
+
+        unset($parameters['date']);
+        unset($parameters['supplierId']);
+        $parameters['supplier'] = "/api/suppliers/{$supplier->getId()}";
+
+        $I->seeResponseContainsJson($parameters);
+    }
+
+    #[Depends('testPutProductInvoiceFileWithSupplier')]
     public function testDeleteProductInvoiceFile(ApiTester $I): void
     {
         $I->sendDelete(self::URL_API . "/{$this->productInvoiceFile->getId()}");
@@ -144,6 +164,19 @@ final class ProductInvoiceFileCest
             'name' => $name,
             'totalAmount' => 127.50,
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function getPutParameters(string $name): array
+    {
+        $parameters = $this->getPameters($name);
+        $parametersWithDate = $parameters;
+        $parametersWithDate['date'] = (new DateTime())->format(DateFormatHelper::DEFAULT_FORMAT);
+        $parametersWithDate['supplierId'] = null;
+
+        return $parametersWithDate;
     }
 
     private function assertIsAZip(ApiTester $I, string $file): void

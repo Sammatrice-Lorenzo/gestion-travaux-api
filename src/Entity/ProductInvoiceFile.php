@@ -185,6 +185,7 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     private float $totalAmount;
 
     #[ORM\ManyToOne(inversedBy: 'productInvoiceFiles')]
+    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
     private ?Supplier $supplier = null;
 
     final public function getId(): ?int
