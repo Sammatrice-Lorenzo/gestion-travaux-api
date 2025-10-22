@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
+use App\Processor\DeletionProcessor;
 use ApiPlatform\Metadata\ApiResource;
 use App\Interface\UserOwnerInterface;
 use App\Repository\SupplierRepository;
@@ -17,8 +18,8 @@ use App\Processor\UserAssignmentProcessor;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
+use Symfony\Component\Validator\Constraints\NotBlank;
 
 #[ORM\Entity(repositoryClass: SupplierRepository::class)]
 #[ApiResource(
@@ -42,7 +43,8 @@ use Symfony\Component\Validator\Constraints\Regex;
             security: "is_granted('EDIT', object)"
         ),
         new Delete(
-            security: "is_granted('EDIT', object)"
+            security: "is_granted('EDIT', object)",
+            processor: DeletionProcessor::class
         ),
     ],
 )]
@@ -56,12 +58,16 @@ class Supplier implements UserOwnerInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups([self::GROUP_SUPPLIER_READ])]
+    #[Groups([self::GROUP_SUPPLIER_READ, ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[NotBlank]
-    #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
+    #[Groups([
+        self::GROUP_SUPPLIER_READ,
+        self::GROUP_SUPPLIER_WRITE,
+        ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_READ,
+    ])]
     private string $name;
 
     #[ORM\Column(length: 255)]
@@ -81,7 +87,7 @@ class Supplier implements UserOwnerInterface
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Regex(
-        pattern: '/^(\+|00)[1-9]{1}[0-9]{0,2}[\s.-]?([0-9]{1,4}[\s.-]?){1,12}[0-9]{1,4}$/',
+        pattern: '/^(?:(?:\+|00)\d{1,3}[\s.-]?)?(?:\(?\d+\)?[\s.-]?){5,}$/',
         message: 'Insérer un numéro de téléphone valide'
     )]
     #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
