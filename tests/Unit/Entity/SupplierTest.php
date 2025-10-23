@@ -15,11 +15,14 @@ final class SupplierTest extends AbstractEntityTestDefault
 
     private User $user;
 
+    private ProductInvoiceFile $productInvoiceFile;
+
     public function _before(): void
     {
         /** @var User $user */
         $user = $this->tester->grabEntity(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);
         $this->user = $user;
+        $this->productInvoiceFile = $this->generateProductInvoiceFile();
     }
 
     public function testRightEntity(): void
@@ -29,14 +32,14 @@ final class SupplierTest extends AbstractEntityTestDefault
         $this->tester->assertEquals($supplier->getUser(), $this->user);
         $this->tester->assertEquals($supplier->getCity(), self::CITY);
 
-        // $this->tester->assertTrue(
-        //     in_array($this->productInvoiceFile, $supplier->getProductInvoiceFiles()->toArray())
-        // );
+        $this->tester->assertTrue(
+            in_array($this->productInvoiceFile, $supplier->getProductInvoiceFiles()->toArray())
+        );
     }
 
     public function testFalseEntity(): void
     {
-        $this->assertHasErrors(6, new Supplier());
+        $this->assertHasErrors(4, new Supplier());
     }
 
     private function generateValidEntity(): Supplier
@@ -48,7 +51,7 @@ final class SupplierTest extends AbstractEntityTestDefault
             ->setPhone('0123456789')
             ->setCountry('France')
             ->setUser($this->user)
-            ->addProductInvoiceFile($this->generateProductInvoiceFile())
+            ->addProductInvoiceFile($this->productInvoiceFile)
         ;
     }
 

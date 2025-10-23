@@ -202,9 +202,7 @@ class Supplier implements UserOwnerInterface
     #[ORM\PrePersist]
     public function setCreatedAtValue(): void
     {
-        if (null === $this->createdAt) {
-            $this->createdAt = new DateTimeImmutable();
-        }
+        $this->createdAt = new DateTimeImmutable();
     }
 
     public function getUser(): User

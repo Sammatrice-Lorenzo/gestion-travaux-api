@@ -142,7 +142,7 @@ final class ProductInvoiceFileCest
 
         unset($parameters['date']);
         unset($parameters['supplierId']);
-        $parameters['supplier'] = "/api/suppliers/{$supplier->getId()}";
+        $parameters['supplier'] = ['id' => $supplier->getId(), 'name' => $supplier->getName()];
 
         $I->seeResponseContainsJson($parameters);
     }

@@ -27,7 +27,7 @@ final class ProductInvoiceFileTest extends AbstractEntityTestDefault
         $user = $this->tester->grabEntity(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);
         $this->user = $user;
 
-        /** @var Supplier $supplierr */
+        /** @var Supplier $supplier */
         $supplier = $this->tester->grabEntity(Supplier::class);
         $this->supplier = $supplier;
     }
