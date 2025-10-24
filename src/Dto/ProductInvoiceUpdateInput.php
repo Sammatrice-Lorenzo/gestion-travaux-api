@@ -23,4 +23,7 @@ final class ProductInvoiceUpdateInput
     #[Assert\Type('string')]
     #[Groups([ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_WRITE])]
     public string $name;
+    
+    #[Groups([ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_WRITE])]
+    public ?int $supplierId;
 }

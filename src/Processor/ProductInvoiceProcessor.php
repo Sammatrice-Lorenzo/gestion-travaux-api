@@ -3,6 +3,7 @@
 namespace App\Processor;
 
 use DateTime;
+use App\Entity\Supplier;
 use ApiPlatform\Metadata\Put;
 use App\Entity\ProductInvoiceFile;
 use ApiPlatform\Metadata\Operation;
@@ -29,10 +30,18 @@ final class ProductInvoiceProcessor implements ProcessorInterface
         $id = $uriVariables['id'];
         $invoice = $this->entityManagerInterface->getRepository(ProductInvoiceFile::class)->find($id);
         if ($operation instanceof Put) {
+
+            $supplierId = $data->supplierId;
+            $supplier = $supplierId
+                ? $this->entityManagerInterface->getRepository(Supplier::class)->find($supplierId)
+                : null
+            ;
+
             $invoice
                 ->setDate(new DateTime($data->date))
                 ->setName($data->name)
                 ->setTotalAmount((float) $data->totalAmount)
+                ->setSupplier($supplier)
             ;
         }
 

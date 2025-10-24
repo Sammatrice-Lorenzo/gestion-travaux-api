@@ -184,6 +184,10 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
     private float $totalAmount;
 
+    #[ORM\ManyToOne(inversedBy: 'productInvoiceFiles')]
+    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
+    private ?Supplier $supplier = null;
+
     final public function getId(): ?int
     {
         return $this->id;
@@ -260,6 +264,18 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     final public function setTotalAmount(float $totalAmount): static
     {
         $this->totalAmount = $totalAmount;
+
+        return $this;
+    }
+
+    public function getSupplier(): ?Supplier
+    {
+        return $this->supplier;
+    }
+
+    public function setSupplier(?Supplier $supplier): static
+    {
+        $this->supplier = $supplier;
 
         return $this;
     }
