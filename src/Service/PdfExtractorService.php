@@ -12,7 +12,8 @@ final class PdfExtractorService
 
     private File $file;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->parser = new Parser();
     }
 
@@ -28,7 +29,7 @@ final class PdfExtractorService
         return $this->parser->parseFile($this->file->getPathname());
     }
 
-    private function getTextPdf(): string
+    public function getTextPdf(): string
     {
         $pdf = $this->getPdf();
         

@@ -15,4 +15,15 @@ final class SupplierRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, Supplier::class);
     }
+
+    public function findByName(string $name): ?Supplier
+    {
+        $qb = $this->createQueryBuilder('s');
+
+        return $qb->where($qb->expr()->like('s.name', ':name'))
+            ->setParameter('name', $name)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
 }

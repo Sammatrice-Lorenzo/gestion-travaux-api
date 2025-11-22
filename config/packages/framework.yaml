@@ -12,6 +12,15 @@ framework:
         cookie_samesite: lax
         storage_factory_id: session.storage.factory.native
 
+    http_client:
+        scoped_clients:
+            ollama.client:
+                base_uri: 'http://localhost:11434'
+                timeout: 300
+                max_duration: 300
+                headers:
+                    Content-Type: 'application/json'
+
     #esi: true
     #fragments: true
     php_errors:

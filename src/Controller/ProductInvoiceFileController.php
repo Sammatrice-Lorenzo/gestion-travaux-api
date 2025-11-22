@@ -8,7 +8,9 @@ use App\Service\ProductInvoiceService;
 use App\Dto\ProductInvoiceCreationInput;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Message\ParseProductInvoiceFileMessage;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,7 +22,7 @@ final class ProductInvoiceFileController extends AbstractController
         private ProductInvoiceService $productInvoiceService,
     ) {}
 
-    public function __invoke(Request $request, ValidatorInterface $validatorInterface): JsonResponse
+    public function __invoke(Request $request, ValidatorInterface $validatorInterface, MessageBusInterface $bus): JsonResponse
     {
         $dto = new ProductInvoiceCreationInput();
         $dto->date = $request->request->get('date');
@@ -34,6 +36,10 @@ final class ProductInvoiceFileController extends AbstractController
         }
 
         $productInvoiceFiles = $this->productInvoiceService->getProductInvoicesCreated($dto);
+
+        foreach ($productInvoiceFiles as $productInvoiceFile) {
+            $bus->dispatch(new ParseProductInvoiceFileMessage($productInvoiceFile->getId()));
+        }
 
         $data = $this->serializer->serialize($productInvoiceFiles, 'json', [
             'groups' => ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_READ,

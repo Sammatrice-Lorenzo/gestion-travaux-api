@@ -38,6 +38,7 @@ public/work-images/*
 
 *.crt
 config/gestion-travaux-firebase-admin.json
+src/Prompt/*
 
 docker/prod/cert.pem
 docker/prod/key.pem
