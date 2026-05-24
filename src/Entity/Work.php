@@ -29,35 +29,27 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: WorkRepository::class)]
-#[ApiResource(
-    order: ['start' => 'DESC'],
-    paginationItemsPerPage: 10,
-    paginationMaximumItemsPerPage: 30,
-    openapi: new Operation(
-        security: [['bearerAuth' => []]],
+#[ApiResource(operations: [
+    new GetCollection(
+        security: "is_granted('ROLE_USER')"
     ),
-    denormalizationContext: ['groups' => ['work:write']],
-    normalizationContext: ['groups' => ['work:read']],
-    operations: [
-        new GetCollection(
-            security: "is_granted('ROLE_USER')"
-        ),
-        new Get(
-            security: "is_granted('VIEW', object)"
-        ),
-        new Post(
-            security: "is_granted('ROLE_USER')",
-            processor: UserAssignmentProcessor::class,
-        ),
-        new Put(
-            security: "is_granted('EDIT', object)"
-        ),
-        new Delete(
-            security: "is_granted('EDIT', object)",
-            processor: WorkProcessor::class
-        ),
-    ],
-)]
+    new Get(
+        security: "is_granted('VIEW', object)"
+    ),
+    new Post(
+        security: "is_granted('ROLE_USER')",
+        processor: UserAssignmentProcessor::class,
+    ),
+    new Put(
+        security: "is_granted('EDIT', object)"
+    ),
+    new Delete(
+        security: "is_granted('EDIT', object)",
+        processor: WorkProcessor::class
+    ),
+], normalizationContext: ['groups' => ['work:read']], denormalizationContext: ['groups' => ['work:write']], openapi: new Operation(
+    security: [['bearerAuth' => []]],
+), order: ['start' => 'DESC'], paginationItemsPerPage: 10, paginationMaximumItemsPerPage: 30)]
 class Work implements UserOwnerInterface
 {
     private const string GROUP_WORK_WRITE = 'work:write';
@@ -107,7 +99,7 @@ class Work implements UserOwnerInterface
     /**
      * @var Collection<int, TypeOfWork>
      */
-    #[ORM\OneToMany(targetEntity: TypeOfWork::class, mappedBy: 'work', cascade: ['remove'])]
+    #[ORM\OneToMany(mappedBy: 'work', targetEntity: TypeOfWork::class, cascade: ['remove'])]
     #[ORM\JoinColumn(nullable: true)]
     private ?Collection $typeOfWorks;
 
@@ -129,10 +121,7 @@ class Work implements UserOwnerInterface
 
     #[ORM\Column]
     #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
-    #[Assert\Range(
-        min: 0,
-        notInRangeMessage: 'Le minimum autorisé est de {{ min }}',
-    )]
+    #[Assert\Range(notInRangeMessage: 'Le minimum autorisé est de {{ min }}', min: 0)]
     private float $totalAmount = 0.0;
 
     /**
@@ -222,8 +211,6 @@ class Work implements UserOwnerInterface
 
     /**
      * @param string[] $equipements
-     *
-     * @return Work
      */
     final public function setEquipements(array $equipements): self
     {

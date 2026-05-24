@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Entity\User;
@@ -27,7 +29,7 @@ final class SecurityController extends AbstractController
             'roles' => $user->getRoles(),
         ]);
     }
-
+    
     #[Route(path: '/api/logout', name: 'api_logout', methods: ['POST'])]
     public function logout(): void {}
 }

@@ -14,16 +14,13 @@ final class WorkImageVoter extends Voter
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::EDIT_WORK_IMAGE])
+        return self::EDIT_WORK_IMAGE === $attribute
             && $subject instanceof WorkImage;
     }
 
     /**
-     * @param string $attribute
      * @param WorkImage $subject
-     * @param TokenInterface $token
      *
-     * @return bool
      */
     protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
     {

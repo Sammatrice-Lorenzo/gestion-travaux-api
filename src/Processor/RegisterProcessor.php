@@ -27,8 +27,6 @@ final class RegisterProcessor implements ProcessorInterface
 
     /**
      * @param RegisterInput $data
-     *
-     * @return User
      */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): User
     {

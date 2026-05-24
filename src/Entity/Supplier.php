@@ -22,32 +22,27 @@ use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
 #[ORM\Entity(repositoryClass: SupplierRepository::class)]
-#[ApiResource(
-    openapi: new Operation(
-        security: [['bearerAuth' => []]],
+#[ApiResource(operations: [
+    new GetCollection(
+        security: "is_granted('ROLE_USER')"
     ),
-    denormalizationContext: ['groups' => ['supplier:write']],
-    normalizationContext: ['groups' => ['supplier:read']],
-    operations: [
-        new GetCollection(
-            security: "is_granted('ROLE_USER')"
-        ),
-        new Get(
-            security: "is_granted('VIEW', object)"
-        ),
-        new Post(
-            security: "is_granted('ROLE_USER')",
-            processor: UserAssignmentProcessor::class,
-        ),
-        new Put(
-            security: "is_granted('EDIT', object)"
-        ),
-        new Delete(
-            security: "is_granted('EDIT', object)",
-            processor: DeletionProcessor::class
-        ),
-    ],
-)]
+    new Get(
+        security: "is_granted('VIEW', object)"
+    ),
+    new Post(
+        security: "is_granted('ROLE_USER')",
+        processor: UserAssignmentProcessor::class,
+    ),
+    new Put(
+        security: "is_granted('EDIT', object)"
+    ),
+    new Delete(
+        security: "is_granted('EDIT', object)",
+        processor: DeletionProcessor::class
+    ),
+], normalizationContext: ['groups' => ['supplier:read']], denormalizationContext: ['groups' => ['supplier:write']], openapi: new Operation(
+    security: [['bearerAuth' => []]],
+))]
 
 class Supplier implements UserOwnerInterface
 {
@@ -237,11 +232,9 @@ class Supplier implements UserOwnerInterface
 
     public function removeProductInvoiceFile(ProductInvoiceFile $productInvoiceFile): static
     {
-        if ($this->productInvoiceFiles->removeElement($productInvoiceFile)) {
-            // set the owning side to null (unless already changed)
-            if ($productInvoiceFile->getSupplier() === $this) {
-                $productInvoiceFile->setSupplier(null);
-            }
+        // set the owning side to null (unless already changed)
+        if ($this->productInvoiceFiles->removeElement($productInvoiceFile) && $productInvoiceFile->getSupplier() === $this) {
+            $productInvoiceFile->setSupplier(null);
         }
 
         return $this;

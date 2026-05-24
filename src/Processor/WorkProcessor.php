@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Processor;
 
 use App\Entity\Work;
@@ -11,7 +13,7 @@ use ApiPlatform\Doctrine\Common\State\PersistProcessor;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * @implements ProcessorInterface<Work, Work|void>
+ * @implements ProcessorInterface<Work, void|Work>
  */
 final class WorkProcessor implements ProcessorInterface
 {

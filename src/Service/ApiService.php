@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Service;
 
 use Symfony\Component\HttpFoundation\Response;
@@ -9,8 +11,6 @@ final readonly class ApiService
 {
     /**
      * @param string[] $errors
-     *
-     * @return JsonResponse
      */
     public static function getJsonResponseRequestParameters(array $errors): JsonResponse
     {

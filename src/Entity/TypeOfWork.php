@@ -53,8 +53,6 @@ class TypeOfWork
 
     /**
      * @param string[] $equipements
-     *
-     * @return TypeOfWork
      */
     public function setEquipements(array $equipements): self
     {

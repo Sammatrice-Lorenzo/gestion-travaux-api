@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Interface;
 
 use setasign\Fpdi\Fpdi;

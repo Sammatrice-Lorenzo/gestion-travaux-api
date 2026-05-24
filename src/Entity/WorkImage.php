@@ -23,48 +23,43 @@ use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
 use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
 
 #[ORM\Entity(repositoryClass: WorkImageRepository::class)]
-#[ApiResource(
-    openapi: new Operation(
-        security: [['bearerAuth' => []]],
-    ),
-    denormalizationContext: ['groups' => ['work_image:write']],
-    normalizationContext: ['groups' => ['work_image:read']],
-    operations: [
-        new Post(
-            security: "is_granted('ROLE_USER')",
-            controller: WorkImageController::class,
-            input: WorkImageCreationInput::class,
-            inputFormats: ['multipart' => ['multipart/form-data']],
-            deserialize: false,
-            openapi: new ModelOperation(
-                security: [['bearerAuth' => []]],
-                requestBody: new ModelRequestBody(
-                    content: new ArrayObject([
-                        'multipart/form-data' => [
-                            'schema' => [
-                                'type' => 'object',
-                                'properties' => [
-                                    'workId' => ['type' => 'integer', 'format' => 'integer'],
-                                    'files' => [
-                                        'type' => 'array',
-                                        'items' => ['type' => 'string', 'format' => 'binary'],
-                                    ],
+#[ApiResource(operations: [
+    new Post(
+        inputFormats: ['multipart' => ['multipart/form-data']],
+        controller: WorkImageController::class,
+        openapi: new ModelOperation(
+            requestBody: new ModelRequestBody(
+                content: new ArrayObject([
+                    'multipart/form-data' => [
+                        'schema' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'workId' => ['type' => 'integer', 'format' => 'integer'],
+                                'files' => [
+                                    'type' => 'array',
+                                    'items' => ['type' => 'string', 'format' => 'binary'],
                                 ],
-                                'required' => ['workId', 'files'],
                             ],
+                            'required' => ['workId', 'files'],
                         ],
-                    ])
-                )
-            )
+                    ],
+                ])
+            ),
+            security: [['bearerAuth' => []]]
         ),
-        new GetCollection(
-            security: "is_granted('ROLE_USER')",
-        ),
-        new Delete(
-            security: "is_granted('EDIT_WORK_IMAGE', object)",
-        ),
-    ]
-)]
+        security: "is_granted('ROLE_USER')",
+        input: WorkImageCreationInput::class,
+        deserialize: false
+    ),
+    new GetCollection(
+        security: "is_granted('ROLE_USER')",
+    ),
+    new Delete(
+        security: "is_granted('EDIT_WORK_IMAGE', object)",
+    ),
+], normalizationContext: ['groups' => ['work_image:read']], denormalizationContext: ['groups' => ['work_image:write']], openapi: new Operation(
+    security: [['bearerAuth' => []]],
+))]
 #[Vich\Uploadable]
 class WorkImage
 {
@@ -126,7 +121,7 @@ class WorkImage
         return $this;
     }
 
-    final public function getWork(): ?Work
+    final public function getWork(): \App\Entity\Work
     {
         return $this->work;
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\OpenApi;
 
 use ArrayObject;
@@ -17,8 +19,6 @@ final class OpenApiFactory implements OpenApiFactoryInterface
 
     /**
      * @param mixed[] $context
-     *
-     * @return OpenApi
      */
     public function __invoke(array $context = []): OpenApi
     {
@@ -83,6 +83,12 @@ final class OpenApiFactory implements OpenApiFactoryInterface
             post: new Operation(
                 operationId: 'postVerifiedEmail',
                 tags: ['Auth'],
+                responses: [
+                    '204' => [
+                        'description' => 'Utilisateur vérifiée',
+                        'content' => 'No content',
+                    ],
+                ],
                 requestBody: new RequestBody(
                     content: new ArrayObject([
                         'application/json' => [
@@ -91,13 +97,7 @@ final class OpenApiFactory implements OpenApiFactoryInterface
                             ],
                         ],
                     ])
-                ),
-                responses: [
-                    '204' => [
-                        'description' => 'Utilisateur vérifiée',
-                        'content' => 'No content',
-                    ],
-                ]
+                )
             )
         );
     }
@@ -142,13 +142,13 @@ final class OpenApiFactory implements OpenApiFactoryInterface
             post: new Operation(
                 operationId: 'postApiLogout',
                 tags: ['Auth'],
-                summary: 'Déconnexion utilisateur connecté',
                 responses: [
                     '204' => [
                         'description' => 'Utilisateur déconnecté',
                         'content' => 'No content',
                     ],
-                ]
+                ],
+                summary: 'Déconnexion utilisateur connecté'
             )
         );
     }
@@ -159,15 +159,6 @@ final class OpenApiFactory implements OpenApiFactoryInterface
             post: new Operation(
                 operationId: 'postApiLogin',
                 tags: ['Auth'],
-                requestBody: new RequestBody(
-                    content: new ArrayObject([
-                        'application/json' => [
-                            'schema' => [
-                                '$ref' => '#/components/schemas/Credentials',
-                            ],
-                        ],
-                    ])
-                ),
                 responses: [
                     '200' => [
                         'description' => 'Token JWT',
@@ -179,7 +170,16 @@ final class OpenApiFactory implements OpenApiFactoryInterface
                             ],
                         ],
                     ],
-                ]
+                ],
+                requestBody: new RequestBody(
+                    content: new ArrayObject([
+                        'application/json' => [
+                            'schema' => [
+                                '$ref' => '#/components/schemas/Credentials',
+                            ],
+                        ],
+                    ])
+                )
             )
         );
     }

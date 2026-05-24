@@ -68,7 +68,7 @@ final class FirebaseNotificationService implements FirebaseNotificationServiceIn
 
             return $response->toArray(false);
         } catch (\Throwable $e) {
-            throw new RuntimeException('Firebase notification sending failed: ' . $e->getMessage());
+            throw new RuntimeException('Firebase notification sending failed: ' . $e->getMessage(), $e->getCode(), $e);
         }
     }
 

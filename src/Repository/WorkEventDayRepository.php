@@ -26,8 +26,6 @@ final class WorkEventDayRepository extends ServiceEntityRepository implements Mo
     }
 
     /**
-     * @param User $user
-     * @param DateTime $month
      *
      * @return WorkEventDay[]
      */

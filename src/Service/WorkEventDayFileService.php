@@ -57,8 +57,9 @@ final class WorkEventDayFileService extends AbstractFileService
         
         // En-tête
         $columnsWidths = $this->getColumnsWidth();
+        $counter = count($header);
 
-        for ($i = 0; $i < count($header); ++$i) {
+        for ($i = 0; $i < $counter; ++$i) {
             $this->fpdi->Cell($columnsWidths[$i], 7, self::convertTextInUTF8($header[$i]), 1, 0, 'C', true);
         }
         $this->fpdi->Ln();
@@ -108,7 +109,6 @@ final class WorkEventDayFileService extends AbstractFileService
     }
 
     /**
-     * @param DateTime $date
      * @param string[] $header
      * @param WorkEventDay[] $workEventDays
      */

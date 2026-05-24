@@ -26,7 +26,7 @@ final class TokenNotificationManagerService
         /** * @var User $user  */
         $user = $this->security->getUser();
 
-        if (!$tokenNotificationPush) {
+        if (!$tokenNotificationPush instanceof TokenNotificationPush) {
             $tokenNotificationPush = (new TokenNotificationPush())
                 ->setUser($user)
                 ->setToken(token: $token)
