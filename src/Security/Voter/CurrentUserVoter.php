@@ -9,6 +9,9 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
+/**
+ * @extends Voter<string, User|UserOwnerInterface>
+ */
 final class CurrentUserVoter extends Voter
 {
     public const string VIEW = 'VIEW';

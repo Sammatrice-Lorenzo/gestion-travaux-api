@@ -175,7 +175,7 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     #[ORM\JoinColumn(nullable: false)]
     private User $user;
 
-    #[Assert\File(mimeTypes: ['application/pdf', ['application/x-pdf']])]
+    #[Assert\File(mimeTypes: ['application/pdf', 'application/x-pdf'])]
     #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_WRITE])]
     #[Vich\UploadableField(mapping: 'products_invoice', fileNameProperty: 'path')]
     private ?File $file = null;

@@ -27,7 +27,7 @@ final class WorkProcessor implements ProcessorInterface
     ) {}
 
     /**
-     * @return void|Work
+     * @return Work
      */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {

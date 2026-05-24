@@ -9,6 +9,9 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
+/**
+ * @extends Voter<string, WorkImage>
+ */
 final class WorkImageVoter extends Voter
 {
     public const string EDIT_WORK_IMAGE = 'EDIT_WORK_IMAGE';
