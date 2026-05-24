@@ -27,7 +27,7 @@ use App\Repository\ProductInvoiceFileRepository;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
 use App\Controller\ProductInvoiceFileZipController;
-use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Vich\UploaderBundle\Mapping\Attribute as Vich;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Controller\ProductInvoiceFileDownloadController;
 use ApiPlatform\OpenApi\Model\Operation as ModelOperation;

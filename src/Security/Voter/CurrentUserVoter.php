@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Interface\UserOwnerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
+use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
 final class CurrentUserVoter extends Voter
@@ -23,7 +24,7 @@ final class CurrentUserVoter extends Voter
         return in_array($attribute, [self::VIEW, self::EDIT, self::EDIT_USER]) && $isInstancedOfEntityManagedByUser;
     }
 
-    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
+    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool
     {
         /** @var ?User $user */
         $user = $token->getUser();

@@ -3,6 +3,7 @@
 namespace App\Service\TokenNotificationPush;
 
 use App\Entity\TokenNotificationPush;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,7 +24,7 @@ final class TokenNotificationManagerService
         $userAgent = $tokenNotificationPushRequest->getUserAgent();
         $token = $tokenNotificationPushRequest->getToken();
 
-        /** * @var User $user  */
+        /** @var User $user */
         $user = $this->security->getUser();
 
         if (!$tokenNotificationPush instanceof TokenNotificationPush) {

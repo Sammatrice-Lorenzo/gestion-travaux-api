@@ -17,7 +17,7 @@ use ApiPlatform\OpenApi\Model\Operation;
 use Symfony\Component\HttpFoundation\File\File;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
-use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Vich\UploaderBundle\Mapping\Attribute as Vich;
 use Symfony\Component\Validator\Constraints\NotNull;
 use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
 use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
