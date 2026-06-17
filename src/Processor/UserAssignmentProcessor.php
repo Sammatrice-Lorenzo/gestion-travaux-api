@@ -14,13 +14,13 @@ use ApiPlatform\Doctrine\Common\State\PersistProcessor;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * @implements ProcessorInterface<UserOwnerInterface, UserOwnerInterface|void>
+ * @implements ProcessorInterface<mixed, mixed>
  */
 final class UserAssignmentProcessor implements ProcessorInterface
 {
     public function __construct(
         /**
-         * @var ProcessorInterface<UserOwnerInterface, UserOwnerInterface|void>
+         * @var ProcessorInterface<mixed, mixed>
          */
         #[Autowire(service: PersistProcessor::class)]
         private ProcessorInterface $processorInterface,
@@ -28,9 +28,6 @@ final class UserAssignmentProcessor implements ProcessorInterface
         private readonly Security $security,
     ) {}
 
-    /**
-     * @return UserOwnerInterface|void
-     */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
         if (!$data instanceof UserOwnerInterface) {

@@ -156,7 +156,7 @@ final class ProductInvoiceFileCest
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, float|string>
      */
     private function getPameters(string $name): array
     {
@@ -167,7 +167,7 @@ final class ProductInvoiceFileCest
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, null|float|string>
      */
     private function getPutParameters(string $name): array
     {

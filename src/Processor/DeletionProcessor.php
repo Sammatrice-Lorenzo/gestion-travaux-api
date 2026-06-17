@@ -2,7 +2,6 @@
 
 namespace App\Processor;
 
-use Doctrine\ORM\Mapping\Entity;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\EntityManagerInterface;
 use ApiPlatform\State\ProcessorInterface;
@@ -10,7 +9,7 @@ use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 /**
- * @implements ProcessorInterface<Entity, mixed>
+ * @implements ProcessorInterface<object, null>
  */
 final class DeletionProcessor implements ProcessorInterface
 {
@@ -19,7 +18,6 @@ final class DeletionProcessor implements ProcessorInterface
     ) {}
 
     /**
-     * @param Entity $data
      * @param array<string, mixed> $uriVariables
      * @param array<string, mixed> $context
      *

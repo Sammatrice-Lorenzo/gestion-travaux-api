@@ -37,7 +37,7 @@ final class CurrentUserVoter extends Voter
 
         return match ($attribute) {
             self::EDIT_USER => $subject->getId() === $user->getId(),
-            self::VIEW, self::EDIT => $subject->getUser()?->getId() === $user->getId(),
+            self::VIEW, self::EDIT => $subject instanceof UserOwnerInterface && $subject->getUser()->getId() === $user->getId(),
             default => false,
         };
     }
