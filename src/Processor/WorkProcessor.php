@@ -13,22 +13,19 @@ use ApiPlatform\Doctrine\Common\State\PersistProcessor;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * @implements ProcessorInterface<Work, void|Work>
+ * @implements ProcessorInterface<mixed, mixed>
  */
 final class WorkProcessor implements ProcessorInterface
 {
     public function __construct(
         /**
-         * @var ProcessorInterface<Work, void|Work>
+         * @var ProcessorInterface<mixed, mixed>
          */
         #[Autowire(service: PersistProcessor::class)]
         private ProcessorInterface $processorInterface,
         private EntityManagerInterface $entityManager,
     ) {}
 
-    /**
-     * @return Work
-     */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): mixed
     {
         if (!$data instanceof Work) {

@@ -13,9 +13,14 @@ parameters:
         - tests/Support/_generated/*
         - tests/Support/ApiTester.php
         - tests/Support/UnitTester.php
+        - tests/Support/AcceptanceTester.php
+        - tests/Support/FunctionalTester.php
+        - tests/Support/Trait/GrabEntityTrait.php
 
     ignoreErrors:
-    - '#Call to an undefined method App\\Tests\\Support\\.*::.*\(\)#'
+        - '#Call to an undefined method App\\Tests\\Support\\.*::.*\(\)#'
+
+    reportUnmatchedIgnoredErrors: false
 
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml

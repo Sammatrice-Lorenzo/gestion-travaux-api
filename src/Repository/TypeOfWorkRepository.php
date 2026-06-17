@@ -12,9 +12,9 @@ use Doctrine\Persistence\ManagerRegistry;
  * @extends ServiceEntityRepository<TypeOfWork>
  *
  * @method null|TypeOfWork find($id, $lockMode = null, $lockVersion = null)
- * @method null|TypeOfWork findOneBy(array $criteria, array $orderBy = null)
+ * @method null|TypeOfWork findOneBy(array<string, mixed> $criteria, array<string, string>|null $orderBy = null)
  * @method TypeOfWork[]    findAll()
- * @method TypeOfWork[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method TypeOfWork[]    findBy(array<string, mixed> $criteria, array<string, string>|null $orderBy = null, ?int $limit = null, ?int $offset = null)
  */
 final class TypeOfWorkRepository extends ServiceEntityRepository
 {

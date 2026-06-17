@@ -12,9 +12,9 @@ use Doctrine\Persistence\ManagerRegistry;
  * @extends ServiceEntityRepository<Client>
  *
  * @method null|Client find($id, $lockMode = null, $lockVersion = null)
- * @method null|Client findOneBy(array $criteria, array $orderBy = null)
+ * @method null|Client findOneBy(array<string, mixed> $criteria, array<string, string>|null $orderBy = null)
  * @method Client[]    findAll()
- * @method Client[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method Client[]    findBy(array<string, mixed> $criteria, array<string, string>|null $orderBy = null, ?int $limit = null, ?int $offset = null)
  */
 final class ClientRepository extends ServiceEntityRepository
 {
