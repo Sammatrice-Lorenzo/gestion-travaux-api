@@ -20,9 +20,7 @@ final readonly class EmailVerifier
     ) {}
 
     /**
-     * @param string $verifyEmailRouteName
      * @param User $user
-     * @param TemplatedEmail $email
      */
     public function sendEmailConfirmation(
         string $verifyEmailRouteName,
@@ -46,7 +44,6 @@ final readonly class EmailVerifier
     }
 
     /**
-     * @param Request $request
      * @param User $user
      *
      * @throws VerifyEmailExceptionInterface

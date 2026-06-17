@@ -26,9 +26,6 @@ abstract class AbstractFileService implements InvoiceFileInterface
         return iconv('UTF-8', 'windows-1252', $text);
     }
 
-    /**
-     * @return integer
-     */
     public function getTotalColumnsWidth(): int
     {
         return array_sum($this->getColumnsWidth());
@@ -43,7 +40,7 @@ abstract class AbstractFileService implements InvoiceFileInterface
     {
         $floatValue = (float) $value;
 
-        return $floatValue === 0.0 ? $value : number_format($floatValue, 2, ',', '');
+        return 0.0 === $floatValue ? $value : number_format($floatValue, 2, ',', '');
     }
 
     public function handleMultiLineText(string $value, float $cellWidth, string $position): void
@@ -60,7 +57,6 @@ abstract class AbstractFileService implements InvoiceFileInterface
     /**
      * @param string[] $row
      * @param int[] $columnsWidths
-     * @return integer
      */
     public function calculateMaxHeight(array $row, array $columnsWidths): int
     {

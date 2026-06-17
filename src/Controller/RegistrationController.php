@@ -20,12 +20,8 @@ final class RegistrationController extends AbstractController
     ) {}
 
     /**
-     * @param Request $request
-     * @param TranslatorInterface $translator
-     *
      * @throws VerifyEmailExceptionInterface
      *
-     * @return RedirectResponse
      */
     #[Route(path: '/api/verify/email', name: 'app_verify_email')]
     public function verifyUserEmail(Request $request, TranslatorInterface $translator): RedirectResponse

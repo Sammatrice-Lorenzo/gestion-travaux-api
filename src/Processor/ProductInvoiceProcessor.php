@@ -22,8 +22,6 @@ final class ProductInvoiceProcessor implements ProcessorInterface
 
     /**
      * @param ProductInvoiceUpdateInput $data
-     *
-     * @return ProductInvoiceFile
      */
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): ProductInvoiceFile
     {

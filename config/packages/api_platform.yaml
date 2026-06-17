@@ -1,4 +1,8 @@
 api_platform:
+    use_symfony_listeners: true
+    serializer:
+        hydra_prefix: true
+    keep_legacy_inflector: false
     formats:
         json: ['application/json']
         jsonld: ['application/ld+json']

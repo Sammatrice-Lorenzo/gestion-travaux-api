@@ -12,7 +12,8 @@ final class PdfExtractorService
 
     private File $file;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->parser = new Parser();
     }
 
@@ -35,7 +36,7 @@ final class PdfExtractorService
         return $pdf->getText();
     }
 
-    public function extractTotalFromPdf(): ?float
+    public function extractTotalFromPdf(): float
     {
         $totalSum = 0.0;
         $pdf = $this->getPdf();

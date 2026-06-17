@@ -59,7 +59,7 @@ final class InvoiceFileService extends AbstractFileService
         $columnsWidths = $this->getColumnsWidth();
         $totalColumnsWidth = $this->getTotalColumnsWidth();
 
-        self::setElementCenter($this->fpdi, $totalColumnsWidth);
+        $this->setElementCenter($this->fpdi, $totalColumnsWidth);
 
         $this->fpdi->SetLineWidth(.3);
         $this->fpdi->SetDrawColor(54, 95, 145);
@@ -84,16 +84,16 @@ final class InvoiceFileService extends AbstractFileService
         $totalColumnsWidth = $this->getTotalColumnsWidth();
 
         $this->fpdi->SetFont('TrebuchetMS', '', self::SIZE_FONT);
-        self::setElementCenter($this->fpdi, $totalColumnsWidth);
+        $this->setElementCenter($this->fpdi, $totalColumnsWidth);
 
         $total = 0.0;
         foreach ($invoiceData as $row) {
-            self::setElementCenter($this->fpdi, $totalColumnsWidth);
+            $this->setElementCenter($this->fpdi, $totalColumnsWidth);
             $maxHeight = $this->calculateMaxHeight($row, $columnsWidths);
 
             foreach ($row as $i => $cell) {
                 $value = self::formatFloatValue($cell);
-                $position = self::getPositionTextInCell((int) $i, $row);
+                $position = $this->getPositionTextInCell((int) $i, $row);
                 $cellWidth = $columnsWidths[$i];
 
                 if ($this->fpdi->GetStringWidth($value) > $cellWidth) {
@@ -117,10 +117,10 @@ final class InvoiceFileService extends AbstractFileService
         $totalColumnsWidth = $this->getTotalColumnsWidth();
 
         $lineTotal = ['', 'Main-d\'oeuvre et diverses fournitures', 'Ensemble', $sumOfTotal];
-        self::setElementCenter($this->fpdi, $totalColumnsWidth);
+        $this->setElementCenter($this->fpdi, $totalColumnsWidth);
 
         foreach ($lineTotal as $index => $element) {
-            $position = self::getPositionTextInCell($index, $lineTotal);
+            $position = $this->getPositionTextInCell($index, $lineTotal);
             $value = self::formatFloatValue($element);
 
             $this->fpdi->Cell(
@@ -178,7 +178,7 @@ final class InvoiceFileService extends AbstractFileService
         $this->fpdi->SetXY(50, 87);
         $totalColumnsWidth = $this->getTotalColumnsWidth();
 
-        self::setElementCenter($this->fpdi, $totalColumnsWidth);
+        $this->setElementCenter($this->fpdi, $totalColumnsWidth);
 
         $this->fpdi->SetLineWidth(.3);
         $this->fpdi->SetDrawColor(54, 95, 145);
@@ -196,7 +196,7 @@ final class InvoiceFileService extends AbstractFileService
 
         $this->fpdi->SetFont('TrebuchetMS', '', self::SIZE_FONT);
         $nameInvoice = self::convertTextInUTF8($nameInvoice);
-        self::setElementCenter($this->fpdi, $totalColumnsWidth);
+        $this->setElementCenter($this->fpdi, $totalColumnsWidth);
         
         $this->fpdi->SetFillColor(255, 255, 255);
         $this->fpdi->MultiCell($totalColumnsWidth, self::ROW_HEIGHT_COLUMN_INVOICE_NAME, $nameInvoice, 1, 'C');
@@ -211,7 +211,7 @@ final class InvoiceFileService extends AbstractFileService
         return [40, 67, 30, 30];
     }
 
-    private static function setElementCenter(Fpdi $pdf, int $totalColumnsWidth): void
+    private function setElementCenter(Fpdi $pdf, int $totalColumnsWidth): void
     {
         $pdf->SetX(($pdf->GetPageWidth() - $totalColumnsWidth + 10) / 2);
     }
@@ -222,12 +222,10 @@ final class InvoiceFileService extends AbstractFileService
     }
 
     /**
-     * @param int $key
      * @param mixed[] $elements
      *
-     * @return string
      */
-    private static function getPositionTextInCell(int $key, array $elements): string
+    private function getPositionTextInCell(int $key, array $elements): string
     {
         return $key === array_key_last($elements) ? 'R' : 'L';
     }
@@ -265,7 +263,6 @@ final class InvoiceFileService extends AbstractFileService
 
     /**
      * @param string[] $headers
-     * @param stdClass $invoiceData
      */
     public function generateInvoiceFile(Client $client, array $headers, stdClass $invoiceData): void
     {

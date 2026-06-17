@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Support\Fake;
 
 use App\Interface\Firebase\FirebaseNotificationServiceInterface;

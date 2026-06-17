@@ -27,7 +27,7 @@ use App\Repository\ProductInvoiceFileRepository;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
 use App\Controller\ProductInvoiceFileZipController;
-use Vich\UploaderBundle\Mapping\Annotation as Vich;
+use Vich\UploaderBundle\Mapping\Attribute as Vich;
 use Symfony\Component\Validator\Constraints as Assert;
 use App\Controller\ProductInvoiceFileDownloadController;
 use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
@@ -35,24 +35,15 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
 
 #[ORM\Entity(repositoryClass: ProductInvoiceFileRepository::class)]
 #[ApiResource(
-    openapi: new Operation(
-        security: [['bearerAuth' => []]],
-    ),
-    normalizationContext: ['groups' => ['product_invoice_file:read']],
-    denormalizationContext: ['groups' => ['product_invoice_file:write']],
     operations: [
         new GetCollection(
             security: "is_granted('ROLE_USER')",
             provider: MonthlyProvider::class,
         ),
         new Post(
-            security: "is_granted('ROLE_USER')",
-            controller: ProductInvoiceFileController::class,
-            input: ProductInvoiceCreationInput::class,
             inputFormats: ['multipart' => ['multipart/form-data']],
-            deserialize: false,
+            controller: ProductInvoiceFileController::class,
             openapi: new ModelOperation(
-                security: [['bearerAuth' => []]],
                 requestBody: new ModelRequestBody(
                     content: new ArrayObject([
                         'multipart/form-data' => [
@@ -69,21 +60,20 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
                             ],
                         ],
                     ])
-                )
-            )
+                ),
+                security: [['bearerAuth' => []]]
+            ),
+            security: "is_granted('ROLE_USER')",
+            input: ProductInvoiceCreationInput::class,
+            deserialize: false
         ),
         new Delete(
             security: "is_granted('EDIT', object)",
         ),
         new Get(
-            security: "is_granted('ROLE_USER')",
             uriTemplate: '/product_invoice_files/{id}/download',
             controller: ProductInvoiceFileDownloadController::class,
-            read: true,
-            deserialize: false,
             openapi: new ModelOperation(
-                security: [['bearerAuth' => []]],
-                summary: 'Téléchargement du fichier PDF',
                 responses: [
                     '200' => [
                         'description' => 'Fichier PDF',
@@ -93,19 +83,28 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
                             ],
                         ],
                     ],
-                ]
-            )
+                ],
+                summary: 'Téléchargement du fichier PDF',
+                security: [['bearerAuth' => []]]
+            ),
+            security: "is_granted('ROLE_USER')",
+            read: true,
+            deserialize: false
         ),
         new Post(
-            security: "is_granted('ROLE_USER')",
             uriTemplate: '/product_invoice_files_download_zip',
             controller: ProductInvoiceFileZipController::class,
-            input: ProductInvoiceDownloadZipInput::class,
-            read: false,
-            write: false,
-            output: false,
             openapi: new ModelOperation(
-                security: [['bearerAuth' => []]],
+                responses: [
+                    '200' => [
+                        'description' => 'Fichier ZIP',
+                        'content' => [
+                            'application/zip' => [
+                                'schema' => ['type' => 'string', 'format' => 'binary'],
+                            ],
+                        ],
+                    ],
+                ],
                 summary: 'Télécharge un zip de factures',
                 requestBody: new ModelRequestBody(
                     description: 'Liste des IDs',
@@ -124,24 +123,25 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
                         ],
                     ])
                 ),
-                responses: [
-                    '200' => [
-                        'description' => 'Fichier ZIP',
-                        'content' => [
-                            'application/zip' => [
-                                'schema' => ['type' => 'string', 'format' => 'binary'],
-                            ],
-                        ],
-                    ],
-                ]
-            )
+                security: [['bearerAuth' => []]]
+            ),
+            security: "is_granted('ROLE_USER')",
+            input: ProductInvoiceDownloadZipInput::class,
+            output: false,
+            read: false,
+            write: false
         ),
         new Put(
             security: "is_granted('EDIT', object)",
             input: ProductInvoiceUpdateInput::class,
             processor: ProductInvoiceProcessor::class
         ),
-    ]
+    ],
+    normalizationContext: ['groups' => ['product_invoice_file:read']],
+    denormalizationContext: ['groups' => ['product_invoice_file:write']],
+    openapi: new Operation(
+        security: [['bearerAuth' => []]],
+    )
 )]
 #[Vich\Uploadable]
 class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
@@ -175,7 +175,7 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     #[ORM\JoinColumn(nullable: false)]
     private User $user;
 
-    #[Assert\File(mimeTypes: ['application/pdf', ['application/x-pdf']])]
+    #[Assert\File(mimeTypes: ['application/pdf', 'application/x-pdf'])]
     #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_WRITE])]
     #[Vich\UploadableField(mapping: 'products_invoice', fileNameProperty: 'path')]
     private ?File $file = null;

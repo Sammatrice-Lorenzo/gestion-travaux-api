@@ -23,31 +23,26 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ClientRepository::class)]
-#[ApiResource(
-    openapi: new Operation(
-        security: [['bearerAuth' => []]],
+#[ApiResource(operations: [
+    new GetCollection(
+        security: "is_granted('ROLE_USER')"
     ),
-    denormalizationContext: ['groups' => ['client:write']],
-    normalizationContext: ['groups' => ['client:read']],
-    operations: [
-        new GetCollection(
-            security: "is_granted('ROLE_USER')"
-        ),
-        new Get(
-            security: "is_granted('VIEW', object)"
-        ),
-        new Post(
-            security: "is_granted('ROLE_USER')",
-            processor: UserAssignmentProcessor::class,
-        ),
-        new Put(
-            security: "is_granted('EDIT', object)"
-        ),
-        new Delete(
-            security: "is_granted('EDIT', object)"
-        ),
-    ],
-)]
+    new Get(
+        security: "is_granted('VIEW', object)"
+    ),
+    new Post(
+        security: "is_granted('ROLE_USER')",
+        processor: UserAssignmentProcessor::class,
+    ),
+    new Put(
+        security: "is_granted('EDIT', object)"
+    ),
+    new Delete(
+        security: "is_granted('EDIT', object)"
+    ),
+], normalizationContext: ['groups' => ['client:read']], denormalizationContext: ['groups' => ['client:write']], openapi: new Operation(
+    security: [['bearerAuth' => []]],
+))]
 class Client implements UserOwnerInterface
 {
     use ClientTrait;
@@ -74,7 +69,7 @@ class Client implements UserOwnerInterface
     
     #[ORM\Column(length: 255)]
     #[Groups([self::GROUP_CLIENT_READ, self::GROUP_CLIENT_WRITE, Work::GROUP_WORK_READ])]
-    #[Assert\Regex(pattern: '/^0[1-9](?:[\s.-]?[0-9]{2}){4}$/', message: 'Insérer un numéro de téléphone valide')]
+    #[Assert\Regex(pattern: '/^0[1-9](?:[\s.-]?\d{2}){4}$/', message: 'Insérer un numéro de téléphone valide')]
     private string $phoneNumber;
     
     #[ORM\Column(length: 255)]

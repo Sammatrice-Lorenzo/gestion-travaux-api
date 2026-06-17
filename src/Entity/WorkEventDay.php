@@ -28,53 +28,48 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
 
 #[ORM\Entity(repositoryClass: WorkEventDayRepository::class)]
-#[ApiResource(
-    openapi: new Operation(
-        security: [['bearerAuth' => []]],
+#[ApiResource(operations: [
+    new GetCollection(
+        security: "is_granted('ROLE_USER')",
+        provider: MonthlyProvider::class
     ),
-    denormalizationContext: ['groups' => ['work_event_day:write']],
-    normalizationContext: ['groups' => ['work_event_day:read']],
-    operations: [
-        new GetCollection(
-            security: "is_granted('ROLE_USER')",
-            provider: MonthlyProvider::class
-        ),
-        new Get(
-            security: "is_granted('VIEW', object)"
-        ),
-        new Post(
-            security: "is_granted('ROLE_USER')",
-            processor: UserAssignmentProcessor::class,
-        ),
-        new Put(
-            security: "is_granted('EDIT', object)"
-        ),
-        new Delete(
-            security: "is_granted('EDIT', object)"
-        ),
-        new Post(
-            security: "is_granted('ROLE_USER')",
-            uriTemplate: '/work_event_days/file_download',
-            controller: WorkEventDayFileController::class,
-            input: WorkEventDayDownloadFileInput::class,
-            deserialize: false,
-            openapi: new ModelOperation(
-                security: [['bearerAuth' => []]],
-                summary: 'Téléchargement du fichier PDF',
-                responses: [
-                    '200' => [
-                        'description' => 'Fichier PDF',
-                        'content' => [
-                            'application/pdf' => [
-                                'schema' => ['type' => 'string', 'format' => 'binary'],
-                            ],
+    new Get(
+        security: "is_granted('VIEW', object)"
+    ),
+    new Post(
+        security: "is_granted('ROLE_USER')",
+        processor: UserAssignmentProcessor::class,
+    ),
+    new Put(
+        security: "is_granted('EDIT', object)"
+    ),
+    new Delete(
+        security: "is_granted('EDIT', object)"
+    ),
+    new Post(
+        uriTemplate: '/work_event_days/file_download',
+        controller: WorkEventDayFileController::class,
+        openapi: new ModelOperation(
+            responses: [
+                '200' => [
+                    'description' => 'Fichier PDF',
+                    'content' => [
+                        'application/pdf' => [
+                            'schema' => ['type' => 'string', 'format' => 'binary'],
                         ],
                     ],
-                ]
-            )
+                ],
+            ],
+            summary: 'Téléchargement du fichier PDF',
+            security: [['bearerAuth' => []]]
         ),
-    ],
-)]
+        security: "is_granted('ROLE_USER')",
+        input: WorkEventDayDownloadFileInput::class,
+        deserialize: false
+    ),
+], normalizationContext: ['groups' => ['work_event_day:read']], denormalizationContext: ['groups' => ['work_event_day:write']], openapi: new Operation(
+    security: [['bearerAuth' => []]],
+))]
 class WorkEventDay implements UserOwnerInterface, MonthlyProviderInterface
 {
     private const string GROUP_WORK_EVENT_DAY_WRITE = 'work_event_day:write';
