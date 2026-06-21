@@ -50,8 +50,10 @@ final class MonthlyProvider implements ProviderInterface
 
         /** @var class-string<MonthlyProviderInterface> */
         $entity = $context['resource_class'];
-        /** @var MonthlyProviderRepositoryInterface $repository */
         $repository = $this->entityManagerInterface->getRepository($entity);
+        if (!$repository instanceof MonthlyProviderRepositoryInterface) {
+            throw new \LogicException(sprintf('Repository for "%s" must implement %s.', $entity, MonthlyProviderRepositoryInterface::class));
+        }
 
         $date = new DateTime();
         $filters = $context['filters'] ?? [];

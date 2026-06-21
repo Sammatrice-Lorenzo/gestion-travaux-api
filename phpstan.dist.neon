@@ -26,5 +26,5 @@ parameters:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
 
     doctrine:
-        ormRepositoryClass: MyApp\Doctrine\BetterEntityRepository
+        ormRepositoryClass: Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository
         objectManagerLoader: doctrine-orm-bootstrap.php
