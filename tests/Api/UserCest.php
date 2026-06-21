@@ -38,7 +38,8 @@ final class UserCest
 
     public function testCreateUser(ApiTester $I): void
     {
-        $parameters = $this->getParametersCreationUser('john.doe@test.com', self::PASSWORD, self::PASSWORD);
+        $email = sprintf('john.doe+%s@test.com', uniqid());
+        $parameters = $this->getParametersCreationUser($email, self::PASSWORD, self::PASSWORD);
         $I->sendPost('/api/register', $parameters);
         $I->seeResponseCodeIsSuccessful();
 
@@ -96,7 +97,11 @@ final class UserCest
 
     private function assertConstrainPasswordCreation(ApiTester $I): void
     {
-        $parameters = $this->getParametersCreationUser('aa@test.com', self::PASSWORD, 'ASAZSZEASAZSS');
+        $parameters = $this->getParametersCreationUser(
+            sprintf('aa+%s@test.com', uniqid()),
+            self::PASSWORD,
+            'ASAZSZEASAZSS'
+        );
         $I->sendPost('/api/register', $parameters);
 
         $I->seeResponseContainsJson([

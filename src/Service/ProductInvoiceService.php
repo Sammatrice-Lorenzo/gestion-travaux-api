@@ -20,6 +20,10 @@ final readonly class ProductInvoiceService
     private function getFormatDateByPdf(): string
     {
         $dateExtracted = $this->pdfExtractorService->extractDateFromPdf();
+        if ('' === $dateExtracted) {
+            return '';
+        }
+
         $dateExtracted = array_reverse(explode('/', $dateExtracted));
 
         return str_replace('/', '-', implode('/', $dateExtracted));

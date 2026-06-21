@@ -100,7 +100,6 @@ class Work implements UserOwnerInterface
      * @var Collection<int, TypeOfWork>
      */
     #[ORM\OneToMany(mappedBy: 'work', targetEntity: TypeOfWork::class, cascade: ['remove'])]
-    #[ORM\JoinColumn(nullable: true)]
     private ?Collection $typeOfWorks;
 
     #[ORM\ManyToOne(inversedBy: 'works')]
@@ -114,7 +113,7 @@ class Work implements UserOwnerInterface
     #[Groups([self::GROUP_WORK_READ, self::GROUP_WORK_WRITE])]
     private Client $client;
 
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(inversedBy: 'work', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
     #[ApiProperty(readableLink: true)]
     private ?Invoice $invoice = null;

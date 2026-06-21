@@ -35,6 +35,9 @@ jobs:
                   php bin/console cache:clear --env=test
                   php bin/console cache:warmup --env=test
 
+            - name: Build Codeception actors
+              run: vendor/bin/codecept build
+
             # review dog
             - uses: reviewdog/action-setup@e04ffabe3898a0af8d0fb1af00c188831c4b5893
               with:

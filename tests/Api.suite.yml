@@ -19,6 +19,9 @@ modules:
         PhpBrowser:
             url: http://localhost:8000
             environment: 'test'
+            curl:
+                CURLOPT_TIMEOUT: 60
+                CURLOPT_CONNECTTIMEOUT: 10
             headers:
                Content-Type: application/json
 extensions:

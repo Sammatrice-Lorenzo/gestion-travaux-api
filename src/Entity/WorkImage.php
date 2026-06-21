@@ -6,6 +6,7 @@ use ArrayObject;
 use DateTimeImmutable;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiFilter;
 use App\Dto\WorkImageCreationInput;
@@ -77,7 +78,7 @@ class WorkImage
     #[Groups([self::GROUP_WORK_IMAGE_WRITE, self::GROUP_WORK_IMAGE_READ])]
     private ?string $imageName = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     #[NotNull]
     #[Groups([self::GROUP_WORK_IMAGE_WRITE, self::GROUP_WORK_IMAGE_READ])]
     private DateTimeImmutable $updatedAt;
