@@ -47,6 +47,8 @@ security:
             jwt: ~
             logout:
                 path: api/logout
+                delete_cookies:
+                    BEARER: { path: /, samesite: lax }
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
     access_control:

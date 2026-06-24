@@ -3,3 +3,29 @@ lexik_jwt_authentication:
     public_key: '%env(resolve:JWT_PUBLIC_KEY)%'
     pass_phrase: '%env(JWT_PASSPHRASE)%'
     user_id_claim: email
+    remove_token_from_body_when_cookies_used: true
+    set_cookies:
+        BEARER:
+            httpOnly: true
+            secure: true
+            samesite: lax
+            path: /
+    token_extractors:
+        authorization_header:
+            enabled: true
+        cookie:
+            enabled: true
+            name: BEARER
+
+when@dev:
+    lexik_jwt_authentication:
+        set_cookies:
+            BEARER:
+                secure: false
+
+when@test:
+    lexik_jwt_authentication:
+        remove_token_from_body_when_cookies_used: false
+        set_cookies:
+            BEARER:
+                secure: false

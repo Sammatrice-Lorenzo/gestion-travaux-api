@@ -16,6 +16,8 @@
         "doctrine/doctrine-migrations-bundle": "^3.2",
         "doctrine/orm": "^3.0",
         "fakerphp/faker": "^1.24",
+        "guzzlehttp/guzzle": "^7.12.1",
+        "guzzlehttp/psr7": "^2.12.1",
         "jms/serializer-bundle": "^5.2",
         "kreait/firebase-php": "^7.0",
         "lexik/jwt-authentication-bundle": "^2.18",
