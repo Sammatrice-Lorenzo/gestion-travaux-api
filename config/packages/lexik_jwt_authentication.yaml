@@ -25,6 +25,7 @@ when@dev:
 
 when@test:
     lexik_jwt_authentication:
+        remove_token_from_body_when_cookies_used: false
         set_cookies:
             BEARER:
                 secure: false

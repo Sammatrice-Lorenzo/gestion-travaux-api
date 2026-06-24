@@ -38,13 +38,38 @@ final class ApiTester extends Actor
         ]);
 
         $this->seeResponseCodeIsSuccessful();
-        $response = $this->grabResponse();
-        $data = json_decode($response, true);
-        $token = $data['token'] ?? null;
+        $token = $this->extractAuthTokenFromLoginResponse();
+
+        if (null === $token || '' === $token) {
+            throw new \RuntimeException('Unable to authenticate: no JWT token found in login response.');
+        }
+
         $this->haveHttpHeader('Authorization', "Bearer {$token}");
 
         $this->amBearerAuthenticated($token);
         $this->amOnPage('/api');
+    }
+
+    private function extractAuthTokenFromLoginResponse(): ?string
+    {
+        $response = $this->grabResponse();
+        $data = json_decode($response, true);
+
+        if (is_array($data) && isset($data['token']) && is_string($data['token'])) {
+            return $data['token'];
+        }
+
+        try {
+            $setCookie = $this->grabHttpHeader('Set-Cookie');
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (preg_match('/BEARER=([^;]+)/', $setCookie, $matches)) {
+            return urldecode($matches[1]);
+        }
+
+        return null;
     }
 
     public function createFile(string $fileName, mixed $file): string
