@@ -6,8 +6,11 @@ inputs:
         required: true
     mysql_root_password:
         required: true
-    repository_backend_path:
+    backend_path:
         required: true
+    mysql_host:
+        required: false
+        default: '127.0.0.1'
 
 runs:
     using: 'composite'
@@ -23,8 +26,9 @@ runs:
           env:
               MYSQL_ROOT_PASSWORD: ${{ inputs.mysql_root_password }}
               MYSQL_DATABASE: ${{ inputs.mysql_database }}
+              MYSQL_HOST: ${{ inputs.mysql_host }}
           run: |
-              echo "DATABASE_URL=mysql://root:${MYSQL_ROOT_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}" > ${{ inputs.backend_path }}/.env.test.local
+              echo "DATABASE_URL=mysql://root:${MYSQL_ROOT_PASSWORD}@${MYSQL_HOST}:3306/${MYSQL_DATABASE}" > ${{ inputs.backend_path }}/.env.test.local
               echo "APP_ENV=test" >> ${{ inputs.backend_path }}/.env.test.local
               echo "DATABASE_SERVER_VERSION=8.4" >> ${{ inputs.backend_path }}/.env.test.local
 
@@ -43,6 +47,7 @@ runs:
         - name: Install dependencies with Yarn
           shell: bash
           run: yarn
+          working-directory: ${{ inputs.backend_path }}
 
         - name: Install Symfony CLI
           shell: bash

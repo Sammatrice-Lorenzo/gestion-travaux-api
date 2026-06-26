@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use ArrayObject;
@@ -14,26 +16,26 @@ use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use App\Interface\UserOwnerInterface;
-use App\Dto\ProductInvoiceUpdateInput;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model\Operation;
-use App\Dto\ProductInvoiceCreationInput;
-use App\Processor\ProductInvoiceProcessor;
-use App\Dto\ProductInvoiceDownloadZipInput;
 use App\Interface\MonthlyProviderInterface;
 use Symfony\Component\HttpFoundation\File\File;
-use App\Controller\ProductInvoiceFileController;
-use App\Repository\ProductInvoiceFileRepository;
+use App\Repository\SupplierReturnInvoiceFileRepository;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
-use App\Controller\ProductInvoiceFileZipController;
 use Vich\UploaderBundle\Mapping\Attribute as Vich;
+use App\Dto\SupplierReturnInvoiceCreationInput;
+use App\Dto\SupplierReturnInvoiceUpdateInput;
+use App\Dto\SupplierReturnInvoiceDownloadZipInput;
+use App\Processor\SupplierReturnInvoiceProcessor;
+use App\Controller\SupplierReturnInvoiceFileController;
+use App\Controller\SupplierReturnInvoiceFileZipController;
 use Symfony\Component\Validator\Constraints as Assert;
-use App\Controller\ProductInvoiceFileDownloadController;
+use App\Controller\SupplierReturnInvoiceFileDownloadController;
 use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
 use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
 
-#[ORM\Entity(repositoryClass: ProductInvoiceFileRepository::class)]
+#[ORM\Entity(repositoryClass: SupplierReturnInvoiceFileRepository::class)]
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -42,7 +44,7 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
         ),
         new Post(
             inputFormats: ['multipart' => ['multipart/form-data']],
-            controller: ProductInvoiceFileController::class,
+            controller: SupplierReturnInvoiceFileController::class,
             openapi: new ModelOperation(
                 requestBody: new ModelRequestBody(
                     content: new ArrayObject([
@@ -51,6 +53,7 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
                                 'type' => 'object',
                                 'properties' => [
                                     'date' => ['type' => 'string', 'format' => 'date'],
+                                    'supplierId' => ['type' => 'integer'],
                                     'files' => [
                                         'type' => 'array',
                                         'items' => ['type' => 'string', 'format' => 'binary'],
@@ -64,15 +67,15 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
                 security: [['bearerAuth' => []]]
             ),
             security: "is_granted('ROLE_USER')",
-            input: ProductInvoiceCreationInput::class,
+            input: SupplierReturnInvoiceCreationInput::class,
             deserialize: false
         ),
         new Delete(
             security: "is_granted('EDIT', object)",
         ),
         new Get(
-            uriTemplate: '/product_invoice_files/{id}/download',
-            controller: ProductInvoiceFileDownloadController::class,
+            uriTemplate: '/supplier_return_invoice_files/{id}/download',
+            controller: SupplierReturnInvoiceFileDownloadController::class,
             openapi: new ModelOperation(
                 responses: [
                     '200' => [
@@ -84,7 +87,7 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
                         ],
                     ],
                 ],
-                summary: 'Téléchargement du fichier PDF',
+                summary: 'Téléchargement du fichier PDF de retour',
                 security: [['bearerAuth' => []]]
             ),
             security: "is_granted('ROLE_USER')",
@@ -92,8 +95,8 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
             deserialize: false
         ),
         new Post(
-            uriTemplate: '/product_invoice_files_download_zip',
-            controller: ProductInvoiceFileZipController::class,
+            uriTemplate: '/supplier_return_invoice_files_download_zip',
+            controller: SupplierReturnInvoiceFileZipController::class,
             openapi: new ModelOperation(
                 responses: [
                     '200' => [
@@ -105,7 +108,7 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
                         ],
                     ],
                 ],
-                summary: 'Télécharge un zip de factures',
+                summary: 'Télécharge un zip de factures de retour',
                 requestBody: new ModelRequestBody(
                     description: 'Liste des IDs',
                     content: new ArrayObject([
@@ -126,144 +129,145 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
                 security: [['bearerAuth' => []]]
             ),
             security: "is_granted('ROLE_USER')",
-            input: ProductInvoiceDownloadZipInput::class,
+            input: SupplierReturnInvoiceDownloadZipInput::class,
             output: false,
             read: false,
             write: false
         ),
         new Put(
             security: "is_granted('EDIT', object)",
-            input: ProductInvoiceUpdateInput::class,
-            processor: ProductInvoiceProcessor::class
+            input: SupplierReturnInvoiceUpdateInput::class,
+            processor: SupplierReturnInvoiceProcessor::class
         ),
     ],
-    normalizationContext: ['groups' => ['product_invoice_file:read']],
-    denormalizationContext: ['groups' => ['product_invoice_file:write']],
+    normalizationContext: ['groups' => ['supplier_return_invoice_file:read']],
+    denormalizationContext: ['groups' => ['supplier_return_invoice_file:write']],
     openapi: new Operation(
         security: [['bearerAuth' => []]],
     )
 )]
 #[Vich\Uploadable]
-class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
+class SupplierReturnInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
 {
-    public const string GROUP_PRODUCT_INVOICE_FILE_READ = 'product_invoice_file:read';
+    public const string GROUP_READ = 'supplier_return_invoice_file:read';
 
-    public const string GROUP_PRODUCT_INVOICE_FILE_WRITE = 'product_invoice_file:write';
+    public const string GROUP_WRITE = 'supplier_return_invoice_file:write';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ, SupplierReturnInvoiceFile::GROUP_READ])]
+    #[Groups([self::GROUP_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
-    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ, self::GROUP_PRODUCT_INVOICE_FILE_WRITE, SupplierReturnInvoiceFile::GROUP_READ])]
+    #[Groups([self::GROUP_READ, self::GROUP_WRITE])]
     private string $name;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 512)]
     #[Assert\NotBlank]
-    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
+    #[Groups([self::GROUP_READ])]
     private ?string $path = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
+    #[Groups([self::GROUP_READ])]
     #[ApiFilter(SearchFilter::class, properties: ['date' => 'exact'])]
     private DateTimeInterface $date;
 
-    #[ORM\ManyToOne(inversedBy: 'productInvoiceFiles')]
+    #[ORM\ManyToOne(inversedBy: 'supplierReturnInvoiceFiles')]
     #[ORM\JoinColumn(nullable: false)]
     private User $user;
 
     #[Assert\File(mimeTypes: ['application/pdf', 'application/x-pdf'])]
-    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_WRITE])]
-    #[Vich\UploadableField(mapping: 'products_invoice', fileNameProperty: 'path')]
+    #[Groups([self::GROUP_WRITE])]
+    #[Vich\UploadableField(mapping: 'supplier_return_invoices', fileNameProperty: 'path')]
     private ?File $file = null;
 
     #[ORM\Column]
-    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
-    private float $totalAmount;
+    #[Groups([self::GROUP_READ])]
+    private float $creditAmount;
 
-    #[ORM\ManyToOne(inversedBy: 'productInvoiceFiles')]
-    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
+    #[ORM\ManyToOne(inversedBy: 'supplierReturnInvoiceFiles')]
+    #[Groups([self::GROUP_READ])]
     private ?Supplier $supplier = null;
 
-    final public function getId(): ?int
+    #[ORM\ManyToOne]
+    #[Groups([self::GROUP_READ])]
+    private ?ProductInvoiceFile $linkedProductInvoice = null;
+
+    public function getId(): ?int
     {
         return $this->id;
     }
 
-    final public function getName(): string
+    public function getName(): string
     {
         return $this->name;
     }
 
-    final public function setName(string $name): static
+    public function setName(string $name): static
     {
         $this->name = $name;
 
         return $this;
     }
 
-    final public function getPath(): ?string
+    public function getPath(): ?string
     {
         return $this->path;
     }
 
-    /**
-     * Le path peut être null car avec Vich durant le delete il passe un null.
-     */
-    final public function setPath(?string $path): static
+    public function setPath(?string $path): static
     {
         $this->path = $path;
 
         return $this;
     }
 
-    final public function getDate(): DateTimeInterface
+    public function getDate(): DateTimeInterface
     {
         return $this->date;
     }
 
-    final public function setDate(DateTimeInterface $date): static
+    public function setDate(DateTimeInterface $date): static
     {
         $this->date = $date;
 
         return $this;
     }
 
-    final public function getUser(): User
+    public function getUser(): User
     {
         return $this->user;
     }
 
-    final public function setUser(User $user): static
+    public function setUser(User $user): static
     {
         $this->user = $user;
 
         return $this;
     }
 
-    final public function getFile(): ?File
+    public function getFile(): ?File
     {
         return $this->file;
     }
 
-    final public function setFile(?File $file): self
+    public function setFile(?File $file): self
     {
         $this->file = $file;
 
         return $this;
     }
 
-    final public function getTotalAmount(): float
+    public function getCreditAmount(): float
     {
-        return $this->totalAmount;
+        return $this->creditAmount;
     }
 
-    final public function setTotalAmount(float $totalAmount): static
+    public function setCreditAmount(float $creditAmount): static
     {
-        $this->totalAmount = $totalAmount;
+        $this->creditAmount = $creditAmount;
 
         return $this;
     }
@@ -276,6 +280,18 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     public function setSupplier(?Supplier $supplier): static
     {
         $this->supplier = $supplier;
+
+        return $this;
+    }
+
+    public function getLinkedProductInvoice(): ?ProductInvoiceFile
+    {
+        return $this->linkedProductInvoice;
+    }
+
+    public function setLinkedProductInvoice(?ProductInvoiceFile $linkedProductInvoice): static
+    {
+        $this->linkedProductInvoice = $linkedProductInvoice;
 
         return $this;
     }

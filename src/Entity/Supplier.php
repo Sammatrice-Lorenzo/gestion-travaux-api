@@ -54,7 +54,7 @@ class Supplier implements UserOwnerInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups([self::GROUP_SUPPLIER_READ, ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_READ])]
+    #[Groups([self::GROUP_SUPPLIER_READ, ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_READ, SupplierReturnInvoiceFile::GROUP_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -63,6 +63,7 @@ class Supplier implements UserOwnerInterface
         self::GROUP_SUPPLIER_READ,
         self::GROUP_SUPPLIER_WRITE,
         ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_READ,
+        SupplierReturnInvoiceFile::GROUP_READ,
     ])]
     private string $name;
 
@@ -107,10 +108,17 @@ class Supplier implements UserOwnerInterface
     #[ORM\OneToMany(mappedBy: 'supplier', targetEntity: ProductInvoiceFile::class)]
     private Collection $productInvoiceFiles;
 
+    /**
+     * @var Collection<int, SupplierReturnInvoiceFile>
+     */
+    #[ORM\OneToMany(mappedBy: 'supplier', targetEntity: SupplierReturnInvoiceFile::class)]
+    private Collection $supplierReturnInvoiceFiles;
+
     public function __construct()
     {
         $this->createdAt = new DateTimeImmutable();
         $this->productInvoiceFiles = new ArrayCollection();
+        $this->supplierReturnInvoiceFiles = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -236,6 +244,33 @@ class Supplier implements UserOwnerInterface
         // set the owning side to null (unless already changed)
         if ($this->productInvoiceFiles->removeElement($productInvoiceFile) && $productInvoiceFile->getSupplier() === $this) {
             $productInvoiceFile->setSupplier(null);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, SupplierReturnInvoiceFile>
+     */
+    public function getSupplierReturnInvoiceFiles(): Collection
+    {
+        return $this->supplierReturnInvoiceFiles;
+    }
+
+    public function addSupplierReturnInvoiceFile(SupplierReturnInvoiceFile $supplierReturnInvoiceFile): static
+    {
+        if (!$this->supplierReturnInvoiceFiles->contains($supplierReturnInvoiceFile)) {
+            $this->supplierReturnInvoiceFiles->add($supplierReturnInvoiceFile);
+            $supplierReturnInvoiceFile->setSupplier($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSupplierReturnInvoiceFile(SupplierReturnInvoiceFile $supplierReturnInvoiceFile): static
+    {
+        if ($this->supplierReturnInvoiceFiles->removeElement($supplierReturnInvoiceFile) && $supplierReturnInvoiceFile->getSupplier() === $this) {
+            $supplierReturnInvoiceFile->setSupplier(null);
         }
 
         return $this;
