@@ -172,6 +172,20 @@ final class SupplierReturnInvoiceFileCest
     }
 
     #[Depends('testPutSupplierReturnInvoiceFileWithLinkedProductInvoice')]
+    public function testProductInvoiceCollectionIncludesLinkedSupplierReturns(ApiTester $I): void
+    {
+        $I->sendGet('/api/product_invoice_files?date=' . $this->date->format(DateFormatHelper::DEFAULT_FORMAT));
+        $I->seeResponseCodeIsSuccessful();
+        $I->seeResponseContainsJson([
+            'linkedSupplierReturns' => [
+                [
+                    'name' => 'Test supplier return linked invoice',
+                ],
+            ],
+        ]);
+    }
+
+    #[Depends('testProductInvoiceCollectionIncludesLinkedSupplierReturns')]
     public function testDeleteSupplierReturnInvoiceFile(ApiTester $I): void
     {
         $storedPath = $this->supplierReturnInvoiceFile->getPath();

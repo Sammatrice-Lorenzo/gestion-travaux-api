@@ -13,6 +13,7 @@ use App\Entity\ProductInvoiceFile;
 use App\Entity\SupplierReturnInvoiceFile;
 use App\Dto\SupplierReturnInvoiceUpdateInput;
 use App\Processor\SupplierReturnInvoiceProcessor;
+use App\Service\SupplierReturnInvoiceLinkValidator;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -21,12 +22,18 @@ final class SupplierReturnInvoiceProcessorTest extends Unit
 {
     private EntityManagerInterface&MockObject $entityManager;
 
+    private SupplierReturnInvoiceLinkValidator $linkValidator;
+
     private SupplierReturnInvoiceProcessor $processor;
 
     protected function _before(): void
     {
         $this->entityManager = $this->createMock(EntityManagerInterface::class);
-        $this->processor = new SupplierReturnInvoiceProcessor($this->entityManager);
+        $this->linkValidator = new SupplierReturnInvoiceLinkValidator($this->entityManager);
+        $this->processor = new SupplierReturnInvoiceProcessor(
+            $this->entityManager,
+            $this->linkValidator,
+        );
     }
 
     public function testUpdatesSupplierReturnInvoiceFields(): void

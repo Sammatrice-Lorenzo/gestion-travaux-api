@@ -32,7 +32,7 @@ jobs:
               with:
                   mysql_database: ${{ secrets.MYSQL_DATABASE }}
                   mysql_root_password: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-                  backend_path: ${{ github.workspace }}
+                  backend_path: .
 
             - name: Run tests
               run: yarn test && yarn replace-env
