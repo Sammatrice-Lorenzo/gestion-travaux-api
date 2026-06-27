@@ -28,6 +28,8 @@ final class ProductInvoiceFileRepository extends ServiceEntityRepository impleme
         $period = DateHelper::getDatePeriodForMonth($date);
 
         return $this->createQueryBuilder('p')
+            ->leftJoin('p.linkedSupplierReturnInvoices', 'linkedReturns')
+            ->addSelect('linkedReturns')
             ->andWhere('p.date BETWEEN :start AND :end')
             ->andWhere('p.user = :user')
             ->setParameter('start', $period->getStartDate())

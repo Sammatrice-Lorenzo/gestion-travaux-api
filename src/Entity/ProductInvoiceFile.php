@@ -14,6 +14,8 @@ use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
 use App\Interface\UserOwnerInterface;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 use App\Dto\ProductInvoiceUpdateInput;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model\Operation;
@@ -188,6 +190,17 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
     private ?Supplier $supplier = null;
 
+    /**
+     * @var Collection<int, SupplierReturnInvoiceFile>
+     */
+    #[ORM\OneToMany(mappedBy: 'linkedProductInvoice', targetEntity: SupplierReturnInvoiceFile::class)]
+    private Collection $linkedSupplierReturnInvoices;
+
+    public function __construct()
+    {
+        $this->linkedSupplierReturnInvoices = new ArrayCollection();
+    }
+
     final public function getId(): ?int
     {
         return $this->id;
@@ -278,5 +291,38 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
         $this->supplier = $supplier;
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, SupplierReturnInvoiceFile>
+     */
+    public function getLinkedSupplierReturnInvoices(): Collection
+    {
+        return $this->linkedSupplierReturnInvoices;
+    }
+
+    /**
+     * @return list<array{id: int, name: string, creditAmount: float, date: string}>
+     */
+    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
+    public function getLinkedSupplierReturns(): array
+    {
+        $returns = [];
+
+        foreach ($this->linkedSupplierReturnInvoices as $returnInvoice) {
+            $id = $returnInvoice->getId();
+            if (null === $id) {
+                continue;
+            }
+
+            $returns[] = [
+                'id' => $id,
+                'name' => $returnInvoice->getName(),
+                'creditAmount' => $returnInvoice->getCreditAmount(),
+                'date' => $returnInvoice->getDate()->format('Y-m-d'),
+            ];
+        }
+
+        return $returns;
     }
 }

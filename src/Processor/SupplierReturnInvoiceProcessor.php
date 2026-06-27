@@ -8,11 +8,11 @@ use DateTime;
 use App\Entity\Supplier;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Operation;
-use App\Entity\ProductInvoiceFile;
 use Doctrine\ORM\EntityManagerInterface;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\SupplierReturnInvoiceFile;
 use App\Dto\SupplierReturnInvoiceUpdateInput;
+use App\Service\SupplierReturnInvoiceLinkValidator;
 
 /**
  * @implements ProcessorInterface<SupplierReturnInvoiceUpdateInput, SupplierReturnInvoiceFile|void>
@@ -21,6 +21,7 @@ final class SupplierReturnInvoiceProcessor implements ProcessorInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManagerInterface,
+        private readonly SupplierReturnInvoiceLinkValidator $linkValidator,
     ) {}
 
     /**
@@ -37,9 +38,11 @@ final class SupplierReturnInvoiceProcessor implements ProcessorInterface
                 ? $this->entityManagerInterface->getRepository(Supplier::class)->find($data->supplierId)
                 : null;
 
-            $linkedProductInvoice = $data->linkedProductInvoiceId
-                ? $this->entityManagerInterface->getRepository(ProductInvoiceFile::class)->find($data->linkedProductInvoiceId)
-                : null;
+            $linkedProductInvoice = $this->linkValidator->resolve(
+                $invoice,
+                $data->linkedProductInvoiceId,
+                $supplier,
+            );
 
             $invoice
                 ->setDate(new DateTime($data->date))
