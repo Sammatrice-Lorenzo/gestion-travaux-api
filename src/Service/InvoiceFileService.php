@@ -78,6 +78,8 @@ final class InvoiceFileService extends AbstractFileService
      */
     public function setValuesTable(array $invoiceData): void
     {
+        $this->setRowHeightColumn(self::ROW_HEIGHT_COLUMN);
+
         $this->fpdi->SetDrawColor(54, 95, 145);
 
         $columnsWidths = $this->getColumnsWidth();

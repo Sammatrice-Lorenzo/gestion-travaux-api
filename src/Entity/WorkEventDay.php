@@ -17,10 +17,14 @@ use App\Interface\UserOwnerInterface;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\OpenApi\Model\Operation;
 use App\Dto\WorkEventDayDownloadFileInput;
+use App\Dto\WorkEventDaySearchInput;
+use App\Dto\WorkEventDaySearchExportInput;
 use App\Processor\UserAssignmentProcessor;
 use App\Repository\WorkEventDayRepository;
 use App\Interface\MonthlyProviderInterface;
 use App\Controller\WorkEventDayFileController;
+use App\Controller\WorkEventDaySearchController;
+use App\Controller\WorkEventDaySearchExportController;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\CssColor;
@@ -65,6 +69,41 @@ use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
         ),
         security: "is_granted('ROLE_USER')",
         input: WorkEventDayDownloadFileInput::class,
+        deserialize: false
+    ),
+    new Post(
+        uriTemplate: '/work_event_days/search',
+        controller: WorkEventDaySearchController::class,
+        openapi: new ModelOperation(
+            summary: 'Recherche de prestations par client, plage de dates et expression régulière',
+            security: [['bearerAuth' => []]]
+        ),
+        security: "is_granted('ROLE_USER')",
+        input: WorkEventDaySearchInput::class,
+        deserialize: false
+    ),
+    new Post(
+        uriTemplate: '/work_event_days/search/export',
+        controller: WorkEventDaySearchExportController::class,
+        openapi: new ModelOperation(
+            responses: [
+                '200' => [
+                    'description' => 'Fichier PDF ou Excel',
+                    'content' => [
+                        'application/pdf' => [
+                            'schema' => ['type' => 'string', 'format' => 'binary'],
+                        ],
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => [
+                            'schema' => ['type' => 'string', 'format' => 'binary'],
+                        ],
+                    ],
+                ],
+            ],
+            summary: 'Export (PDF ou Excel) des prestations recherchées',
+            security: [['bearerAuth' => []]]
+        ),
+        security: "is_granted('ROLE_USER')",
+        input: WorkEventDaySearchExportInput::class,
         deserialize: false
     ),
 ], normalizationContext: ['groups' => ['work_event_day:read']], denormalizationContext: ['groups' => ['work_event_day:write']], openapi: new Operation(

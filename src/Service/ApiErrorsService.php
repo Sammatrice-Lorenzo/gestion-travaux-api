@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
 final readonly class ApiErrorsService
@@ -19,5 +21,12 @@ final readonly class ApiErrorsService
         }
 
         return $errorsMessage;
+    }
+
+    public static function getHydraDescriptionResponse(string $description): JsonResponse
+    {
+        return new JsonResponse([
+            'hydra:description' => $description,
+        ], Response::HTTP_UNPROCESSABLE_ENTITY);
     }
 }

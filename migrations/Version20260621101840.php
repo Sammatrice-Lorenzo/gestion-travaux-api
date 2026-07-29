@@ -21,10 +21,10 @@ final class Version20260621101840 extends AbstractMigration
         }
 
         $this->addSql(<<<'SQL'
-            ALTER TABLE invoice DROP FOREIGN KEY IF EXISTS FK_90651744BB3453DB
+            ALTER TABLE invoice DROP FOREIGN KEY FK_90651744BB3453DB
         SQL);
         $this->addSql(<<<'SQL'
-            DROP INDEX IF EXISTS UNIQ_90651744BB3453DB ON invoice
+            DROP INDEX UNIQ_90651744BB3453DB ON invoice
         SQL);
         $this->addSql(<<<'SQL'
             ALTER TABLE invoice DROP COLUMN work_id

@@ -45,4 +45,43 @@ final class WorkEventDayRepository extends ServiceEntityRepository implements Mo
             ->getResult()
         ;
     }
+
+    /**
+     *
+     * @throws \Doctrine\DBAL\Exception when the database rejects the regular expression in $search
+     *
+     * @return WorkEventDay[]
+     */
+    public function search(User $user, ?int $clientId, string $search, DateTime $startDate, DateTime $endDate): array
+    {
+        $startOfDay = (clone $startDate)->setTime(0, 0, 0);
+        $endOfDay = (clone $endDate)->setTime(23, 59, 59);
+
+        $queryBuilder = $this->createQueryBuilder('w')
+            ->andWhere('w.user = :user')
+            ->andWhere('w.startDate BETWEEN :startDate AND :endDate')
+            ->andWhere('REGEXP(w.title, :search) = 1')
+            ->setParameter('user', $user)
+            ->setParameter('startDate', $startOfDay)
+            ->setParameter('endDate', $endOfDay)
+            ->setParameter('search', $search)
+            ->orderBy('w.startDate', 'ASC')
+        ;
+
+        if (null !== $clientId) {
+            $queryBuilder
+                ->andWhere('w.client = :clientId')
+                ->setParameter('clientId', $clientId)
+            ;
+        }
+
+        $connection = $this->getEntityManager()->getConnection();
+        $connection->executeStatement('SET SESSION MAX_EXECUTION_TIME=2000');
+
+        try {
+            return $queryBuilder->getQuery()->getResult();
+        } finally {
+            $connection->executeStatement('SET SESSION MAX_EXECUTION_TIME=0');
+        }
+    }
 }
