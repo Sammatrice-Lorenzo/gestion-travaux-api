@@ -6,26 +6,26 @@ use App\Entity\User;
 use App\Entity\WorkImage;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
+use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
+/**
+ * @extends Voter<string, WorkImage>
+ */
 final class WorkImageVoter extends Voter
 {
     public const string EDIT_WORK_IMAGE = 'EDIT_WORK_IMAGE';
 
     protected function supports(string $attribute, mixed $subject): bool
     {
-        return in_array($attribute, [self::EDIT_WORK_IMAGE])
+        return self::EDIT_WORK_IMAGE === $attribute
             && $subject instanceof WorkImage;
     }
 
     /**
-     * @param string $attribute
      * @param WorkImage $subject
-     * @param TokenInterface $token
-     *
-     * @return bool
      */
-    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
+    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool
     {
         /** @var ?User $user */
         $user = $token->getUser();

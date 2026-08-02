@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Helper;
 
 use DateTime;
@@ -23,6 +25,9 @@ final class DateHelper
         '12' => 'Décembre',
     ];
 
+    /**
+     * @return DatePeriod<DateTime, DateTime, null|int>
+     */
     public static function getDatePeriodForMonth(DateTime $date): DatePeriod
     {
         $firstDayOfMonth = new DateTime("{$date->format('Y-m')}-01");

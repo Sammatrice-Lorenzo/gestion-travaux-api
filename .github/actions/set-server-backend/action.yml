@@ -6,8 +6,11 @@ inputs:
         required: true
     mysql_root_password:
         required: true
-    repository_backend_path:
+    backend_path:
         required: true
+    mysql_host:
+        required: false
+        default: '127.0.0.1'
 
 runs:
     using: 'composite'
@@ -18,31 +21,36 @@ runs:
               php-version: '8.3'
               extensions: gd, sodium, curl, zip, pdo_mysql
               tools: composer
+              coverage: none
+
         - name: Set DATABASE_URL
           shell: bash
           env:
               MYSQL_ROOT_PASSWORD: ${{ inputs.mysql_root_password }}
               MYSQL_DATABASE: ${{ inputs.mysql_database }}
+              MYSQL_HOST: ${{ inputs.mysql_host }}
           run: |
-              echo "DATABASE_URL=mysql://root:${MYSQL_ROOT_PASSWORD}@127.0.0.1:3306/${MYSQL_DATABASE}" > ${{ inputs.backend_path }}/.env.test.local
-              echo "APP_ENV=test" >> ${{ inputs.backend_path }}/.env.test.local
-              echo "DATABASE_SERVER_VERSION=8.4" >> ${{ inputs.backend_path }}/.env.test.local
+              BACKEND="${GITHUB_WORKSPACE}/${{ inputs.backend_path }}"
+              echo "DATABASE_URL=mysql://root:${MYSQL_ROOT_PASSWORD}@${MYSQL_HOST}:3306/${MYSQL_DATABASE}" > "${BACKEND}/.env.test.local"
+              echo "APP_ENV=test" >> "${BACKEND}/.env.test.local"
+              echo "DATABASE_SERVER_VERSION=8.4" >> "${BACKEND}/.env.test.local"
 
         - name: Configure Git safe.directory
           shell: bash
-          run: git config --global --add safe.directory ${{ inputs.backend_path }}
+          run: git config --global --add safe.directory "${GITHUB_WORKSPACE}/${{ inputs.backend_path }}"
 
         - name: Composer install
           shell: bash
-          run: composer install --prefer-dist --no-progress --no-scripts --working-dir=${{ inputs.backend_path }}
+          run: composer install --prefer-dist --no-progress --no-scripts --working-dir="${GITHUB_WORKSPACE}/${{ inputs.backend_path }}"
 
         - name: Update permissions on vendor
-          run: sudo chmod -R 777 ${{ inputs.backend_path }}/vendor/
+          run: sudo chmod -R 777 "${GITHUB_WORKSPACE}/${{ inputs.backend_path }}/vendor/"
           shell: bash
 
-        - name: Install dependencies with Yarn
+        - name: Install backend Yarn dependencies
           shell: bash
-          run: yarn
+          run: yarn install --frozen-lockfile --ignore-scripts
+          working-directory: ${{ inputs.backend_path }}
 
         - name: Install Symfony CLI
           shell: bash
@@ -52,5 +60,5 @@ runs:
 
         - name: Install JWT keys
           shell: bash
-          run: php bin/console lexik:jwt:generate-keypair
+          run: php bin/console lexik:jwt:generate-keypair --skip-if-exists
           working-directory: ${{ inputs.backend_path }}

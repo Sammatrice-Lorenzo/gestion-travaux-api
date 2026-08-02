@@ -14,17 +14,17 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: TokenNotificationPushRepository::class)]
 #[ApiResource(
-    openapi: new Operation(
-        security: [['bearerAuth' => []]],
-    ),
-    normalizationContext: ['groups' => ['token_notification_push:read']],
-    denormalizationContext: ['groups' => ['token_notification_push:write']],
     operations: [
         new Post(
-            security: "is_granted('ROLE_USER')",
             controller: RegisterTokenNotificationPushController::class,
+            security: "is_granted('ROLE_USER')",
         ),
-    ]
+    ],
+    normalizationContext: ['groups' => ['token_notification_push:read']],
+    denormalizationContext: ['groups' => ['token_notification_push:write']],
+    openapi: new Operation(
+        security: [['bearerAuth' => []]],
+    )
 )]
 class TokenNotificationPush
 {

@@ -2,7 +2,6 @@
 
 namespace App\Processor;
 
-use Doctrine\ORM\Mapping\Entity;
 use ApiPlatform\Metadata\Operation;
 use Doctrine\ORM\EntityManagerInterface;
 use ApiPlatform\State\ProcessorInterface;
@@ -10,7 +9,7 @@ use Doctrine\DBAL\Exception\ForeignKeyConstraintViolationException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 /**
- * @implements ProcessorInterface<Entity, mixed>
+ * @implements ProcessorInterface<object, null>
  */
 final class DeletionProcessor implements ProcessorInterface
 {
@@ -19,8 +18,6 @@ final class DeletionProcessor implements ProcessorInterface
     ) {}
 
     /**
-     * @param Entity $data
-     * @param Operation $operation
      * @param array<string, mixed> $uriVariables
      * @param array<string, mixed> $context
      *
@@ -32,7 +29,7 @@ final class DeletionProcessor implements ProcessorInterface
             $this->entityManagerInterface->remove($data);
             $this->entityManagerInterface->flush();
         } catch (ForeignKeyConstraintViolationException $e) {
-            throw new UnprocessableEntityHttpException('Impossible de supprimer cette ressource : elle est encore utilisée ailleurs.');
+            throw new UnprocessableEntityHttpException('Impossible de supprimer cette ressource : elle est encore utilisée ailleurs.', $e);
         }
 
         return null;

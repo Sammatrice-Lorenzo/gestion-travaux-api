@@ -25,37 +25,32 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Lexik\Bundle\JWTAuthenticationBundle\Security\User\JWTUserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
-#[ApiResource(
-    openapi: new Operation(
-        security: [['bearerAuth' => []]]
+#[ApiResource(operations: [
+    new Get(
+        uriTemplate: '/user',
+        controller: UserController::class,
+        openapi: new Operation(
+            security: [['bearerAuth' => []]]
+        ),
+        security: 'is_granted("ROLE_USER")',
+        read: false,
+        name: 'user',
     ),
-    operations: [
-        new Get(
-            name: 'user',
-            uriTemplate: '/user',
-            controller: UserController::class,
-            read: false,
-            security: 'is_granted("ROLE_USER")',
-            openapi: new Operation(
-                security: [['bearerAuth' => []]]
-            ),
+    new Put(
+        openapi: new Operation(
+            security: [['bearerAuth' => []]]
         ),
-        new Put(
-            security: "is_granted('EDIT_USER', object)",
-            openapi: new Operation(
-                security: [['bearerAuth' => []]]
-            ),
-        ),
-        new Post(
-            uriTemplate: '/register',
-            name: 'register_user',
-            input: RegisterInput::class,
-            processor: RegisterProcessor::class,
-        ),
-    ],
-    normalizationContext: ['groups' => ['user:read']],
-    denormalizationContext: ['groups' => ['user:write']]
-)]
+        security: "is_granted('EDIT_USER', object)",
+    ),
+    new Post(
+        uriTemplate: '/register',
+        input: RegisterInput::class,
+        name: 'register_user',
+        processor: RegisterProcessor::class,
+    ),
+], normalizationContext: ['groups' => ['user:read']], denormalizationContext: ['groups' => ['user:write']], openapi: new Operation(
+    security: [['bearerAuth' => []]]
+))]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[UniqueEntity(fields: ['email'], message: 'Un utilisateur ne peut avoir un seul unique email')]
@@ -111,7 +106,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
     /**
      * @var Collection<int, Client>
      */
-    #[ORM\OneToMany(targetEntity: Client::class, mappedBy: 'user')]
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Client::class)]
     private Collection $clients;
 
     /**
@@ -178,7 +173,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
      */
     final public function getUserIdentifier(): string
     {
-        return (string) $this->email;
+        return $this->email;
     }
 
     /**
@@ -197,8 +192,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
 
     /**
      * @param string[] $roles
-     *
-     * @return self
      */
     final public function setRoles(array $roles): self
     {
@@ -248,8 +241,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, JWTUser
      *
      * @param string $username
      * @param array<string, int|string> $payload
-     *
-     * @return User
      */
     public static function createFromPayload($username, array $payload): User
     {

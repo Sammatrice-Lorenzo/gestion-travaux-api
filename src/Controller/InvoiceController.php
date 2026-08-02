@@ -22,12 +22,11 @@ final class InvoiceController extends AbstractController
         InvoiceFileService $invoiceFileService,
         InvoiceFormService $invoiceFormService,
         ClientRepository $clientRepository,
-    ): BinaryFileResponse|JsonResponse
-    {
+    ): BinaryFileResponse|JsonResponse {
         $jsonData = json_decode($request->getContent());
         $errorsRequest = $invoiceFormService->checkInvoiceData($jsonData);
 
-        if ($errorsRequest) {
+        if ([] !== $errorsRequest) {
             return ApiService::getJsonResponseRequestParameters($errorsRequest);
         }
 
@@ -44,7 +43,6 @@ final class InvoiceController extends AbstractController
 
         $invoiceFileService->setupInvoiceParameterFile($pdfExample);
         $headers = ['LOCALISATION', 'DESCRIPTION DES PRESTATIONS', 'PRIX UNITAIRE', 'TOTAL DE LA LIGNE'];
-
 
         $invoiceFileService->generateInvoiceFile($client, $headers, $jsonData);
 

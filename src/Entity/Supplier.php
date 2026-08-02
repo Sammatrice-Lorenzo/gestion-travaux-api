@@ -7,6 +7,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use App\Processor\DeletionProcessor;
 use ApiPlatform\Metadata\ApiResource;
@@ -22,32 +23,27 @@ use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
 #[ORM\Entity(repositoryClass: SupplierRepository::class)]
-#[ApiResource(
-    openapi: new Operation(
-        security: [['bearerAuth' => []]],
+#[ApiResource(operations: [
+    new GetCollection(
+        security: "is_granted('ROLE_USER')"
     ),
-    denormalizationContext: ['groups' => ['supplier:write']],
-    normalizationContext: ['groups' => ['supplier:read']],
-    operations: [
-        new GetCollection(
-            security: "is_granted('ROLE_USER')"
-        ),
-        new Get(
-            security: "is_granted('VIEW', object)"
-        ),
-        new Post(
-            security: "is_granted('ROLE_USER')",
-            processor: UserAssignmentProcessor::class,
-        ),
-        new Put(
-            security: "is_granted('EDIT', object)"
-        ),
-        new Delete(
-            security: "is_granted('EDIT', object)",
-            processor: DeletionProcessor::class
-        ),
-    ],
-)]
+    new Get(
+        security: "is_granted('VIEW', object)"
+    ),
+    new Post(
+        security: "is_granted('ROLE_USER')",
+        processor: UserAssignmentProcessor::class,
+    ),
+    new Put(
+        security: "is_granted('EDIT', object)"
+    ),
+    new Delete(
+        security: "is_granted('EDIT', object)",
+        processor: DeletionProcessor::class
+    ),
+], normalizationContext: ['groups' => ['supplier:read']], denormalizationContext: ['groups' => ['supplier:write']], openapi: new Operation(
+    security: [['bearerAuth' => []]],
+))]
 
 class Supplier implements UserOwnerInterface
 {
@@ -58,7 +54,7 @@ class Supplier implements UserOwnerInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups([self::GROUP_SUPPLIER_READ, ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_READ])]
+    #[Groups([self::GROUP_SUPPLIER_READ, ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_READ, SupplierReturnInvoiceFile::GROUP_READ])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
@@ -67,6 +63,7 @@ class Supplier implements UserOwnerInterface
         self::GROUP_SUPPLIER_READ,
         self::GROUP_SUPPLIER_WRITE,
         ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_READ,
+        SupplierReturnInvoiceFile::GROUP_READ,
     ])]
     private string $name;
 
@@ -97,7 +94,7 @@ class Supplier implements UserOwnerInterface
     #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
     private ?string $vatNumber = null;
 
-    #[ORM\Column(type: 'datetime_immutable')]
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private DateTimeImmutable $createdAt;
 
     #[ORM\ManyToOne(inversedBy: 'suppliers')]
@@ -111,10 +108,17 @@ class Supplier implements UserOwnerInterface
     #[ORM\OneToMany(mappedBy: 'supplier', targetEntity: ProductInvoiceFile::class)]
     private Collection $productInvoiceFiles;
 
+    /**
+     * @var Collection<int, SupplierReturnInvoiceFile>
+     */
+    #[ORM\OneToMany(mappedBy: 'supplier', targetEntity: SupplierReturnInvoiceFile::class)]
+    private Collection $supplierReturnInvoiceFiles;
+
     public function __construct()
     {
         $this->createdAt = new DateTimeImmutable();
         $this->productInvoiceFiles = new ArrayCollection();
+        $this->supplierReturnInvoiceFiles = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -237,11 +241,36 @@ class Supplier implements UserOwnerInterface
 
     public function removeProductInvoiceFile(ProductInvoiceFile $productInvoiceFile): static
     {
-        if ($this->productInvoiceFiles->removeElement($productInvoiceFile)) {
-            // set the owning side to null (unless already changed)
-            if ($productInvoiceFile->getSupplier() === $this) {
-                $productInvoiceFile->setSupplier(null);
-            }
+        // set the owning side to null (unless already changed)
+        if ($this->productInvoiceFiles->removeElement($productInvoiceFile) && $productInvoiceFile->getSupplier() === $this) {
+            $productInvoiceFile->setSupplier(null);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, SupplierReturnInvoiceFile>
+     */
+    public function getSupplierReturnInvoiceFiles(): Collection
+    {
+        return $this->supplierReturnInvoiceFiles;
+    }
+
+    public function addSupplierReturnInvoiceFile(SupplierReturnInvoiceFile $supplierReturnInvoiceFile): static
+    {
+        if (!$this->supplierReturnInvoiceFiles->contains($supplierReturnInvoiceFile)) {
+            $this->supplierReturnInvoiceFiles->add($supplierReturnInvoiceFile);
+            $supplierReturnInvoiceFile->setSupplier($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSupplierReturnInvoiceFile(SupplierReturnInvoiceFile $supplierReturnInvoiceFile): static
+    {
+        if ($this->supplierReturnInvoiceFiles->removeElement($supplierReturnInvoiceFile) && $supplierReturnInvoiceFile->getSupplier() === $this) {
+            $supplierReturnInvoiceFile->setSupplier(null);
         }
 
         return $this;

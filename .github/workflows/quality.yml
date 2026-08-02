@@ -10,37 +10,26 @@ jobs:
         name: Code Quality Checks
         runs-on: ubuntu-latest
 
-        services:
-            mysql:
-                image: mysql:8.4
-                env:
-                    MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-                    MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
-                ports:
-                    - 3306:3306
-
         steps:
             - uses: actions/checkout@v4
-            - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
 
-            - name: Setup Server
-              uses: ./.github/actions/set-server-backend
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
               with:
-                  mysql_database: ${{ secrets.MYSQL_DATABASE }}
-                  mysql_root_password: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-                  backend_path: ${{ github.workspace }}
+                  php-version: '8.3'
+                  tools: composer
+                  coverage: none
 
-            - name: Run cache clear Symfony
-              run: |
-                  php bin/console cache:clear --env=test
-                  php bin/console cache:warmup --env=test
+            - name: Composer install
+              run: composer install --prefer-dist --no-progress --no-scripts
 
-            # review dog
+            - name: Warmup Symfony cache for PHPStan
+              run: php bin/console cache:warmup --env=dev
+
             - uses: reviewdog/action-setup@e04ffabe3898a0af8d0fb1af00c188831c4b5893
               with:
                   reviewdog_version: latest
 
-              # php stan
             - name: Run PHPStan
               continue-on-error: true
               run: vendor/bin/phpstan analyze --error-format=raw > phpstan.result.txt
@@ -51,6 +40,14 @@ jobs:
               run: |
                   cat phpstan.result.txt | reviewdog -f=phpstan -reporter=github-pr-review -fail-level=none -level=warning -filter-mode=nofilter
 
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: lts/*
+                  cache: 'yarn'
+
+            - name: Install Yarn dependencies
+              run: yarn install --frozen-lockfile
+
             - name: Get changed files
               id: changed-files
               uses: tj-actions/changed-files@v46
@@ -59,6 +56,7 @@ jobs:
               if: steps.changed-files.outputs.all_changed_files != ''
               run: yarn prettier --check ${{ steps.changed-files.outputs.all_changed_files }}
               continue-on-error: true
+
             - uses: EPMatt/reviewdog-action-prettier@v1
               with:
                   github_token: ${{ secrets.GITHUB_TOKEN }}

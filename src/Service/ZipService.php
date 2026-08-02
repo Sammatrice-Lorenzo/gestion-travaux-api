@@ -9,15 +9,14 @@ final readonly class ZipService
 {
     /**
      * @param string[] $files
-     * @param string $nameZip
+     *
      * @throws ZipArchiveException
-     * @return string
      */
     public static function getZipArchive(array $files, string $nameZip, string $nameFolder): string
     {
         $zipFile = tempnam(sys_get_temp_dir(), $nameZip) . '.zip';
         $zip = new ZipArchive();
-        if ($zip->open($zipFile, ZipArchive::CREATE) !== true) {
+        if (true !== $zip->open($zipFile, ZipArchive::CREATE)) {
             throw new ZipArchiveException();
         }
 

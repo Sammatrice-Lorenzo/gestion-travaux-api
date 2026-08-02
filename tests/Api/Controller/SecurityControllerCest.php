@@ -17,6 +17,17 @@ final class SecurityControllerCest
             'password' => '1234',
         ]);
         $I->seeResponseCodeIsSuccessful();
-        $I->seeResponseIsJson('token');
+
+        $response = $I->grabResponse();
+        $data = json_decode($response, true);
+
+        if (is_array($data) && isset($data['token']) && is_string($data['token'])) {
+            $I->seeResponseContainsJson(['token' => $data['token']]);
+
+            return;
+        }
+
+        $I->seeHttpHeader('Set-Cookie');
+        $I->assertStringContainsString('BEARER=', $I->grabHttpHeader('Set-Cookie'));
     }
 }

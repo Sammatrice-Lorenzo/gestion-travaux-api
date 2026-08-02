@@ -98,7 +98,7 @@ final class WorkCest
     }
 
     /**
-     * @return array<string, float|string>
+     * @return array<string, mixed>
      */
     private function getParameters(DateTime $start, DateTime $end, float $totalAmount): array
     {
@@ -115,7 +115,7 @@ final class WorkCest
     }
 
     /**
-     * @return array<string, float|string>
+     * @return array<string, mixed>
      */
     private function getParametersAsserts(DateTime $start, DateTime $end, float $totalAmount): array
     {

@@ -41,7 +41,6 @@ trait GrabEntityTrait
      * @param class-string<TEntity> $name
      * @param array<string, mixed> $criteria
      * @param null|array<string, string> $orderBy
-     * @param null|int $limit
      *
      * @return TEntity[]
      */

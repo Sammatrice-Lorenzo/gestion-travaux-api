@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Formatter;
 
+use App\Entity\Client;
 use App\Entity\WorkEventDay;
 use App\Helper\DateFormatHelper;
 
@@ -16,12 +19,29 @@ final class WorkEventDaysFormatter
     {
         $timeFormat = DateFormatHelper::TIME_FORMAT;
 
-        return array_map(static fn (WorkEventDay $workEventDay) => [
+        return array_map(static fn (WorkEventDay $workEventDay): array => [
             $workEventDay->getStartDate()->format(DateFormatHelper::FRENCH_FORMAT),
             $workEventDay->getTitle(),
             $workEventDay->getStartDate()->format($timeFormat),
             $workEventDay->getEndDate()->format($timeFormat),
-            $workEventDay->getClient() ? $workEventDay->getClient()->getName() : '',
+            $workEventDay->getClient() instanceof Client ? $workEventDay->getClient()->getName() : '',
+        ], $workEventDays);
+    }
+
+    /**
+     * @param WorkEventDay[] $workEventDays
+     *
+     * @return array<array<int, string>>
+     */
+    public static function getWorkDayEventFormattedForSearchExport(array $workEventDays): array
+    {
+        $frenchFormat = DateFormatHelper::FRENCH_FORMAT;
+
+        return array_map(static fn (WorkEventDay $workEventDay): array => [
+            $workEventDay->getTitle(),
+            $workEventDay->getStartDate()->format($frenchFormat),
+            $workEventDay->getEndDate()->format($frenchFormat),
+            $workEventDay->getClient() instanceof Client ? $workEventDay->getClient()->getName() : '',
         ], $workEventDays);
     }
 }

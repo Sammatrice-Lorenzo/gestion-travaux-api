@@ -19,11 +19,15 @@ modules:
         PhpBrowser:
             url: http://localhost:8000
             environment: 'test'
+            curl:
+                CURLOPT_TIMEOUT: 60
+                CURLOPT_CONNECTTIMEOUT: 10
             headers:
                Content-Type: application/json
 extensions:
     enabled:
         - Codeception\Extension\RunProcess:
-            0: sed -i 's/^APP_ENV=.*/APP_ENV=test/' .env
-            1: symfony serve
-            sleep: 3
+            0: php tests/bin/set-test-env.php
+            1: symfony local:server:stop
+            2: symfony local:server:start --port=8000 --no-tls --daemon
+            sleep: 10

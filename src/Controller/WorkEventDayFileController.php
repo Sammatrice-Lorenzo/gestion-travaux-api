@@ -9,7 +9,6 @@ use App\Service\WorkEventDayFileService;
 use App\Dto\WorkEventDayDownloadFileInput;
 use App\Repository\WorkEventDayRepository;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -24,7 +23,7 @@ final class WorkEventDayFileController extends AbstractController
         Request $request,
         WorkEventDayFileService $workEventDayFileService,
         SerializerInterface $serializerInterface
-    ): JsonResponse|BinaryFileResponse {
+    ): BinaryFileResponse {
         $workEventDayFileInput = $serializerInterface->deserialize(
             $request->getContent(),
             WorkEventDayDownloadFileInput::class,

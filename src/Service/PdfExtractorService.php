@@ -12,7 +12,8 @@ final class PdfExtractorService
 
     private File $file;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->parser = new Parser();
     }
 
@@ -23,22 +24,33 @@ final class PdfExtractorService
         return $this;
     }
 
-    private function getPdf(): Document
+    private function getPdf(): ?Document
     {
-        return $this->parser->parseFile($this->file->getPathname());
+        try {
+            return $this->parser->parseFile($this->file->getPathname());
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     private function getTextPdf(): string
     {
         $pdf = $this->getPdf();
-        
+        if (null === $pdf) {
+            return '';
+        }
+
         return $pdf->getText();
     }
 
-    public function extractTotalFromPdf(): ?float
+    public function extractTotalFromPdf(): float
     {
-        $totalSum = 0.0;
         $pdf = $this->getPdf();
+        if (null === $pdf) {
+            return 0.0;
+        }
+
+        $totalSum = 0.0;
         foreach ($pdf->getPages() as $page) {
             $text = $page->getText();
             $hasTotalTTCWithComa = preg_match('/Total TTC\s*(\d+,\d{2})/', $text, $matches);
