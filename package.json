@@ -31,7 +31,7 @@
     },
     "resolutions": {
         "@nestjs/core": "^11.1.0",
-        "axios": "^1.18.1",
+        "axios": "^1.19.0",
         "basic-ftp": "^5.0.5",
         "brace-expansion": "^5.0.6",
         "file-type": "^21.3.2",
@@ -43,7 +43,7 @@
         "minimatch": "^10.2.3",
         "path-to-regexp": "^8.3.0",
         "picomatch": "^4.0.4",
-        "shell-quote": "^1.8.3",
+        "shell-quote": "^1.10.0",
         "yaml": "^2.8.2"
     }
 }
