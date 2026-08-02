@@ -6,6 +6,10 @@ doctrine:
         naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
         auto_mapping: true
 
+        dql:
+            string_functions:
+                REGEXP: App\Doctrine\DqlFunction\RegexpFunction
+
         mappings:
             App:
                 is_bundle: false

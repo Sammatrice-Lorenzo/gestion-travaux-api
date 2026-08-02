@@ -27,4 +27,21 @@ final class WorkEventDaysFormatter
             $workEventDay->getClient() instanceof Client ? $workEventDay->getClient()->getName() : '',
         ], $workEventDays);
     }
+
+    /**
+     * @param WorkEventDay[] $workEventDays
+     *
+     * @return array<array<int, string>>
+     */
+    public static function getWorkDayEventFormattedForSearchExport(array $workEventDays): array
+    {
+        $frenchFormat = DateFormatHelper::FRENCH_FORMAT;
+
+        return array_map(static fn (WorkEventDay $workEventDay): array => [
+            $workEventDay->getTitle(),
+            $workEventDay->getStartDate()->format($frenchFormat),
+            $workEventDay->getEndDate()->format($frenchFormat),
+            $workEventDay->getClient() instanceof Client ? $workEventDay->getClient()->getName() : '',
+        ], $workEventDays);
+    }
 }
