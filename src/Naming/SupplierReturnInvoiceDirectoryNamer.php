@@ -10,7 +10,9 @@ use Vich\UploaderBundle\Mapping\PropertyMapping;
 use Vich\UploaderBundle\Naming\DirectoryNamerInterface;
 
 /**
- * @implements DirectoryNamerInterface<SupplierReturnInvoiceFile>
+ * Vich passes whatever object the mapping is attached to, so the type is checked at runtime.
+ *
+ * @implements DirectoryNamerInterface<object>
  */
 final readonly class SupplierReturnInvoiceDirectoryNamer implements DirectoryNamerInterface
 {
@@ -19,7 +21,7 @@ final readonly class SupplierReturnInvoiceDirectoryNamer implements DirectoryNam
     ) {}
 
     /**
-     * @param array<string, mixed>|SupplierReturnInvoiceFile $object
+     * @param array<string, mixed>|object $object
      */
     public function directoryName(object|array $object, PropertyMapping $mapping): string
     {

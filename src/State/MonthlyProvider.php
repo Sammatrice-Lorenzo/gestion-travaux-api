@@ -17,9 +17,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
  */
 final class MonthlyProvider implements ProviderInterface
 {
-    private const string SEARCH_KEY_DATE = 'date';
+    public const string SEARCH_KEY_DATE = 'date';
 
-    private const string SEARCH_KEY_START_DATE = 'startDate';
+    public const string SEARCH_KEY_START_DATE = 'startDate';
 
     public function __construct(
         private readonly Security $security,

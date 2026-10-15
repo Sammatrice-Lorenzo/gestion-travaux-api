@@ -10,7 +10,9 @@ use Vich\UploaderBundle\Mapping\PropertyMapping;
 use Vich\UploaderBundle\Naming\NamerInterface;
 
 /**
- * @implements NamerInterface<SupplierReturnInvoiceFile>
+ * Vich passes whatever object the mapping is attached to, so the type is checked at runtime.
+ *
+ * @implements NamerInterface<object>
  */
 final readonly class SupplierReturnInvoiceNamer implements NamerInterface
 {

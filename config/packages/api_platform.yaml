@@ -2,7 +2,11 @@ api_platform:
     use_symfony_listeners: true
     serializer:
         hydra_prefix: true
-    keep_legacy_inflector: false
+    defaults:
+        extra_properties:
+            # PUT keeps the partial-update semantics the frontend relies on (fields absent from the payload are left untouched).
+            # API Platform 4 defaults to a full replacement, which would reset non-writable fields such as the owner `user`.
+            standard_put: false
     formats:
         json: ['application/json']
         jsonld: ['application/ld+json']

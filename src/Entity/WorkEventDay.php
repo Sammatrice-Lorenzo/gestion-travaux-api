@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ArrayObject;
 use DateTimeInterface;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\Put;
@@ -10,7 +11,7 @@ use App\State\MonthlyProvider;
 use Doctrine\DBAL\Types\Types;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\QueryParameter;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use App\Interface\UserOwnerInterface;
@@ -25,17 +26,21 @@ use App\Interface\MonthlyProviderInterface;
 use App\Controller\WorkEventDayFileController;
 use App\Controller\WorkEventDaySearchController;
 use App\Controller\WorkEventDaySearchExportController;
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints\CssColor;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
+use ApiPlatform\OpenApi\Model\Response;
 
 #[ORM\Entity(repositoryClass: WorkEventDayRepository::class)]
 #[ApiResource(operations: [
     new GetCollection(
         security: "is_granted('ROLE_USER')",
-        provider: MonthlyProvider::class
+        provider: MonthlyProvider::class,
+        parameters: [
+            MonthlyProvider::SEARCH_KEY_START_DATE => new QueryParameter(description: 'Date du mois à afficher (ex. 2026-10-01), mois courant par défaut', schema: ['type' => 'string']),
+            MonthlyProvider::SEARCH_KEY_DATE => new QueryParameter(description: 'Date du mois à afficher (ex. 2026-10-01), mois courant par défaut', schema: ['type' => 'string']),
+        ],
     ),
     new Get(
         security: "is_granted('VIEW', object)"
@@ -55,14 +60,14 @@ use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
         controller: WorkEventDayFileController::class,
         openapi: new ModelOperation(
             responses: [
-                '200' => [
-                    'description' => 'Fichier PDF',
-                    'content' => [
+                '200' => new Response(
+                    description: 'Fichier PDF',
+                    content: new ArrayObject([
                         'application/pdf' => [
                             'schema' => ['type' => 'string', 'format' => 'binary'],
                         ],
-                    ],
-                ],
+                    ]),
+                ),
             ],
             summary: 'Téléchargement du fichier PDF',
             security: [['bearerAuth' => []]]
@@ -87,17 +92,17 @@ use ApiPlatform\OpenApi\Model\Operation as ModelOperation;
         controller: WorkEventDaySearchExportController::class,
         openapi: new ModelOperation(
             responses: [
-                '200' => [
-                    'description' => 'Fichier PDF ou Excel',
-                    'content' => [
+                '200' => new Response(
+                    description: 'Fichier PDF ou Excel',
+                    content: new ArrayObject([
                         'application/pdf' => [
                             'schema' => ['type' => 'string', 'format' => 'binary'],
                         ],
                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => [
                             'schema' => ['type' => 'string', 'format' => 'binary'],
                         ],
-                    ],
-                ],
+                    ]),
+                ),
             ],
             summary: 'Export (PDF ou Excel) des prestations recherchées',
             security: [['bearerAuth' => []]]
@@ -130,7 +135,6 @@ class WorkEventDay implements UserOwnerInterface, MonthlyProviderInterface
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups([self::GROUP_WORK_EVENT_DAY_READ, self::GROUP_WORK_EVENT_DAY_WRITE])]
-    #[ApiFilter(SearchFilter::class, properties: ['startDate' => 'exact', 'date' => 'exact'])]
     private DateTimeInterface $startDate;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
