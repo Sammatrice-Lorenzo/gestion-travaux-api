@@ -7,6 +7,7 @@ namespace App\OpenApi;
 use ArrayObject;
 use ApiPlatform\OpenApi\OpenApi;
 use ApiPlatform\OpenApi\Model\PathItem;
+use ApiPlatform\OpenApi\Model\Response;
 use ApiPlatform\OpenApi\Model\Operation;
 use ApiPlatform\OpenApi\Model\RequestBody;
 use ApiPlatform\OpenApi\Factory\OpenApiFactoryInterface;
@@ -84,10 +85,7 @@ final class OpenApiFactory implements OpenApiFactoryInterface
                 operationId: 'postVerifiedEmail',
                 tags: ['Auth'],
                 responses: [
-                    '204' => [
-                        'description' => 'Utilisateur vérifiée',
-                        'content' => 'No content',
-                    ],
+                    '204' => new Response(description: 'Utilisateur vérifiée'),
                 ],
                 requestBody: new RequestBody(
                     content: new ArrayObject([
@@ -143,10 +141,7 @@ final class OpenApiFactory implements OpenApiFactoryInterface
                 operationId: 'postApiLogout',
                 tags: ['Auth'],
                 responses: [
-                    '204' => [
-                        'description' => 'Utilisateur déconnecté',
-                        'content' => 'No content',
-                    ],
+                    '204' => new Response(description: 'Utilisateur déconnecté'),
                 ],
                 summary: 'Déconnexion utilisateur connecté'
             )
@@ -160,16 +155,16 @@ final class OpenApiFactory implements OpenApiFactoryInterface
                 operationId: 'postApiLogin',
                 tags: ['Auth'],
                 responses: [
-                    '200' => [
-                        'description' => 'Token JWT',
-                        'content' => [
+                    '200' => new Response(
+                        description: 'Token JWT',
+                        content: new ArrayObject([
                             'application/json' => [
                                 'schema' => [
                                     '$ref' => '#/components/schemas/Token',
                                 ],
                             ],
-                        ],
-                    ],
+                        ]),
+                    ),
                 ],
                 requestBody: new RequestBody(
                     content: new ArrayObject([
