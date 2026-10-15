@@ -8,15 +8,15 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Delete;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use ApiPlatform\Metadata\ApiFilter;
 use App\Dto\WorkImageCreationInput;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\QueryParameter;
 use App\Controller\WorkImageController;
 use App\Repository\WorkImageRepository;
 use ApiPlatform\OpenApi\Model\Operation;
 use Symfony\Component\HttpFoundation\File\File;
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\ExactFilter;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Vich\UploaderBundle\Mapping\Attribute as Vich;
 use Symfony\Component\Validator\Constraints\NotNull;
@@ -54,6 +54,9 @@ use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
     ),
     new GetCollection(
         security: "is_granted('ROLE_USER')",
+        parameters: [
+            'work.id' => new QueryParameter(filter: new ExactFilter(), property: 'work.id'),
+        ],
     ),
     new Delete(
         security: "is_granted('EDIT_WORK_IMAGE', object)",
@@ -86,7 +89,6 @@ class WorkImage
     #[ORM\ManyToOne(inversedBy: 'workImages')]
     #[ORM\JoinColumn(nullable: false)]
     #[NotNull]
-    #[ApiFilter(SearchFilter::class, properties: ['work.id' => 'exact'])]
     private Work $work;
 
     #[Vich\UploadableField(mapping: 'work_images', fileNameProperty: 'imageName')]

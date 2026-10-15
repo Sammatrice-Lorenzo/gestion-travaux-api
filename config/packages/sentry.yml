@@ -1,10 +1,10 @@
 when@prod:
   sentry:
-      dsn: '%env(SENTRY_DSN)%'
-      options:
-          environment: '%env(default::SENTRY_ENVIRONMENT)%'
-          send_default_pii: false
-          traces_sample_rate: 0   # GlitchTip gère mal le tracing, on garde juste les erreurs
-          ignore_exceptions:
-              - Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-              - Symfony\Component\Security\Core\Exception\AccessDeniedException
+    dsn: '%env(SENTRY_DSN)%'
+    options:
+      environment: '%env(default::SENTRY_ENVIRONMENT)%'
+      send_default_pii: false
+      traces_sample_rate: 0   # GlitchTip gère mal le tracing, on garde juste les erreurs
+      ignore_exceptions:
+        - Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+        - Symfony\Component\Security\Core\Exception\AccessDeniedException

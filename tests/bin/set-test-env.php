@@ -15,4 +15,10 @@ if (false === $content) {
     exit(1);
 }
 
-file_put_contents($envFile, preg_replace('/^APP_ENV=.*/m', 'APP_ENV=test', $content));
+$newContent = preg_replace('/^APP_ENV=.*/m', 'APP_ENV=test', $content);
+
+// Only write when needed: touching .env invalidates the debug container, which then gets rebuilt
+// concurrently by the test server and the Codeception kernel (fails on Windows with locked files).
+if ($newContent !== $content) {
+    file_put_contents($envFile, $newContent);
+}
