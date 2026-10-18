@@ -67,20 +67,17 @@ class Supplier implements UserOwnerInterface
     ])]
     private string $name;
 
-    #[ORM\Column(length: 255)]
-    #[NotBlank]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
-    private string $address;
+    private ?string $address = null;
 
-    #[ORM\Column(length: 255)]
-    #[NotBlank]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
-    private string $city;
+    private ?string $city = null;
 
-    #[ORM\Column(length: 255)]
-    #[NotBlank]
+    #[ORM\Column(length: 255, nullable: true)]
     #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
-    private string $country;
+    private ?string $country = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Regex(
@@ -93,6 +90,9 @@ class Supplier implements UserOwnerInterface
     #[ORM\Column(length: 50, nullable: true)]
     #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
     private ?string $vatNumber = null;
+
+    #[ORM\Column(length: 255, unique: true, nullable: true)]
+    private ?string $qontoSupplierId = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private DateTimeImmutable $createdAt;
@@ -138,36 +138,36 @@ class Supplier implements UserOwnerInterface
         return $this;
     }
 
-    public function getAddress(): string
+    public function getAddress(): ?string
     {
         return $this->address;
     }
 
-    public function setAddress(string $address): static
+    public function setAddress(?string $address): static
     {
         $this->address = $address;
 
         return $this;
     }
 
-    public function getCity(): string
+    public function getCity(): ?string
     {
         return $this->city;
     }
 
-    public function setCity(string $city): static
+    public function setCity(?string $city): static
     {
         $this->city = $city;
 
         return $this;
     }
 
-    public function getCountry(): string
+    public function getCountry(): ?string
     {
         return $this->country;
     }
 
-    public function setCountry(string $country): static
+    public function setCountry(?string $country): static
     {
         $this->country = $country;
 
@@ -194,6 +194,18 @@ class Supplier implements UserOwnerInterface
     public function setVatNumber(?string $vatNumber): static
     {
         $this->vatNumber = $vatNumber;
+
+        return $this;
+    }
+
+    public function getQontoSupplierId(): ?string
+    {
+        return $this->qontoSupplierId;
+    }
+
+    public function setQontoSupplierId(?string $qontoSupplierId): static
+    {
+        $this->qontoSupplierId = $qontoSupplierId;
 
         return $this;
     }
