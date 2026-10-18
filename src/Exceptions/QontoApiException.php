@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Exceptions;
 
-use Exception;
 use Throwable;
 
-final class QontoApiException extends Exception
+final class QontoApiException extends InvoicingPlatformException
 {
     public function __construct(string $message, int $statusCode = 0, ?Throwable $previous = null)
     {

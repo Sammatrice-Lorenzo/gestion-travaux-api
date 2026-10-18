@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Service\Qonto;
 
-use App\Dto\Qonto\QontoAttachment;
-use App\Dto\Qonto\QontoSupplierInvoice;
+use App\Dto\InvoicingPlatform\PlatformAttachment;
+use App\Dto\InvoicingPlatform\PlatformSupplierInvoice;
 use App\Dto\Qonto\QontoSupplierInvoicePage;
 use App\Exceptions\QontoApiException;
-use App\Interface\Qonto\QontoSupplierInvoiceClientInterface;
+use App\Interface\InvoicingPlatform\InvoicingPlatformClientInterface;
 use DateTimeImmutable;
 use DateTimeZone;
 use Psr\Log\LoggerInterface;
@@ -18,7 +18,7 @@ use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Contracts\HttpClient\ResponseInterface;
 
-final readonly class QontoApiClient implements QontoSupplierInvoiceClientInterface
+final readonly class QontoApiClient implements InvoicingPlatformClientInterface
 {
     public const int PER_PAGE = 100;
 
@@ -35,9 +35,16 @@ final readonly class QontoApiClient implements QontoSupplierInvoiceClientInterfa
         private HttpClientInterface $qontoDownloadClient,
         #[Autowire('%env(QONTO_STAGING_TOKEN)%')]
         private string $stagingToken,
+        private QontoPayloadMapper $mapper = new QontoPayloadMapper(),
         private LoggerInterface $logger = new NullLogger(),
     ) {}
 
+    /**
+     * Une page de factures fournisseurs (hors avoirs) triées par updated_at croissant. Détail propre à Qonto :
+     * le code métier passe par iterateSupplierInvoices(), qui gère une pagination stable.
+     *
+     * @throws QontoApiException
+     */
     public function listSupplierInvoices(DateTimeImmutable $updatedFrom, DateTimeImmutable $updatedTo, int $page = 1): QontoSupplierInvoicePage
     {
         $response = $this->getJson('/v2/supplier_invoices', [
@@ -51,7 +58,7 @@ final readonly class QontoApiClient implements QontoSupplierInvoiceClientInterfa
             'page' => $page,
         ]);
 
-        $invoicePage = QontoSupplierInvoicePage::fromArray($response);
+        $invoicePage = $this->mapper->toSupplierInvoicePage($response);
         if ($invoicePage->skippedCount > 0) {
             $this->logger->warning('Qonto : factures fournisseurs sans identifiant ignorées.', [
                 'skipped' => $invoicePage->skippedCount,
@@ -69,9 +76,9 @@ final readonly class QontoApiClient implements QontoSupplierInvoiceClientInterfa
         return $this->iteratePages($updatedFrom, $updatedTo, 1, []);
     }
 
-    public function getAttachment(string $attachmentId): QontoAttachment
+    public function getAttachment(string $attachmentId): PlatformAttachment
     {
-        return QontoAttachment::fromArray($this->getJson('/v2/attachments/' . rawurlencode($attachmentId)));
+        return $this->mapper->toAttachment($this->getJson('/v2/attachments/' . rawurlencode($attachmentId)));
     }
 
     public function downloadFile(string $url): string
@@ -144,7 +151,7 @@ final readonly class QontoApiClient implements QontoSupplierInvoiceClientInterfa
      *
      * @param array<string, true> $seenIds
      *
-     * @return iterable<string, QontoSupplierInvoice>
+     * @return iterable<string, PlatformSupplierInvoice>
      */
     private function iteratePages(DateTimeImmutable $cursor, DateTimeImmutable $updatedTo, int $page, array $seenIds): iterable
     {
@@ -173,7 +180,7 @@ final readonly class QontoApiClient implements QontoSupplierInvoiceClientInterfa
     private function nextPosition(QontoSupplierInvoicePage $invoicePage, DateTimeImmutable $cursor, int $page): array
     {
         $updatedAts = array_filter(array_map(
-            static fn (QontoSupplierInvoice $invoice): ?DateTimeImmutable => $invoice->updatedAt,
+            static fn (PlatformSupplierInvoice $invoice): ?DateTimeImmutable => $invoice->updatedAt,
             $invoicePage->invoices,
         ));
         $nextCursor = [] === $updatedAts ? null : max($updatedAts)->modify('-1 millisecond');
