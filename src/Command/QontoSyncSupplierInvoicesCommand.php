@@ -15,7 +15,10 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Scheduler\Attribute\AsCronTask;
 
+// Toutes les heures, via le worker Scheduler ; un échec (code de sortie ≠ 0) remonte dans GlitchTip.
+#[AsCronTask('0 * * * *', timezone: 'Europe/Paris')]
 #[AsCommand(
     name: 'app:qonto:sync-supplier-invoices',
     description: 'Importe les factures fournisseurs Qonto en factures produits (PDF), sans doublon',
