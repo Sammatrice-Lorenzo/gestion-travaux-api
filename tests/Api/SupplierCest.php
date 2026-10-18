@@ -64,6 +64,14 @@ final class SupplierCest
         $I->seeResponseCodeIsClientError();
     }
 
+    public function testCreateSupplierWithBlankAddressFails(ApiTester $I): void
+    {
+        $I->sendPost(self::BASE_URL, ['name' => 'Supplier Blank Address API', 'address' => '', 'city' => '  ']);
+
+        $I->seeResponseCodeIs(422);
+        $I->seeResponseContainsJson(['violations' => [['propertyPath' => 'address'], ['propertyPath' => 'city']]]);
+    }
+
     #[Depends('testCreateSupplier')]
     public function testPutSupplierByUser(ApiTester $I): void
     {
