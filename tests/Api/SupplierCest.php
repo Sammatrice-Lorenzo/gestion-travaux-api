@@ -47,6 +47,23 @@ final class SupplierCest
         $I->seeResponseCodeIsClientError();
     }
 
+    public function testCreateSupplierWithOnlyName(ApiTester $I): void
+    {
+        $I->sendPost(self::BASE_URL, ['name' => 'Supplier Only Name API']);
+
+        $I->seeResponseCodeIsSuccessful();
+        $I->seeResponseContainsJson([
+            'name' => 'Supplier Only Name API',
+            'address' => null,
+            'city' => null,
+            'country' => null,
+        ]);
+        $I->dontSeeResponseJsonMatchesJsonPath('$.qontoSupplierId');
+
+        $I->sendPost(self::BASE_URL, ['address' => '85 rue Paris']);
+        $I->seeResponseCodeIsClientError();
+    }
+
     #[Depends('testCreateSupplier')]
     public function testPutSupplierByUser(ApiTester $I): void
     {
