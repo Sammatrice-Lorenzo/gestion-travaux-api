@@ -37,6 +37,7 @@ use ApiPlatform\OpenApi\Model\Response;
 use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
 
 #[ORM\Entity(repositoryClass: ProductInvoiceFileRepository::class)]
+#[ORM\UniqueConstraint(name: ProductInvoiceFile::UNIQUE_USER_QONTO_ID, columns: ['user_id', 'qonto_id'])]
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -156,6 +157,8 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
 
     public const string GROUP_PRODUCT_INVOICE_FILE_WRITE = 'product_invoice_file:write';
 
+    public const string UNIQUE_USER_QONTO_ID = 'UNIQ_PRODUCT_INVOICE_FILE_USER_QONTO_ID';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -194,9 +197,9 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     private ?Supplier $supplier = null;
 
     /**
-     * Identifiant de la facture fournisseur Qonto : garantit qu'une facture n'est importée qu'une fois.
+     * Identifiant de la facture fournisseur Qonto : garantit qu'une facture n'est importée qu'une fois par utilisateur (contrainte UNIQUE_USER_QONTO_ID).
      */
-    #[ORM\Column(length: 255, unique: true, nullable: true)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $qontoId = null;
 
     #[ORM\Column(length: 20, enumType: ProductInvoiceSourceEnum::class, options: ['default' => ProductInvoiceSourceEnum::MANUAL->value])]

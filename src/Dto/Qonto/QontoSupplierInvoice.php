@@ -52,9 +52,9 @@ final readonly class QontoSupplierInvoice
             fileName: (string) ($invoice['file_name'] ?? ''),
             attachmentId: self::stringOrNull($invoice['attachment_id'] ?? null),
             invoiceNumber: self::stringOrNull($invoice['invoice_number'] ?? null),
-            supplierId: self::stringOrNull($invoice['supplier_id'] ?? $snapshot['id'] ?? null),
-            supplierName: self::stringOrNull($invoice['supplier_name'] ?? $snapshot['name'] ?? $seller['name'] ?? $invoice['issuer_name'] ?? null),
-            vatNumber: self::stringOrNull($snapshot['vat_number'] ?? $invoice['vat_number'] ?? $seller['vat_number'] ?? null),
+            supplierId: self::firstStringOrNull($invoice['supplier_id'] ?? null, $snapshot['id'] ?? null),
+            supplierName: self::firstStringOrNull($invoice['supplier_name'] ?? null, $snapshot['name'] ?? null, $seller['name'] ?? null, $invoice['issuer_name'] ?? null),
+            vatNumber: self::firstStringOrNull($snapshot['vat_number'] ?? null, $invoice['vat_number'] ?? null, $seller['vat_number'] ?? null),
             totalAmount: isset($totalAmount['value']) && is_numeric($totalAmount['value']) ? (float) $totalAmount['value'] : null,
             currency: self::stringOrNull($totalAmount['currency'] ?? null),
             issueDate: self::dateOrNull($invoice['issue_date'] ?? null),
@@ -66,6 +66,21 @@ final readonly class QontoSupplierInvoice
             supplierCity: self::stringOrNull($sellerAddress['city'] ?? null),
             supplierCountryCode: self::stringOrNull($sellerAddress['country_code'] ?? null),
         );
+    }
+
+    /**
+     * Première valeur non vide (après trim) : une chaîne vide ne masque pas les sources suivantes.
+     */
+    private static function firstStringOrNull(mixed ...$values): ?string
+    {
+        foreach ($values as $value) {
+            $string = self::stringOrNull($value);
+            if (null !== $string) {
+                return $string;
+            }
+        }
+
+        return null;
     }
 
     private static function stringOrNull(mixed $value): ?string

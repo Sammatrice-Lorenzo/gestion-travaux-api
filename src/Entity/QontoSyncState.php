@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Interface\UserOwnerInterface;
 use App\Repository\QontoSyncStateRepository;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
@@ -13,7 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
  * Point de reprise de la synchro Qonto : lastSyncedAt n'avance qu'après une synchro complète réussie.
  */
 #[ORM\Entity(repositoryClass: QontoSyncStateRepository::class)]
-class QontoSyncState
+class QontoSyncState implements UserOwnerInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]

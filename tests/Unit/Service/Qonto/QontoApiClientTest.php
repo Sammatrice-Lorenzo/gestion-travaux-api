@@ -9,6 +9,7 @@ use App\Service\Qonto\QontoApiClient;
 use Codeception\Test\Unit;
 use DateTimeImmutable;
 use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
 final class QontoApiClientTest extends Unit
@@ -88,7 +89,7 @@ final class QontoApiClientTest extends Unit
             function (string $method, string $url, array $options) use (&$headers): MockResponse {
                 $headers = $options['normalized_headers'];
 
-                return $this->jsonResponse(['attachment' => ['id' => 'att-1']]);
+                return $this->jsonResponse(['attachment' => ['id' => 'att-1', 'url' => self::ATTACHMENT_URL]]);
             },
             self::BASE_URL,
         ), stagingToken: 'staging-123');
@@ -185,6 +186,159 @@ final class QontoApiClientTest extends Unit
         $client->downloadFile(self::ATTACHMENT_URL);
     }
 
+    public function testDownloadTransportErrorWhileReadingBodyThrowsQontoApiException(): void
+    {
+        $client = new QontoApiClient(
+            new MockHttpClient([], self::BASE_URL),
+            new MockHttpClient(new MockResponse((static function (): iterable {
+                yield '%PDF-1.4 ';
+
+                throw new TransportException('Connection reset by peer');
+            })())),
+            '',
+        );
+
+        $this->expectException(QontoApiException::class);
+        $this->expectExceptionMessage('téléchargement interrompu');
+
+        $client->downloadFile(self::ATTACHMENT_URL);
+    }
+
+    public function testDownloadTooLargeThrowsQontoApiException(): void
+    {
+        $client = new QontoApiClient(
+            new MockHttpClient([], self::BASE_URL),
+            new MockHttpClient(new MockResponse(str_repeat('a', QontoApiClient::MAX_DOWNLOAD_BYTES + 1))),
+            '',
+        );
+
+        $this->expectException(QontoApiException::class);
+        $this->expectExceptionMessage('trop volumineuse');
+
+        $client->downloadFile(self::ATTACHMENT_URL);
+    }
+
+    public function testAttachmentWithoutUrlThrowsQontoApiException(): void
+    {
+        $client = $this->createClient(new MockHttpClient(
+            $this->jsonResponse(['errors' => [['code' => 'unexpected']]]),
+            self::BASE_URL,
+        ));
+
+        $this->expectException(QontoApiException::class);
+        $this->expectExceptionMessage('id ou url manquant');
+
+        $client->getAttachment('att-1');
+    }
+
+    public function testEmptySupplierFieldsFallBackToNextSource(): void
+    {
+        $payload = $this->invoicePayload();
+        $payload['supplier_id'] = '';
+        $payload['supplier_name'] = '  ';
+        $payload['supplier_snapshot'] = ['id' => 'sup-2', 'name' => '', 'vat_number' => ''];
+        $payload['vat_number'] = 'FR99999999999';
+
+        $client = $this->createClient(new MockHttpClient($this->jsonResponse([
+            'supplier_invoices' => [$payload],
+            'meta' => ['current_page' => 1, 'next_page' => null],
+        ]), self::BASE_URL));
+
+        $invoice = $client->listSupplierInvoices(new DateTimeImmutable('-1 day'), new DateTimeImmutable())->invoices[0];
+
+        $this->assertSame('sup-2', $invoice->supplierId);
+        $this->assertSame('Bricoman SAS', $invoice->supplierName);
+        $this->assertSame('FR99999999999', $invoice->vatNumber);
+    }
+
+    public function testInvoicesWithoutIdAreCountedAsSkipped(): void
+    {
+        $client = $this->createClient(new MockHttpClient($this->jsonResponse([
+            'supplier_invoices' => [$this->invoicePayload(), ['status' => 'to_pay'], ['id' => '']],
+            'meta' => ['current_page' => 1, 'next_page' => null],
+        ]), self::BASE_URL));
+
+        $page = $client->listSupplierInvoices(new DateTimeImmutable('-1 day'), new DateTimeImmutable());
+
+        $this->assertCount(1, $page->invoices);
+        $this->assertSame(2, $page->skippedCount);
+    }
+
+    public function testIterateSupplierInvoicesUsesUpdatedAtCursorAndDeduplicates(): void
+    {
+        $queries = [];
+        $responses = [
+            [
+                'supplier_invoices' => [
+                    $this->invoicePayload('inv-1', '2026-01-10T10:00:00.000Z'),
+                    $this->invoicePayload('inv-2', '2026-01-11T10:00:00.000Z'),
+                ],
+                'meta' => ['current_page' => 1, 'next_page' => 2],
+            ],
+            // inv-2 revient car le curseur est inclusif : il ne doit pas être renvoyé deux fois.
+            [
+                'supplier_invoices' => [
+                    $this->invoicePayload('inv-2', '2026-01-11T10:00:00.000Z'),
+                    $this->invoicePayload('inv-3', '2026-01-12T10:00:00.000Z'),
+                ],
+                'meta' => ['current_page' => 1, 'next_page' => null],
+            ],
+        ];
+        $client = $this->createClient(new MockHttpClient(
+            function (string $method, string $url) use (&$queries, &$responses): MockResponse {
+                $queries[] = $this->parseQuery($url);
+
+                return $this->jsonResponse((array) array_shift($responses));
+            },
+            self::BASE_URL,
+        ));
+
+        $ids = [];
+        foreach ($client->iterateSupplierInvoices(new DateTimeImmutable('2026-01-01T00:00:00Z'), new DateTimeImmutable('2026-02-01T00:00:00Z')) as $invoice) {
+            $ids[] = $invoice->id;
+        }
+
+        $this->assertSame(['inv-1', 'inv-2', 'inv-3'], $ids);
+        $this->assertCount(2, $queries);
+        $this->assertSame('2026-01-11T09:59:59.999Z', $queries[1]['filter']['updated_at_from']);
+        $this->assertSame('1', $queries[1]['page']);
+    }
+
+    public function testIterateSupplierInvoicesIncrementsPageWhenCursorDoesNotMove(): void
+    {
+        $queries = [];
+        $responses = [
+            [
+                'supplier_invoices' => [$this->invoicePayload('inv-1', '2026-01-10T10:00:00.000Z')],
+                'meta' => ['current_page' => 1, 'next_page' => 2],
+            ],
+            [
+                'supplier_invoices' => [$this->invoicePayload('inv-2', '2026-01-10T10:00:00.000Z')],
+                'meta' => ['current_page' => 1, 'next_page' => 2],
+            ],
+            [
+                'supplier_invoices' => [$this->invoicePayload('inv-3', '2026-01-10T10:00:00.000Z')],
+                'meta' => ['current_page' => 2, 'next_page' => null],
+            ],
+        ];
+        $client = $this->createClient(new MockHttpClient(
+            function (string $method, string $url) use (&$queries, &$responses): MockResponse {
+                $queries[] = $this->parseQuery($url);
+
+                return $this->jsonResponse((array) array_shift($responses));
+            },
+            self::BASE_URL,
+        ));
+
+        $ids = [];
+        foreach ($client->iterateSupplierInvoices(new DateTimeImmutable('2026-01-01T00:00:00Z'), new DateTimeImmutable('2026-02-01T00:00:00Z')) as $invoice) {
+            $ids[] = $invoice->id;
+        }
+
+        $this->assertSame(['inv-1', 'inv-2', 'inv-3'], $ids);
+        $this->assertSame(['1', '1', '2'], array_column($queries, 'page'));
+    }
+
     private function createClient(MockHttpClient $qontoClient, string $stagingToken = ''): QontoApiClient
     {
         return new QontoApiClient($qontoClient, new MockHttpClient(), $stagingToken);
@@ -213,17 +367,17 @@ final class QontoApiClientTest extends Unit
     /**
      * @return array<string, mixed>
      */
-    private function invoicePayload(): array
+    private function invoicePayload(string $id = 'inv-1', string $updatedAt = '2026-01-16T10:00:00.000Z'): array
     {
         return [
-            'id' => 'inv-1',
+            'id' => $id,
             'status' => 'to_pay',
             'organization_id' => 'org-1',
             'source_type' => 'email',
             'attachment_id' => 'att-1',
             'display_attachment_id' => 'att-1',
             'created_at' => '2026-01-15T10:00:00.000Z',
-            'updated_at' => '2026-01-16T10:00:00.000Z',
+            'updated_at' => $updatedAt,
             'file_name' => 'facture.pdf',
             'declined_note' => null,
             'is_einvoice' => true,

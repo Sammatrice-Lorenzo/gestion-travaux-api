@@ -32,6 +32,15 @@ framework:
                     max_retries: 3
                     delay: 1000
                     multiplier: 2
+            # Autowiré via `HttpClientInterface $qontoDownloadClient`. Liens signés (S3) des pièces jointes : pas d'en-tête Authorization.
+            qonto.download.client:
+                scope: '^https://'
+                timeout: 30
+                max_duration: 120
+                retry_failed:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
 
     annotations:
         enabled: false
