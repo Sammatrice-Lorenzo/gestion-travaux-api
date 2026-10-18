@@ -23,6 +23,7 @@ use App\Dto\ProductInvoiceCreationInput;
 use App\Processor\ProductInvoiceProcessor;
 use App\Dto\ProductInvoiceDownloadZipInput;
 use App\Interface\MonthlyProviderInterface;
+use App\Enum\ProductInvoiceSourceEnum;
 use Symfony\Component\HttpFoundation\File\File;
 use App\Controller\ProductInvoiceFileController;
 use App\Repository\ProductInvoiceFileRepository;
@@ -193,6 +194,16 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     private ?Supplier $supplier = null;
 
     /**
+     * Identifiant de la facture fournisseur Qonto : garantit qu'une facture n'est importée qu'une fois.
+     */
+    #[ORM\Column(length: 255, unique: true, nullable: true)]
+    private ?string $qontoId = null;
+
+    #[ORM\Column(length: 20, enumType: ProductInvoiceSourceEnum::class, options: ['default' => ProductInvoiceSourceEnum::MANUAL->value])]
+    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
+    private ProductInvoiceSourceEnum $source = ProductInvoiceSourceEnum::MANUAL;
+
+    /**
      * @var Collection<int, SupplierReturnInvoiceFile>
      */
     #[ORM\OneToMany(mappedBy: 'linkedProductInvoice', targetEntity: SupplierReturnInvoiceFile::class)]
@@ -291,6 +302,30 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     public function setSupplier(?Supplier $supplier): static
     {
         $this->supplier = $supplier;
+
+        return $this;
+    }
+
+    public function getQontoId(): ?string
+    {
+        return $this->qontoId;
+    }
+
+    public function setQontoId(?string $qontoId): static
+    {
+        $this->qontoId = $qontoId;
+
+        return $this;
+    }
+
+    public function getSource(): ProductInvoiceSourceEnum
+    {
+        return $this->source;
+    }
+
+    public function setSource(ProductInvoiceSourceEnum $source): static
+    {
+        $this->source = $source;
 
         return $this;
     }

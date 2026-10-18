@@ -19,6 +19,20 @@ framework:
 
     handle_all_throwables: true
 
+    http_client:
+        scoped_clients:
+            # Autowiré via `HttpClientInterface $qontoClient`. Clé API (login:secret, sans Base64) uniquement côté serveur.
+            qonto.client:
+                base_uri: '%env(QONTO_BASE_URL)%'
+                headers:
+                    Accept: 'application/json'
+                    Authorization: '%env(QONTO_LOGIN)%:%env(QONTO_SECRET_KEY)%'
+                # Réessaie les 423/425/429/5xx (codes par défaut) avec un délai exponentiel.
+                retry_failed:
+                    max_retries: 3
+                    delay: 1000
+                    multiplier: 2
+
     annotations:
         enabled: false
 
