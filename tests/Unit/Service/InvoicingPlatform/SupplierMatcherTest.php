@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\InvoicingPlatform;
 
+use App\Dto\InvoicingPlatform\PlatformSupplierInvoice;
 use App\Entity\Supplier;
 use App\Entity\User;
+use App\Service\InvoicingPlatform\SupplierLookup;
 use App\Service\InvoicingPlatform\SupplierMatcher;
 use App\Tests\Enum\UserFixturesEnum;
 use App\Tests\Support\Fake\FakeInvoicingPlatformClient;
@@ -40,7 +42,7 @@ final class SupplierMatcherTest extends Unit
         $existing = $this->createSupplier('Matcher Par Id')->setQontoSupplierId('qonto-sup-1');
         $this->entityManager->flush();
 
-        $supplier = $this->matcher->findOrCreate($this->user, FakeInvoicingPlatformClient::invoice('m1', supplierId: 'qonto-sup-1', supplierName: 'Autre nom'));
+        $supplier = $this->findOrCreate(FakeInvoicingPlatformClient::invoice('m1', supplierId: 'qonto-sup-1', supplierName: 'Autre nom'));
 
         $this->assertSame($existing, $supplier);
     }
@@ -50,7 +52,7 @@ final class SupplierMatcherTest extends Unit
         $existing = $this->createSupplier('Matcher Par TVA')->setVatNumber('FR 32 123 456 789');
         $this->entityManager->flush();
 
-        $supplier = $this->matcher->findOrCreate($this->user, FakeInvoicingPlatformClient::invoice('m2', supplierId: 'qonto-sup-2', vatNumber: 'fr32123456789', supplierName: 'Nom différent'));
+        $supplier = $this->findOrCreate(FakeInvoicingPlatformClient::invoice('m2', supplierId: 'qonto-sup-2', vatNumber: 'fr32123456789', supplierName: 'Nom différent'));
 
         $this->assertSame($existing, $supplier);
         $this->assertSame('qonto-sup-2', $existing->getQontoSupplierId());
@@ -62,14 +64,14 @@ final class SupplierMatcherTest extends Unit
         $existing = $this->createSupplier('Leroy-Merlin Évry Matcher');
         $this->entityManager->flush();
 
-        $supplier = $this->matcher->findOrCreate($this->user, FakeInvoicingPlatformClient::invoice('m3', supplierName: '  LEROY MERLIN evry   matcher '));
+        $supplier = $this->findOrCreate(FakeInvoicingPlatformClient::invoice('m3', supplierName: '  LEROY MERLIN evry   matcher '));
 
         $this->assertSame($existing, $supplier);
     }
 
     public function testCreatesUnknownSupplierWithAvailableData(): void
     {
-        $supplier = $this->matcher->findOrCreate($this->user, FakeInvoicingPlatformClient::invoice(
+        $supplier = $this->findOrCreate(FakeInvoicingPlatformClient::invoice(
             'm4',
             supplierId: 'qonto-sup-4',
             supplierName: 'Nouveau Fournisseur Matcher',
@@ -94,7 +96,7 @@ final class SupplierMatcherTest extends Unit
 
     public function testCreatesSupplierWithOnlyName(): void
     {
-        $supplier = $this->matcher->findOrCreate($this->user, FakeInvoicingPlatformClient::invoice('m5', supplierName: 'Ticket Sans Adresse Matcher'));
+        $supplier = $this->findOrCreate(FakeInvoicingPlatformClient::invoice('m5', supplierName: 'Ticket Sans Adresse Matcher'));
 
         $this->assertInstanceOf(Supplier::class, $supplier);
         $this->assertNull($supplier->getAddress());
@@ -111,7 +113,7 @@ final class SupplierMatcherTest extends Unit
         ;
         $this->entityManager->flush();
 
-        $supplier = $this->matcher->findOrCreate($this->user, FakeInvoicingPlatformClient::invoice(
+        $supplier = $this->findOrCreate(FakeInvoicingPlatformClient::invoice(
             'm6',
             supplierId: 'qonto-sup-6',
             supplierName: 'fournisseur saisi matcher',
@@ -129,13 +131,42 @@ final class SupplierMatcherTest extends Unit
 
     public function testReturnsNullWithoutSupplierData(): void
     {
-        $this->assertNull($this->matcher->findOrCreate($this->user, FakeInvoicingPlatformClient::invoice('m7')));
+        $this->assertNull($this->findOrCreate(FakeInvoicingPlatformClient::invoice('m7')));
     }
 
     public function testNormalizers(): void
     {
-        $this->assertSame('leroy merlin evry', SupplierMatcher::normalizeName('  Leroy-Merlin   ÉVRY '));
-        $this->assertSame('FR32123456789', SupplierMatcher::normalizeVatNumber('fr 32.123 456-789'));
+        $this->assertSame('leroy merlin evry', SupplierLookup::normalizeName('  Leroy-Merlin   ÉVRY '));
+        $this->assertSame('FR32123456789', SupplierLookup::normalizeVatNumber('fr 32.123 456-789'));
+    }
+
+    public function testSupplierCreatedDuringSyncIsReusedWithoutQuery(): void
+    {
+        $lookup = $this->matcher->createLookup($this->user);
+
+        $first = $this->matcher->findOrCreate($this->user, FakeInvoicingPlatformClient::invoice('m8', supplierId: 'qonto-sup-8', supplierName: 'Fournisseur Lookup Matcher'), $lookup);
+        $second = $this->matcher->findOrCreate($this->user, FakeInvoicingPlatformClient::invoice('m9', supplierId: 'qonto-sup-8', supplierName: 'Fournisseur Lookup Matcher'), $lookup);
+
+        $this->assertNotNull($first);
+        $this->assertSame($first, $second, 'Le fournisseur créé (non flushé) est retrouvé par le même index.');
+    }
+
+    public function testTooLongValuesAreTruncatedToColumnLength(): void
+    {
+        $supplier = $this->findOrCreate(FakeInvoicingPlatformClient::invoice(
+            'm10',
+            supplierName: str_repeat('N', 300),
+            vatNumber: str_repeat('9', 80),
+        ));
+
+        $this->assertNotNull($supplier);
+        $this->assertSame(255, mb_strlen($supplier->getName()));
+        $this->assertSame(50, mb_strlen((string) $supplier->getVatNumber()));
+    }
+
+    private function findOrCreate(PlatformSupplierInvoice $invoice): ?Supplier
+    {
+        return $this->matcher->findOrCreate($this->user, $invoice, $this->matcher->createLookup($this->user));
     }
 
     private function createSupplier(string $name): Supplier

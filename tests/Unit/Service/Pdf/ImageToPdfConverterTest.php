@@ -7,6 +7,7 @@ namespace App\Tests\Unit\Service\Pdf;
 use App\Exceptions\UnsupportedImageFormatException;
 use App\Service\Pdf\ImageToPdfConverter;
 use Codeception\Test\Unit;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 use GdImage;
 
 final class ImageToPdfConverterTest extends Unit
@@ -19,7 +20,7 @@ final class ImageToPdfConverterTest extends Unit
 
     protected function _before(): void
     {
-        $this->converter = new ImageToPdfConverter();
+        $this->converter = new ImageToPdfConverter(new AsciiSlugger());
     }
 
     public function testJpegBecomesSinglePageA4Pdf(): void
@@ -92,9 +93,9 @@ final class ImageToPdfConverterTest extends Unit
 
     public function testPdfFileName(): void
     {
-        $this->assertSame('ticket.pdf', ImageToPdfConverter::pdfFileName('ticket.jpg'));
-        $this->assertSame('Ticket-Cafe-ete.pdf', ImageToPdfConverter::pdfFileName('Ticket Café été.JPG'));
-        $this->assertSame('facture.pdf', ImageToPdfConverter::pdfFileName('.png'));
+        $this->assertSame('ticket.pdf', $this->converter->pdfFileName('ticket.jpg'));
+        $this->assertSame('Ticket-Cafe-ete.pdf', $this->converter->pdfFileName('Ticket Café été.JPG'));
+        $this->assertSame('facture.pdf', $this->converter->pdfFileName('.png'));
     }
 
     private function assertValidSinglePagePdf(string $pdf): void

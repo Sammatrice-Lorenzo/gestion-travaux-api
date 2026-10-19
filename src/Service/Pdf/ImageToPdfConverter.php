@@ -9,7 +9,7 @@ use GdImage;
 use Mpdf\Mpdf;
 use Mpdf\MpdfException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\String\Slugger\AsciiSlugger;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 /**
  * Convertit une photo (JPEG, PNG, WebP) en PDF A4 d'une page : orientation EXIF corrigée, image réduite à
@@ -29,9 +29,14 @@ final readonly class ImageToPdfConverter
 
     private const array JPEG_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/pjpeg'];
 
+    private const string PNG_MIME_TYPE = 'image/png';
+
+    private const string WEBP_MIME_TYPE = 'image/webp';
+
     private string $tempDir;
 
     public function __construct(
+        private SluggerInterface $slugger,
         #[Autowire('%kernel.cache_dir%/mpdf')]
         ?string $tempDir = null,
     ) {
@@ -40,11 +45,10 @@ final readonly class ImageToPdfConverter
 
     public function supports(string $mimeType): bool
     {
-        return match (strtolower($mimeType)) {
-            'image/jpeg', 'image/jpg', 'image/pjpeg', 'image/png' => true,
-            'image/webp' => function_exists('imagecreatefromwebp'),
-            default => false,
-        };
+        $mimeType = strtolower($mimeType);
+
+        return in_array($mimeType, [...self::JPEG_MIME_TYPES, self::PNG_MIME_TYPE], true)
+            || (self::WEBP_MIME_TYPE === $mimeType && function_exists('imagecreatefromwebp'));
     }
 
     /**
@@ -76,9 +80,9 @@ final readonly class ImageToPdfConverter
     /**
      * « ticket.jpg » devient « ticket.pdf » (nom nettoyé, utilisable comme nom de fichier).
      */
-    public static function pdfFileName(string $originalName): string
+    public function pdfFileName(string $originalName): string
     {
-        $baseName = (new AsciiSlugger())->slug(pathinfo($originalName, PATHINFO_FILENAME))->toString();
+        $baseName = $this->slugger->slug(pathinfo($originalName, PATHINFO_FILENAME))->toString();
 
         return ('' === $baseName ? 'facture' : $baseName) . '.pdf';
     }

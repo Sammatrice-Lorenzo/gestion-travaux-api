@@ -9,7 +9,8 @@ use App\Entity\Supplier;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Intl\Countries;
-use Symfony\Component\String\UnicodeString;
+
+use function Symfony\Component\String\u;
 
 /**
  * Retrouve le fournisseur d'une facture de la plateforme agréée, ou le crée (« trouve ou crée »).
@@ -17,129 +18,71 @@ use Symfony\Component\String\UnicodeString;
  */
 final readonly class SupplierMatcher
 {
+    private const int NAME_MAX_LENGTH = 255;
+
+    private const int VAT_NUMBER_MAX_LENGTH = 50;
+
     public function __construct(
         private EntityManagerInterface $entityManager,
     ) {}
+
+    /**
+     * Charge une fois les fournisseurs de l'utilisateur, à réutiliser pour toutes les factures d'une synchro.
+     */
+    public function createLookup(User $user): SupplierLookup
+    {
+        return new SupplierLookup($this->entityManager->getRepository(Supplier::class)->findBy(['user' => $user]));
+    }
 
     /**
      * Le fournisseur créé est persisté mais pas flushé : l'appelant flushe avec la facture.
      *
      * @return null|Supplier null si la facture ne permet ni de retrouver ni de nommer un fournisseur
      */
-    public function findOrCreate(User $user, PlatformSupplierInvoice $invoice): ?Supplier
+    public function findOrCreate(User $user, PlatformSupplierInvoice $invoice, SupplierLookup $lookup): ?Supplier
     {
-        $repository = $this->entityManager->getRepository(Supplier::class);
+        $supplier = $lookup->find($invoice);
 
-        if (null !== $invoice->supplierId) {
-            $supplier = $repository->findOneBy(['user' => $user, 'qontoSupplierId' => $invoice->supplierId]);
-            if (null !== $supplier) {
-                return $supplier;
+        if (null === $supplier) {
+            if (null === $invoice->supplierName) {
+                return null;
             }
+
+            $supplier = (new Supplier())->setUser($user)->setName($this->truncate($invoice->supplierName, self::NAME_MAX_LENGTH));
+            $this->entityManager->persist($supplier);
         }
 
-        $userSuppliers = $repository->findBy(['user' => $user]);
-        $supplier = $this->findByVatNumber($userSuppliers, $invoice->vatNumber)
-            ?? $this->findByName($userSuppliers, $invoice->supplierName);
-
-        if (null !== $supplier) {
-            return $this->completeMissingFields($supplier, $invoice);
-        }
-
-        if (null === $invoice->supplierName) {
-            return null;
-        }
-
-        $supplier = $this->completeMissingFields(
-            (new Supplier())->setUser($user)->setName($invoice->supplierName),
-            $invoice,
-        );
-        $this->entityManager->persist($supplier);
+        $this->completeMissingFields($supplier, $invoice);
+        $lookup->add($supplier);
 
         return $supplier;
-    }
-
-    public static function normalizeName(string $name): string
-    {
-        return (new UnicodeString($name))
-            ->ascii()
-            ->lower()
-            ->replaceMatches('/[^a-z0-9]+/', ' ')
-            ->collapseWhitespace()
-            ->trim()
-            ->toString()
-        ;
-    }
-
-    public static function normalizeVatNumber(string $vatNumber): string
-    {
-        return strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', $vatNumber));
-    }
-
-    /**
-     * @param Supplier[] $suppliers
-     */
-    private function findByVatNumber(array $suppliers, ?string $vatNumber): ?Supplier
-    {
-        if (null === $vatNumber || '' === self::normalizeVatNumber($vatNumber)) {
-            return null;
-        }
-
-        $normalized = self::normalizeVatNumber($vatNumber);
-        foreach ($suppliers as $supplier) {
-            if (null !== $supplier->getVatNumber() && self::normalizeVatNumber($supplier->getVatNumber()) === $normalized) {
-                return $supplier;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @param Supplier[] $suppliers
-     */
-    private function findByName(array $suppliers, ?string $name): ?Supplier
-    {
-        if (null === $name || '' === self::normalizeName($name)) {
-            return null;
-        }
-
-        $normalized = self::normalizeName($name);
-        foreach ($suppliers as $supplier) {
-            if (self::normalizeName($supplier->getName()) === $normalized) {
-                return $supplier;
-            }
-        }
-
-        return null;
     }
 
     /**
      * Ne remplit que les champs vides : l'identifiant plateforme, la TVA et l'adresse saisis à la main sont conservés.
      */
-    private function completeMissingFields(Supplier $supplier, PlatformSupplierInvoice $invoice): Supplier
+    private function completeMissingFields(Supplier $supplier, PlatformSupplierInvoice $invoice): void
     {
         if (null === $supplier->getQontoSupplierId() && null !== $invoice->supplierId) {
-            $supplier->setQontoSupplierId($invoice->supplierId);
+            $supplier->setQontoSupplierId($this->truncate($invoice->supplierId, self::NAME_MAX_LENGTH));
         }
 
         if (null === $supplier->getVatNumber() && null !== $invoice->vatNumber) {
-            $supplier->setVatNumber($invoice->vatNumber);
+            $supplier->setVatNumber($this->truncate($invoice->vatNumber, self::VAT_NUMBER_MAX_LENGTH));
         }
 
         if (null === $supplier->getAddress() && null !== $invoice->supplierStreetAddress) {
-            $supplier->setAddress($invoice->supplierStreetAddress);
+            $supplier->setAddress($this->truncate($invoice->supplierStreetAddress, self::NAME_MAX_LENGTH));
         }
 
         $city = trim(($invoice->supplierZipCode ?? '') . ' ' . ($invoice->supplierCity ?? ''));
         if (null === $supplier->getCity() && '' !== $city) {
-            $supplier->setCity($city);
+            $supplier->setCity($this->truncate($city, self::NAME_MAX_LENGTH));
         }
 
         if (null === $supplier->getCountry() && null !== $invoice->supplierCountryCode) {
-            $supplier->setCountry($this->countryName($invoice->supplierCountryCode));
+            $supplier->setCountry($this->truncate($this->countryName($invoice->supplierCountryCode), self::NAME_MAX_LENGTH));
         }
-
-        return $supplier;
     }
 
     private function countryName(string $countryCode): string
@@ -147,5 +90,13 @@ final readonly class SupplierMatcher
         $countryCode = strtoupper($countryCode);
 
         return Countries::exists($countryCode) ? Countries::getName($countryCode, 'fr') : $countryCode;
+    }
+
+    /**
+     * Les colonnes sont limitées en base : une valeur trop longue ferait échouer tout l'import.
+     */
+    private function truncate(string $value, int $maxLength): string
+    {
+        return u($value)->truncate($maxLength)->toString();
     }
 }

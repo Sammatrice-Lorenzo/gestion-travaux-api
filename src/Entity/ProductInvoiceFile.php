@@ -207,6 +207,12 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     private ProductInvoiceSourceEnum $source = ProductInvoiceSourceEnum::MANUAL;
 
     /**
+     * @var null|array{name: string, totalAmount: float, date: string}
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $platformSnapshot = null;
+
+    /**
      * @var Collection<int, SupplierReturnInvoiceFile>
      */
     #[ORM\OneToMany(mappedBy: 'linkedProductInvoice', targetEntity: SupplierReturnInvoiceFile::class)]
@@ -329,6 +335,24 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     public function setSource(ProductInvoiceSourceEnum $source): static
     {
         $this->source = $source;
+
+        return $this;
+    }
+
+    /**
+     * @return null|array{name: string, totalAmount: float, date: string}
+     */
+    public function getPlatformSnapshot(): ?array
+    {
+        return $this->platformSnapshot;
+    }
+
+    /**
+     * @param null|array{name: string, totalAmount: float, date: string} $platformSnapshot
+     */
+    public function setPlatformSnapshot(?array $platformSnapshot): static
+    {
+        $this->platformSnapshot = $platformSnapshot;
 
         return $this;
     }

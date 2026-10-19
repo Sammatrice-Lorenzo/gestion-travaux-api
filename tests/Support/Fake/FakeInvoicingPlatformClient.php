@@ -9,6 +9,7 @@ use App\Dto\InvoicingPlatform\PlatformSupplierInvoice;
 use App\Exceptions\InvoicingPlatformException;
 use App\Interface\InvoicingPlatform\InvoicingPlatformClientInterface;
 use DateTimeImmutable;
+use Throwable;
 
 /**
  * Plateforme agréée en mémoire : les tests y déposent factures, pièces jointes et fichiers.
@@ -33,6 +34,11 @@ final class FakeInvoicingPlatformClient implements InvoicingPlatformClientInterf
     private ?InvoicingPlatformException $listException = null;
 
     /**
+     * @var array<string, Throwable> erreur levée au téléchargement, par URL
+     */
+    private array $downloadExceptions = [];
+
+    /**
      * @var list<array{DateTimeImmutable, DateTimeImmutable}>
      */
     public array $requestedWindows = [];
@@ -50,6 +56,16 @@ final class FakeInvoicingPlatformClient implements InvoicingPlatformClientInterf
         return $this;
     }
 
+    /**
+     * Fait échouer le téléchargement de la pièce jointe de cette facture (erreur permanente, réseau...).
+     */
+    public function failDownload(string $attachmentId, Throwable $exception): self
+    {
+        $this->downloadExceptions["https://files.test/{$attachmentId}"] = $exception;
+
+        return $this;
+    }
+
     public function failListing(InvoicingPlatformException $exception): self
     {
         $this->listException = $exception;
@@ -63,6 +79,7 @@ final class FakeInvoicingPlatformClient implements InvoicingPlatformClientInterf
         $this->attachments = [];
         $this->files = [];
         $this->listException = null;
+        $this->downloadExceptions = [];
         $this->requestedWindows = [];
     }
 
@@ -84,6 +101,10 @@ final class FakeInvoicingPlatformClient implements InvoicingPlatformClientInterf
 
     public function downloadFile(string $url): string
     {
+        if (isset($this->downloadExceptions[$url])) {
+            throw $this->downloadExceptions[$url];
+        }
+
         return $this->files[$url] ?? throw new InvoicingPlatformException('Lien de téléchargement expiré.', 403);
     }
 

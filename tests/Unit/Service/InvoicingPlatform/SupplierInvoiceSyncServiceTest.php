@@ -9,6 +9,7 @@ use App\Entity\QontoSyncState;
 use App\Entity\User;
 use App\Enum\ProductInvoiceSourceEnum;
 use App\Exceptions\InvoicingPlatformException;
+use App\Exceptions\SupplierInvoiceSyncAlreadyRunningException;
 use App\Service\InvoicingPlatform\SupplierInvoiceSyncService;
 use App\Service\InvoicingPlatform\SupplierMatcher;
 use App\Service\Pdf\ImageToPdfConverter;
@@ -18,7 +19,12 @@ use App\Tests\Support\UnitTester;
 use Codeception\Test\Unit;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use Psr\Log\NullLogger;
+use RuntimeException;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\Store\InMemoryStore;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 
 final class SupplierInvoiceSyncServiceTest extends Unit
 {
@@ -29,6 +35,8 @@ final class SupplierInvoiceSyncServiceTest extends Unit
     private FakeInvoicingPlatformClient $client;
 
     private SupplierInvoiceSyncService $syncService;
+
+    private LockFactory $lockFactory;
 
     private User $user;
 
@@ -44,11 +52,16 @@ final class SupplierInvoiceSyncServiceTest extends Unit
         $entityManager = $this->tester->grabService('doctrine.orm.entity_manager');
         $this->entityManager = $entityManager;
         $this->client = new FakeInvoicingPlatformClient();
+        /** @var ManagerRegistry $doctrine */
+        $doctrine = $this->tester->grabService('doctrine');
+        $this->lockFactory = new LockFactory(new InMemoryStore());
         $this->syncService = new SupplierInvoiceSyncService(
             $this->client,
             $this->entityManager,
+            $doctrine,
             new SupplierMatcher($this->entityManager),
-            new ImageToPdfConverter(),
+            new ImageToPdfConverter(new AsciiSlugger()),
+            $this->lockFactory,
             new NullLogger(),
         );
 
@@ -84,7 +97,6 @@ final class SupplierInvoiceSyncServiceTest extends Unit
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
 
         $this->assertSame(1, $result->created);
-        $this->assertSame(['sync-pdf'], $result->createdIds);
 
         $productInvoiceFile = $this->findByPlatformId('sync-pdf');
         $this->assertSame(ProductInvoiceSourceEnum::QONTO, $productInvoiceFile->getSource());
@@ -129,6 +141,78 @@ final class SupplierInvoiceSyncServiceTest extends Unit
         $this->syncService->sync($this->user, $this->from, $this->until);
 
         $this->assertSame($chosenSupplier, $this->findByPlatformId('sync-supplier')->getSupplier());
+    }
+
+    public function testUpdateKeepsValuesCorrectedByUser(): void
+    {
+        $this->client->addInvoice(FakeInvoicingPlatformClient::invoice('sync-corrected', totalAmount: 1.23), content: $this->pdfContent());
+        $this->syncService->sync($this->user, $this->from, $this->until);
+
+        // OCR erroné (1 234,00 lu 1.23) corrigé dans la PWA, puis la facture change sur la plateforme pour une autre raison.
+        $this->findByPlatformId('sync-corrected')->setTotalAmount(1234.0);
+        $this->entityManager->flush();
+
+        $this->client->addInvoice(FakeInvoicingPlatformClient::invoice('sync-corrected', totalAmount: 1.23, issueDate: new DateTimeImmutable('2026-01-20')));
+        $this->syncService->sync($this->user, $this->from, $this->until);
+
+        $productInvoiceFile = $this->findByPlatformId('sync-corrected');
+        $this->assertSame(1234.0, $productInvoiceFile->getTotalAmount(), 'La correction manuelle est conservée.');
+        $this->assertSame('2026-01-20', $productInvoiceFile->getDate()->format('Y-m-d'), 'Un champ non corrigé suit la plateforme.');
+    }
+
+    public function testNameFollowsInvoiceNumberFilledLater(): void
+    {
+        $this->client->addInvoice(FakeInvoicingPlatformClient::invoice('sync-ocr', invoiceNumber: null, fileName: 'scan-0042.pdf'), fileName: 'scan-0042.pdf', content: $this->pdfContent());
+        $this->syncService->sync($this->user, $this->from, $this->until);
+        $this->assertSame('scan-0042.pdf', $this->findByPlatformId('sync-ocr')->getName());
+
+        $this->client->addInvoice(FakeInvoicingPlatformClient::invoice('sync-ocr', invoiceNumber: 'F-2026-042'));
+        $result = $this->syncService->sync($this->user, $this->from, $this->until);
+
+        $this->assertSame(1, $result->updated);
+        $this->assertSame('F-2026-042', $this->findByPlatformId('sync-ocr')->getName());
+    }
+
+    public function testForeignCurrencyIsReportedAndNotImported(): void
+    {
+        $this->client->addInvoice(FakeInvoicingPlatformClient::invoice('sync-usd', currency: 'USD', totalAmount: 1000.0), content: $this->pdfContent());
+
+        $result = $this->syncService->sync($this->user, $this->from, $this->until);
+
+        $this->assertSame(0, $result->created);
+        $this->assertSame(1, $result->skipped);
+        $this->assertStringContainsString('USD', $result->unsupported[0]);
+        $this->assertNull($this->entityManager->getRepository(ProductInvoiceFile::class)->findOneBy(['user' => $this->user, 'qontoId' => 'sync-usd']));
+    }
+
+    public function testPermanentFailureIsReportedWithoutBlockingSyncPoint(): void
+    {
+        $this->client
+            ->addInvoice(FakeInvoicingPlatformClient::invoice('sync-permanent'), content: $this->pdfContent())
+            ->failDownload('att-sync-permanent', new RuntimeException('Disque plein'))
+            ->addInvoice(FakeInvoicingPlatformClient::invoice('sync-after-failure'), content: $this->pdfContent())
+        ;
+
+        $result = $this->syncService->sync($this->user, $this->from, $this->until);
+
+        $this->assertSame(1, $result->created, 'Les factures suivantes sont importées.');
+        $this->assertCount(1, $result->failures);
+        $this->assertStringContainsString('Disque plein', $result->failures[0]);
+        $this->assertFalse($result->hasErrors());
+        $this->assertEquals($this->until, $result->syncedUntil, 'Une erreur permanente ne bloque pas les synchros suivantes.');
+    }
+
+    public function testConcurrentSyncIsRefused(): void
+    {
+        $lock = $this->lockFactory->createLock('supplier-invoice-sync-' . $this->user->getId());
+        $this->assertTrue($lock->acquire());
+
+        try {
+            $this->expectException(SupplierInvoiceSyncAlreadyRunningException::class);
+            $this->syncService->sync($this->user, $this->from, $this->until);
+        } finally {
+            $lock->release();
+        }
     }
 
     public function testExcludedDocumentsAreSkipped(): void

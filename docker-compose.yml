@@ -16,6 +16,22 @@ services:
         networks:
             - php
 
+    # Worker Symfony Scheduler : exécute les tâches #[AsCronTask] (synchro Qonto horaire). Sans lui, rien n'est planifié.
+    # --time-limit / --memory-limit : le worker redémarre régulièrement (restart) pour libérer la mémoire et recharger le code.
+    gestion-travaux-scheduler:
+        container_name: gestion-travaux-scheduler
+        build:
+            context: .
+            dockerfile: ./docker/Dockerfile
+        depends_on:
+            - gestion-travaux-database
+        volumes:
+            - ../gestion-travaux-api:/var/www/
+        command: ["php", "bin/console", "messenger:consume", "scheduler_default", "--time-limit=3600", "--memory-limit=256M"]
+        restart: unless-stopped
+        networks:
+            - php
+
     gestion-travaux-database:
         image: mysql:latest
         container_name: database_gestion_travaux

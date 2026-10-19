@@ -53,7 +53,7 @@ final class QontoSyncSupplierInvoicesCommandCest
 
         $output = $I->runSymfonyConsoleCommand(self::COMMAND, ['--from' => '2026-01-01']);
 
-        $I->assertMatchesRegularExpression('/^\s*1\s+0\s+2\s+0\s*$/m', $output);
+        $I->assertMatchesRegularExpression('/^\s*1\s+0\s+2\s+0\s+0\s*$/m', $output);
         $I->assertStringContainsString('F-cmd-heic', $output);
         $I->assertStringContainsString('Synchro terminée', $output);
 
@@ -64,7 +64,7 @@ final class QontoSyncSupplierInvoicesCommandCest
 
         $secondOutput = $I->runSymfonyConsoleCommand(self::COMMAND, ['--from' => '2026-01-01']);
 
-        $I->assertMatchesRegularExpression('/^\s*0\s+0\s+3\s+0\s*$/m', $secondOutput);
+        $I->assertMatchesRegularExpression('/^\s*0\s+0\s+3\s+0\s+0\s*$/m', $secondOutput);
         $I->assertCount(1, $I->grabEntitiesFromRepository(ProductInvoiceFile::class, ['qontoId' => 'cmd-pdf']));
     }
 
