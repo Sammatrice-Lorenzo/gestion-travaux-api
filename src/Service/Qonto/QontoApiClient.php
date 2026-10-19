@@ -148,8 +148,10 @@ final readonly class QontoApiClient implements InvoicingPlatformClientInterface
 
     /**
      * Renvoie les factures de la page demandée (indexées par id, sans doublon), puis enchaîne récursivement sur la position suivante.
+     * Mémoire bornée quel que soit le nombre de pages : la page est libérée avant l'appel suivant, et seuls les ids
+     * encore susceptibles de revenir (updated_at ≥ prochain curseur) sont transmis.
      *
-     * @param array<string, true> $seenIds
+     * @param array<string, null|DateTimeImmutable> $seenIds id => updated_at des factures déjà renvoyées
      *
      * @return iterable<string, PlatformSupplierInvoice>
      */
@@ -158,18 +160,25 @@ final readonly class QontoApiClient implements InvoicingPlatformClientInterface
         $invoicePage = $this->listSupplierInvoices($cursor, $updatedTo, $page);
 
         foreach ($invoicePage->invoices as $invoice) {
-            if (!isset($seenIds[$invoice->id])) {
-                $seenIds[$invoice->id] = true;
+            if (!\array_key_exists($invoice->id, $seenIds)) {
+                $seenIds[$invoice->id] = $invoice->updatedAt;
 
                 yield $invoice->id => $invoice;
             }
         }
 
-        if (null !== $invoicePage->meta->nextPage) {
-            [$nextCursor, $nextPage] = $this->nextPosition($invoicePage, $cursor, $page);
-
-            yield from $this->iteratePages($nextCursor, $updatedTo, $nextPage, $seenIds);
+        if (null === $invoicePage->meta->nextPage) {
+            return;
         }
+
+        [$nextCursor, $nextPage] = $this->nextPosition($invoicePage, $cursor, $page);
+        unset($invoicePage);
+        $seenIds = array_filter(
+            $seenIds,
+            static fn (?DateTimeImmutable $updatedAt): bool => null !== $updatedAt && $updatedAt >= $nextCursor,
+        );
+
+        yield from $this->iteratePages($nextCursor, $updatedTo, $nextPage, $seenIds);
     }
 
     /**
