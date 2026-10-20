@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Service\ApiErrorsService;
 use App\Entity\ProductInvoiceFile;
+use App\Exceptions\UnsupportedImageFormatException;
 use App\Service\ProductInvoiceService;
 use App\Dto\ProductInvoiceCreationInput;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,7 +34,11 @@ final class ProductInvoiceFileController extends AbstractController
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
-        $productInvoiceFiles = $this->productInvoiceService->getProductInvoicesCreated($dto);
+        try {
+            $productInvoiceFiles = $this->productInvoiceService->getProductInvoicesCreated($dto);
+        } catch (UnsupportedImageFormatException $exception) {
+            return ApiErrorsService::getHydraDescriptionResponse("Photo impossible à convertir en PDF : {$exception->getMessage()}");
+        }
 
         $data = $this->serializer->serialize($productInvoiceFiles, 'json', [
             'groups' => ProductInvoiceFile::GROUP_PRODUCT_INVOICE_FILE_READ,

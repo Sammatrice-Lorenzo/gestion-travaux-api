@@ -7,6 +7,8 @@ use App\Entity\User;
 use App\Entity\ProductInvoiceFile;
 use App\Dto\ProductInvoiceCreationInput;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Exceptions\UnsupportedImageFormatException;
+use App\Service\ProductInvoiceFile\UploadedInvoiceFileConverter;
 use Symfony\Bundle\SecurityBundle\Security;
 
 final readonly class ProductInvoiceService
@@ -14,7 +16,8 @@ final readonly class ProductInvoiceService
     public function __construct(
         private EntityManagerInterface $entityManagerInterface,
         private Security $security,
-        private PdfExtractorService $pdfExtractorService
+        private PdfExtractorService $pdfExtractorService,
+        private UploadedInvoiceFileConverter $uploadedInvoiceFileConverter,
     ) {}
 
     private function getFormatDateByPdf(): string
@@ -30,7 +33,11 @@ final readonly class ProductInvoiceService
     }
 
     /**
+     * Les photos sont converties en PDF avant l'enregistrement ; aucune facture n'est créée si l'une est illisible.
+     *
      * @param ProductInvoiceFile[] $productInvoiceFiles
+     *
+     * @throws UnsupportedImageFormatException
      */
     private function createProductInvoice(ProductInvoiceCreationInput $productInvoiceCreationInput, array &$productInvoiceFiles): void
     {
@@ -42,27 +49,41 @@ final readonly class ProductInvoiceService
         /** @var User $user */
         $user = $this->entityManagerInterface->getRepository(User::class)->find($currentUser->getId());
 
-        foreach ($uploadedFiles as $file) {
-            $this->pdfExtractorService->setFile($file);
-            $totalAmount = $this->pdfExtractorService->extractTotalFromPdf();
-            $dateExtracted = $this->getFormatDateByPdf();
+        $pdfFiles = [];
 
-            $productInvoiceFile = (new ProductInvoiceFile())
-                ->setUser($user)
-                ->setName($file->getClientOriginalName())
-                ->setDate(new DateTime('' !== $dateExtracted ? $dateExtracted : $date))
-                ->setFile($file)
-                ->setTotalAmount($totalAmount)
-            ;
-            $this->entityManagerInterface->persist($productInvoiceFile);
+        try {
+            foreach ($uploadedFiles as $uploadedFile) {
+                $file = $this->uploadedInvoiceFileConverter->toPdf($uploadedFile);
+                $pdfFiles[] = $file;
 
-            $productInvoiceFiles[] = $productInvoiceFile;
+                // Une photo convertie ne contient pas de texte : montant à 0 et date du formulaire, à corriger à la main.
+                $this->pdfExtractorService->setFile($file);
+                $totalAmount = $this->pdfExtractorService->extractTotalFromPdf();
+                $dateExtracted = $this->getFormatDateByPdf();
+
+                $productInvoiceFile = (new ProductInvoiceFile())
+                    ->setUser($user)
+                    ->setName($file->getClientOriginalName())
+                    ->setDate(new DateTime('' !== $dateExtracted ? $dateExtracted : $date))
+                    ->setFile($file)
+                    ->setTotalAmount($totalAmount)
+                ;
+                $this->entityManagerInterface->persist($productInvoiceFile);
+
+                $productInvoiceFiles[] = $productInvoiceFile;
+            }
+
+            $this->entityManagerInterface->flush();
+        } finally {
+            foreach ($pdfFiles as $pdfFile) {
+                $this->uploadedInvoiceFileConverter->removeTemporaryFile($pdfFile);
+            }
         }
-
-        $this->entityManagerInterface->flush();
     }
 
     /**
+     * @throws UnsupportedImageFormatException
+     *
      * @return ProductInvoiceFile[]
      */
     public function getProductInvoicesCreated(ProductInvoiceCreationInput $productInvoiceCreationInput): array
