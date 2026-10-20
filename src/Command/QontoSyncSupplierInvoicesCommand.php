@@ -6,9 +6,11 @@ namespace App\Command;
 
 use App\Dto\InvoicingPlatform\SupplierInvoiceSyncResult;
 use App\Entity\User;
+use App\Exceptions\InvoicingPlatformAccountException;
 use App\Exceptions\InvoicingPlatformException;
 use App\Exceptions\SupplierInvoiceSyncAlreadyRunningException;
-use App\Repository\UserRepository;
+use App\Service\InvoicingPlatform\InvoicingPlatformAccountOwner;
+use App\Service\InvoicingPlatform\SupplierInvoiceImportNotifier;
 use App\Service\InvoicingPlatform\SupplierInvoiceSyncService;
 use DateTimeImmutable;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -18,7 +20,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Scheduler\Attribute\AsCronTask;
 
 // Toutes les heures, via le worker Scheduler ; un échec (code de sortie ≠ 0) remonte dans GlitchTip.
@@ -31,9 +32,8 @@ final class QontoSyncSupplierInvoicesCommand extends Command
 {
     public function __construct(
         private readonly SupplierInvoiceSyncService $syncService,
-        private readonly UserRepository $userRepository,
-        #[Autowire('%env(QONTO_USER_EMAIL)%')]
-        private readonly string $userEmail,
+        private readonly InvoicingPlatformAccountOwner $accountOwner,
+        private readonly SupplierInvoiceImportNotifier $notifier,
     ) {
         parent::__construct();
     }
@@ -69,12 +69,11 @@ final class QontoSyncSupplierInvoicesCommand extends Command
      */
     private function resolveUser(): User
     {
-        if ('' === trim($this->userEmail)) {
-            throw new InvalidArgumentException('QONTO_USER_EMAIL n\'est pas défini.');
+        try {
+            return $this->accountOwner->getOwner();
+        } catch (InvoicingPlatformAccountException $exception) {
+            throw new InvalidArgumentException($exception->getMessage(), previous: $exception);
         }
-
-        return $this->userRepository->findOneBy(['email' => $this->userEmail])
-            ?? throw new InvalidArgumentException("Aucun utilisateur pour QONTO_USER_EMAIL « {$this->userEmail} ».");
     }
 
     /**
@@ -112,6 +111,7 @@ final class QontoSyncSupplierInvoicesCommand extends Command
         }
 
         $this->renderReport($io, $result);
+        $this->notifier->notifyImported($user, $result);
 
         return $result->isSuccessful() ? Command::SUCCESS : Command::FAILURE;
     }

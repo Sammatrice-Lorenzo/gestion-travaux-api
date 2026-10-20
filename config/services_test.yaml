@@ -9,8 +9,7 @@ services:
         public: true
 
     # Indépendant des fichiers .env : le bootstrap des tests ne charge que .env.test.local ou .env.test.
-    App\Command\QontoSyncSupplierInvoicesCommand:
+    App\Service\InvoicingPlatform\InvoicingPlatformAccountOwner:
         autowire: true
-        autoconfigure: true
         arguments:
-            $userEmail: 'user@test.com'
+            $email: 'user@test.com'
