@@ -24,6 +24,7 @@ use LogicException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\SharedLockInterface;
 use Throwable;
 use Vich\UploaderBundle\FileAbstraction\ReplacingFile;
 
@@ -50,6 +51,11 @@ final readonly class SupplierInvoiceSyncService
 
     private const string SNAPSHOT_DATE_FORMAT = 'Y-m-d';
 
+    /**
+     * Durée de vie du verrou entre deux factures (téléchargement et conversion compris).
+     */
+    private const float LOCK_TTL_SECONDS = 300.0;
+
     public function __construct(
         private InvoicingPlatformClientInterface $client,
         private EntityManagerInterface $entityManager,
@@ -70,8 +76,9 @@ final readonly class SupplierInvoiceSyncService
      */
     public function sync(User $user, ?DateTimeImmutable $from = null, ?DateTimeImmutable $until = null): SupplierInvoiceSyncResult
     {
-        // Une synchro manuelle et la tâche planifiée créeraient sinon les mêmes factures en double.
-        $lock = $this->lockFactory->createLock('supplier-invoice-sync-' . $user->getId());
+        // Tâche planifiée, synchro à la demande (worker) et lancement manuel créeraient sinon les mêmes factures en double.
+        // Verrou en base (config/packages/lock.yaml) : partagé par tous les conteneurs.
+        $lock = $this->lockFactory->createLock('supplier-invoice-sync-' . $user->getId(), self::LOCK_TTL_SECONDS);
         if (!$lock->acquire()) {
             throw new SupplierInvoiceSyncAlreadyRunningException();
         }
@@ -81,19 +88,24 @@ final readonly class SupplierInvoiceSyncService
                 $user,
                 $from ?? $this->findSyncState($user)?->getLastSyncedAt() ?? new DateTimeImmutable(self::DEFAULT_FIRST_SYNC_FROM),
                 $until ?? new DateTimeImmutable(),
+                $lock,
             );
         } finally {
             $lock->release();
         }
     }
 
-    private function syncWindow(User $user, DateTimeImmutable $from, DateTimeImmutable $until): SupplierInvoiceSyncResult
+    /**
+     * @param SharedLockInterface $lock prolongé à chaque facture : un processus arrêté net le libère au bout de LOCK_TTL_SECONDS
+     */
+    private function syncWindow(User $user, DateTimeImmutable $from, DateTimeImmutable $until, SharedLockInterface $lock): SupplierInvoiceSyncResult
     {
         $result = new SupplierInvoiceSyncResult();
         $suppliers = $this->supplierMatcher->createLookup($user);
 
         foreach ($this->client->iterateSupplierInvoices($from, $until) as $invoice) {
             $this->importInvoice($user, $invoice, $suppliers, $result);
+            $lock->refresh();
 
             if (!$this->entityManager->isOpen()) {
                 // Un flush en échec ferme l'EntityManager : il est réinitialisé pour importer les factures suivantes.

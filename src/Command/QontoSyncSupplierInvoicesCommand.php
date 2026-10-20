@@ -111,7 +111,7 @@ final class QontoSyncSupplierInvoicesCommand extends Command
         }
 
         $this->renderReport($io, $result);
-        $this->notifier->notify($user, $result);
+        $this->notifier->notifyImported($user, $result);
 
         return $result->isSuccessful() ? Command::SUCCESS : Command::FAILURE;
     }

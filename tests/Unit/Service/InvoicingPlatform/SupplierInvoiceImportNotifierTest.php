@@ -8,22 +8,21 @@ use App\Dto\InvoicingPlatform\SupplierInvoiceSyncResult;
 use App\Entity\TokenNotificationPush;
 use App\Entity\User;
 use App\Interface\Firebase\FirebaseNotificationServiceInterface;
+use App\Repository\TokenNotificationPushRepository;
 use App\Service\InvoicingPlatform\SupplierInvoiceImportNotifier;
+use App\Service\TokenNotificationPush\NotificationPushSender;
+use App\Tests\Enum\UserFixturesEnum;
+use App\Tests\Support\UnitTester;
 use Codeception\Test\Unit;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\EntityRepository;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\NullLogger;
 use RuntimeException;
 
 final class SupplierInvoiceImportNotifierTest extends Unit
 {
-    private FirebaseNotificationServiceInterface&MockObject $firebase;
+    protected UnitTester $tester;
 
-    /**
-     * @var EntityRepository<TokenNotificationPush>&MockObject
-     */
-    private EntityRepository&MockObject $tokenRepository;
+    private FirebaseNotificationServiceInterface&MockObject $firebase;
 
     private SupplierInvoiceImportNotifier $notifier;
 
@@ -32,47 +31,105 @@ final class SupplierInvoiceImportNotifierTest extends Unit
     protected function _before(): void
     {
         $this->firebase = $this->createMock(FirebaseNotificationServiceInterface::class);
-        $this->tokenRepository = $this->createMock(EntityRepository::class);
-        $entityManager = $this->createMock(EntityManagerInterface::class);
-        $entityManager->method('getRepository')->with(TokenNotificationPush::class)->willReturn($this->tokenRepository);
-        $this->notifier = new SupplierInvoiceImportNotifier($this->firebase, $entityManager, new NullLogger());
-        $this->user = new User();
+
+        /** @var TokenNotificationPushRepository $tokenRepository */
+        $tokenRepository = $this->tester->grabService(TokenNotificationPushRepository::class);
+        $this->notifier = new SupplierInvoiceImportNotifier(new NotificationPushSender($this->firebase, new NullLogger()), $tokenRepository, new NullLogger());
+
+        /** @var User $user */
+        $user = $this->tester->grabEntityFromRepository(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);
+        $this->user = $user;
     }
 
     public function testNotifiesEveryDeviceOfTheUser(): void
     {
-        $this->tokenRepository->method('findBy')->with(['user' => $this->user])->willReturn([$this->token('phone'), $this->token('laptop')]);
-        $this->firebase->expects($this->exactly(2))
-            ->method('sendNotification')
-            ->with($this->anything(), SupplierInvoiceImportNotifier::TITLE, '3 nouvelles factures fournisseurs importées depuis Qonto')
-            ->willReturn(['name' => 'projects/x/messages/1'])
-        ;
+        $this->haveDevices('notifier-phone', 'notifier-laptop');
+        $sentTo = [];
+        $this->firebase->method('sendNotification')->willReturnCallback(
+            static function (string $token, string $title, string $body) use (&$sentTo): array {
+                $sentTo[] = [$token, $title, $body];
 
-        $this->assertSame(2, $this->notifier->notify($this->user, $this->syncResult(created: 3)));
+                return ['name' => 'projects/x/messages/1'];
+            },
+        );
+
+        $this->notifier->notifyImported($this->user, $this->syncResult(created: 3));
+
+        $body = '3 nouvelles factures fournisseurs importées depuis Qonto';
+        $this->assertContains(['notifier-phone', SupplierInvoiceImportNotifier::TITLE, $body], $sentTo);
+        $this->assertContains(['notifier-laptop', SupplierInvoiceImportNotifier::TITLE, $body], $sentTo);
     }
 
-    public function testNothingSentWithoutNewInvoice(): void
+    public function testScheduledSyncSendsNothingWithoutNewInvoice(): void
     {
-        $this->tokenRepository->expects($this->never())->method('findBy');
+        $this->haveDevices('notifier-silent');
         $this->firebase->expects($this->never())->method('sendNotification');
 
-        $this->assertSame(0, $this->notifier->notify($this->user, $this->syncResult(created: 0)));
+        $this->assertSame(0, $this->notifier->notifyImported($this->user, $this->syncResult(created: 0)));
+    }
+
+    public function testRequestedSyncAlwaysReportsItsOutcome(): void
+    {
+        $this->haveDevices('notifier-outcome');
+        $bodies = [];
+        $this->firebase->method('sendNotification')->willReturnCallback(
+            static function (string $token, string $title, string $body) use (&$bodies): array {
+                $bodies[$token] = $body;
+
+                return ['name' => 'ok'];
+            },
+        );
+
+        $this->notifier->notifyRequestedSync($this->user, $this->syncResult(created: 0));
+
+        $this->assertSame(SupplierInvoiceImportNotifier::NOTHING_NEW_BODY, $bodies['notifier-outcome']);
     }
 
     public function testUnreachableDeviceDoesNotStopOthers(): void
     {
-        $this->tokenRepository->method('findBy')->willReturn([$this->token('expired'), $this->token('phone')]);
+        $this->haveDevices('notifier-expired', 'notifier-reachable');
+        $reached = [];
         $this->firebase->method('sendNotification')->willReturnCallback(
-            static fn (string $token): array => 'expired' === $token ? throw new RuntimeException('UNREGISTERED') : ['name' => 'ok'],
+            static function (string $token) use (&$reached): array {
+                if ('notifier-expired' === $token) {
+                    throw new RuntimeException('UNREGISTERED');
+                }
+
+                $reached[] = $token;
+
+                return ['name' => 'ok'];
+            },
         );
 
-        $this->assertSame(1, $this->notifier->notify($this->user, $this->syncResult(created: 1)));
+        $this->notifier->notifyImported($this->user, $this->syncResult(created: 1));
+
+        $this->assertContains('notifier-reachable', $reached);
     }
 
-    public function testBodyIsSingularForOneInvoice(): void
+    public function testNeverThrows(): void
     {
-        $this->assertSame('1 nouvelle facture fournisseur importée depuis Qonto', SupplierInvoiceImportNotifier::body(1));
-        $this->assertSame('2 nouvelles factures fournisseurs importées depuis Qonto', SupplierInvoiceImportNotifier::body(2));
+        $this->haveDevices('notifier-broken');
+        $this->firebase->method('sendNotification')->willThrowException(new \LogicException('Configuration Firebase invalide'));
+
+        $this->assertSame(0, $this->notifier->notifyImported($this->user, $this->syncResult(created: 2)));
+    }
+
+    public function testBodies(): void
+    {
+        $this->assertSame('1 nouvelle facture fournisseur importée depuis Qonto', SupplierInvoiceImportNotifier::importedBody(1));
+        $this->assertSame('2 nouvelles factures fournisseurs importées depuis Qonto', SupplierInvoiceImportNotifier::importedBody(2));
+
+        $incomplete = $this->syncResult(created: 2);
+        $incomplete->errors = ['F-1 : Qonto indisponible'];
+        $incomplete->failures = ['F-2 : disque plein'];
+        $this->assertSame('Synchronisation Qonto incomplète : 2 importée(s), 2 en erreur', SupplierInvoiceImportNotifier::resultBody($incomplete));
+    }
+
+    private function haveDevices(string ...$tokens): void
+    {
+        foreach ($tokens as $token) {
+            $this->tester->haveInRepository(TokenNotificationPush::class, ['token' => $token, 'userAgent' => "test-{$token}", 'user' => $this->user]);
+        }
     }
 
     private function syncResult(int $created): SupplierInvoiceSyncResult
@@ -81,10 +138,5 @@ final class SupplierInvoiceImportNotifierTest extends Unit
         $result->created = $created;
 
         return $result;
-    }
-
-    private function token(string $token): TokenNotificationPush
-    {
-        return (new TokenNotificationPush())->setToken($token)->setUserAgent('test')->setUser($this->user);
     }
 }

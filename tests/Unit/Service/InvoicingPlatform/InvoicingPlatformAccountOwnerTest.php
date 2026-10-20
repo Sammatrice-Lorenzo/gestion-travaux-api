@@ -6,28 +6,44 @@ namespace App\Tests\Unit\Service\InvoicingPlatform;
 
 use App\Entity\User;
 use App\Exceptions\InvoicingPlatformAccountException;
+use App\Repository\UserRepository;
 use App\Service\InvoicingPlatform\InvoicingPlatformAccountOwner;
+use App\Tests\Enum\UserFixturesEnum;
+use App\Tests\Support\UnitTester;
 use Codeception\Test\Unit;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\EntityRepository;
+use LogicException;
 
 final class InvoicingPlatformAccountOwnerTest extends Unit
 {
-    private const string EMAIL = 'artisan@test.com';
+    protected UnitTester $tester;
 
-    public function testOnlyConfiguredUserIsOwner(): void
+    private UserRepository $userRepository;
+
+    protected function _before(): void
     {
-        $accountOwner = new InvoicingPlatformAccountOwner($this->entityManagerReturning(null), ' ' . self::EMAIL . ' ');
+        /** @var UserRepository $userRepository */
+        $userRepository = $this->tester->grabService(UserRepository::class);
+        $this->userRepository = $userRepository;
+    }
 
-        $this->assertTrue($accountOwner->isOwner((new User())->setEmail('Artisan@Test.com')));
-        $this->assertFalse($accountOwner->isOwner((new User())->setEmail('autre@test.com')));
+    public function testOwnerIsTheUserFoundInDatabase(): void
+    {
+        $accountOwner = $this->accountOwner(' ' . UserFixturesEnum::DEFAULT_USER->value . ' ');
+
+        $this->assertTrue($accountOwner->isOwner($this->defaultUser()));
+        $this->assertFalse($accountOwner->isOwner($this->otherUser()));
+    }
+
+    public function testNobodyIsOwnerWhenEmailMatchesNoUser(): void
+    {
+        $this->assertFalse($this->accountOwner('inconnu@test.com')->isOwner($this->defaultUser()));
     }
 
     public function testNobodyIsOwnerWhenEmailIsNotConfigured(): void
     {
-        $accountOwner = new InvoicingPlatformAccountOwner($this->entityManagerReturning(null), '');
+        $accountOwner = $this->accountOwner('');
 
-        $this->assertFalse($accountOwner->isOwner((new User())->setEmail('')));
+        $this->assertFalse($accountOwner->isOwner($this->defaultUser()));
         $this->expectException(InvoicingPlatformAccountException::class);
 
         $accountOwner->getOwner();
@@ -35,26 +51,36 @@ final class InvoicingPlatformAccountOwnerTest extends Unit
 
     public function testGetOwner(): void
     {
-        $user = (new User())->setEmail(self::EMAIL);
-        $this->assertSame($user, (new InvoicingPlatformAccountOwner($this->entityManagerReturning($user), self::EMAIL))->getOwner());
+        $this->assertSame($this->defaultUser(), $this->accountOwner(UserFixturesEnum::DEFAULT_USER->value)->getOwner());
     }
 
     public function testUnknownEmailThrows(): void
     {
         $this->expectException(InvoicingPlatformAccountException::class);
-        $this->expectExceptionMessage(self::EMAIL);
+        $this->expectExceptionMessage('inconnu@test.com');
 
-        (new InvoicingPlatformAccountOwner($this->entityManagerReturning(null), self::EMAIL))->getOwner();
+        $this->accountOwner('inconnu@test.com')->getOwner();
     }
 
-    private function entityManagerReturning(?User $user): EntityManagerInterface
+    private function accountOwner(string $email): InvoicingPlatformAccountOwner
     {
-        $repository = $this->createMock(EntityRepository::class);
-        $repository->method('findOneBy')->willReturn($user);
+        return new InvoicingPlatformAccountOwner($this->userRepository, $email);
+    }
 
-        $entityManager = $this->createMock(EntityManagerInterface::class);
-        $entityManager->method('getRepository')->with(User::class)->willReturn($repository);
+    private function defaultUser(): User
+    {
+        return $this->userRepository->findOneBy(['email' => UserFixturesEnum::DEFAULT_USER->value])
+            ?? throw new LogicException('Utilisateur des fixtures introuvable.');
+    }
 
-        return $entityManager;
+    private function otherUser(): User
+    {
+        foreach ($this->userRepository->findAll() as $user) {
+            if (UserFixturesEnum::DEFAULT_USER->value !== $user->getEmail()) {
+                return $user;
+            }
+        }
+
+        throw new LogicException('Les fixtures doivent contenir un second utilisateur.');
     }
 }

@@ -14,6 +14,9 @@ use App\Service\InvoicingPlatform\SupplierInvoiceSyncService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
+/**
+ * Synchro demandée depuis la PWA : quelle que soit l'issue, l'utilisateur en est prévenu par une notification push.
+ */
 #[AsMessageHandler]
 final readonly class SyncSupplierInvoicesHandler
 {
@@ -25,9 +28,6 @@ final readonly class SyncSupplierInvoicesHandler
         private LoggerInterface $logger,
     ) {}
 
-    /**
-     * @throws InvoicingPlatformException plateforme indisponible : Messenger retente le message, puis le passe en « failed »
-     */
     public function __invoke(SyncSupplierInvoicesMessage $message): void
     {
         $user = $this->userRepository->find($message->userId);
@@ -41,12 +41,18 @@ final readonly class SyncSupplierInvoicesHandler
             $result = $this->syncService->sync($user);
         } catch (SupplierInvoiceSyncAlreadyRunningException) {
             // La synchro en cours importe déjà les mêmes factures : rien à refaire.
-            $this->logger->info('Synchro des factures fournisseurs déjà en cours, demande ignorée.', ['userId' => $message->userId]);
+            $this->notifier->notifySyncNotRun($user, SupplierInvoiceImportNotifier::ALREADY_RUNNING_BODY);
+
+            return;
+        } catch (InvoicingPlatformException $exception) {
+            // Pas de nouvel essai du message : la synchro planifiée reprendra au même point dans l'heure.
+            $this->logger->error('Synchro des factures fournisseurs à la demande interrompue.', ['userId' => $message->userId, 'exception' => $exception]);
+            $this->notifier->notifySyncNotRun($user, SupplierInvoiceImportNotifier::PLATFORM_UNAVAILABLE_BODY);
 
             return;
         }
 
-        $this->notifier->notify($user, $result);
+        $this->notifier->notifyRequestedSync($user, $result);
 
         if (!$result->isSuccessful()) {
             $this->logger->error('Synchro des factures fournisseurs incomplète.', [

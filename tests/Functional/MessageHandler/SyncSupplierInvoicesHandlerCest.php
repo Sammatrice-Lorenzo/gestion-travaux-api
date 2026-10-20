@@ -8,6 +8,7 @@ use App\Entity\ProductInvoiceFile;
 use App\Entity\TokenNotificationPush;
 use App\Entity\User;
 use App\Enum\ProductInvoiceSourceEnum;
+use App\Exceptions\InvoicingPlatformException;
 use App\Message\SyncSupplierInvoicesMessage;
 use App\MessageHandler\SyncSupplierInvoicesHandler;
 use App\Service\InvoicingPlatform\SupplierInvoiceImportNotifier;
@@ -16,6 +17,7 @@ use App\Tests\Support\Fake\FakeFirebaseNotificationService;
 use App\Tests\Support\Fake\FakeInvoicingPlatformClient;
 use App\Tests\Support\FunctionalTester;
 use LogicException;
+use Symfony\Component\Lock\LockFactory;
 
 final class SyncSupplierInvoicesHandlerCest
 {
@@ -70,9 +72,48 @@ final class SyncSupplierInvoicesHandlerCest
 
         $I->seeInRepository(ProductInvoiceFile::class, ['user' => $user, 'qontoId' => 'handler-pdf']);
         $I->assertContains(
-            ['token' => 'device-handler', 'title' => SupplierInvoiceImportNotifier::TITLE, 'body' => SupplierInvoiceImportNotifier::body(1)],
+            ['token' => 'device-handler', 'title' => SupplierInvoiceImportNotifier::TITLE, 'body' => SupplierInvoiceImportNotifier::importedBody(1)],
             $this->firebase->sent,
         );
+    }
+
+    public function testOwnerIsToldWhenNothingIsNew(FunctionalTester $I): void
+    {
+        $user = $this->grabUserWithDevice($I, 'device-nothing-new');
+
+        ($this->handler)(new SyncSupplierInvoicesMessage((int) $user->getId()));
+
+        $I->assertContains($this->notification('device-nothing-new', SupplierInvoiceImportNotifier::NOTHING_NEW_BODY), $this->firebase->sent);
+    }
+
+    public function testOwnerIsToldWhenSyncIsAlreadyRunning(FunctionalTester $I): void
+    {
+        $user = $this->grabUserWithDevice($I, 'device-running');
+
+        /** @var LockFactory $lockFactory */
+        $lockFactory = $I->grabService(LockFactory::class);
+        $runningSync = $lockFactory->createLock('supplier-invoice-sync-' . $user->getId());
+        $I->assertTrue($runningSync->acquire());
+
+        try {
+            ($this->handler)(new SyncSupplierInvoicesMessage((int) $user->getId()));
+        } finally {
+            $runningSync->release();
+        }
+
+        $I->assertSame([], $this->client->requestedWindows);
+        $I->assertContains($this->notification('device-running', SupplierInvoiceImportNotifier::ALREADY_RUNNING_BODY), $this->firebase->sent);
+    }
+
+    public function testOwnerIsToldWhenPlatformIsUnavailable(FunctionalTester $I): void
+    {
+        $user = $this->grabUserWithDevice($I, 'device-unavailable');
+        $this->client->failListing(new InvoicingPlatformException('Qonto indisponible', 503));
+
+        // Pas d'exception : le message n'est pas retenté, la synchro planifiée prendra le relais.
+        ($this->handler)(new SyncSupplierInvoicesMessage((int) $user->getId()));
+
+        $I->assertContains($this->notification('device-unavailable', SupplierInvoiceImportNotifier::PLATFORM_UNAVAILABLE_BODY), $this->firebase->sent);
     }
 
     public function testOtherUserCannotImportOwnerInvoices(FunctionalTester $I): void
@@ -95,6 +136,22 @@ final class SyncSupplierInvoicesHandlerCest
         ($this->handler)(new SyncSupplierInvoicesMessage(PHP_INT_MAX));
 
         $I->assertSame([], $this->client->requestedWindows);
+    }
+
+    private function grabUserWithDevice(FunctionalTester $I, string $token): User
+    {
+        $user = $this->grabUser($I, UserFixturesEnum::DEFAULT_USER->value);
+        $I->haveInRepository(TokenNotificationPush::class, ['token' => $token, 'userAgent' => "test-{$token}", 'user' => $user]);
+
+        return $user;
+    }
+
+    /**
+     * @return array{token: string, title: string, body: string}
+     */
+    private function notification(string $token, string $body): array
+    {
+        return ['token' => $token, 'title' => SupplierInvoiceImportNotifier::TITLE, 'body' => $body];
     }
 
     private function grabUser(FunctionalTester $I, string $email): User
