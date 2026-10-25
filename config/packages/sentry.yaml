@@ -8,3 +8,16 @@ when@prod:
       ignore_exceptions:
         - Symfony\Component\HttpKernel\Exception\NotFoundHttpException
         - Symfony\Component\Security\Core\Exception\AccessDeniedException
+
+  # Handlers Monolog branchés dans monolog.yaml : les erreurs attrapées et journalisées par l'appli remontent aussi.
+  services:
+    Sentry\Monolog\LogToSentryIssueHandler:
+      arguments:
+        $hub: '@Sentry\State\HubInterface'
+        $level: !php/enum Monolog\Level::Error
+        $fillExtraContext: true
+
+    Sentry\Monolog\ExceptionToSentryIssueHandler:
+      arguments:
+        $hub: '@Sentry\State\HubInterface'
+        $level: !php/enum Monolog\Level::Error
