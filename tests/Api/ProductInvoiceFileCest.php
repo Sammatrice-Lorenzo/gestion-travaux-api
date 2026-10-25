@@ -26,6 +26,12 @@ final class ProductInvoiceFileCest
 
     private ProductInvoiceFile $productInvoiceFile;
 
+    /**
+     * Path of the PDF uploaded by testAddProductInvoiceFile: tests are shuffled, so other
+     * invoice files of the user (e.g. the photo one) may exist and must not be picked up.
+     */
+    private static ?string $uploadedFilePath = null;
+
     private DateTime $date;
 
     private const string URL_API = '/api/product_invoice_files';
@@ -40,7 +46,9 @@ final class ProductInvoiceFileCest
         /**
          * @var ?ProductInvoiceFile $productInvoiceFile
          */
-        $productInvoiceFile = $I->grabEntity(ProductInvoiceFile::class, ['user' => $this->user]);
+        $productInvoiceFile = null !== self::$uploadedFilePath
+            ? $I->grabEntity(ProductInvoiceFile::class, ['user' => $this->user, 'path' => self::$uploadedFilePath])
+            : null;
         if ($productInvoiceFile) {
             $this->productInvoiceFile = $productInvoiceFile;
         }
@@ -67,6 +75,7 @@ final class ProductInvoiceFileCest
         $I->seeResponseCodeIsSuccessful();
         $data = json_decode($response, true);
         $fileName = $data[0]['path'];
+        self::$uploadedFilePath = $fileName;
 
         $I->assertFileIsUploaded(self::DIRECTORY_FILES, $fileName);
     }
