@@ -39,7 +39,7 @@ final class SupplierTest extends AbstractEntityTestDefault
 
     public function testFalseEntity(): void
     {
-        $this->assertHasErrors(4, new Supplier());
+        $this->assertHasErrors(1, new Supplier());
     }
 
     private function generateValidEntity(): Supplier

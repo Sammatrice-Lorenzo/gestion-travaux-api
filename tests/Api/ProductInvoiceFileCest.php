@@ -18,11 +18,19 @@ final class ProductInvoiceFileCest
 {
     private const string FILE_NAME = 'InvoiceTemplate.pdf';
 
+    private const string PHOTO_FILE_NAME = 'fakeImage.jpg';
+
     private const string DIRECTORY_FILES = 'products_invoice';
 
     private User $user;
 
     private ProductInvoiceFile $productInvoiceFile;
+
+    /**
+     * Path of the PDF uploaded by testAddProductInvoiceFile: tests are shuffled, so other
+     * invoice files of the user (e.g. the photo one) may exist and must not be picked up.
+     */
+    private static ?string $uploadedFilePath = null;
 
     private DateTime $date;
 
@@ -38,7 +46,9 @@ final class ProductInvoiceFileCest
         /**
          * @var ?ProductInvoiceFile $productInvoiceFile
          */
-        $productInvoiceFile = $I->grabEntity(ProductInvoiceFile::class, ['user' => $this->user]);
+        $productInvoiceFile = null !== self::$uploadedFilePath
+            ? $I->grabEntity(ProductInvoiceFile::class, ['user' => $this->user, 'path' => self::$uploadedFilePath])
+            : null;
         if ($productInvoiceFile) {
             $this->productInvoiceFile = $productInvoiceFile;
         }
@@ -65,8 +75,33 @@ final class ProductInvoiceFileCest
         $I->seeResponseCodeIsSuccessful();
         $data = json_decode($response, true);
         $fileName = $data[0]['path'];
+        self::$uploadedFilePath = $fileName;
 
         $I->assertFileIsUploaded(self::DIRECTORY_FILES, $fileName);
+    }
+
+    public function testAddProductInvoiceFileFromPhoto(ApiTester $I): void
+    {
+        $filePath = codecept_data_dir(self::PHOTO_FILE_NAME);
+
+        $I->haveHttpHeader('Content-Type', '');
+        $response = $I->sendPost(self::URL_API, [
+            'date' => (new DateTime())->format(DateFormatHelper::DEFAULT_FORMAT),
+        ], [
+            'files[]' => [
+                'name' => self::PHOTO_FILE_NAME,
+                'type' => 'image/jpeg',
+                'error' => UPLOAD_ERR_OK,
+                'size' => filesize($filePath),
+                'tmp_name' => $filePath,
+            ],
+        ]);
+
+        $I->seeResponseCodeIs(201);
+        $data = json_decode($response, true);
+        $I->assertSame('fakeImage.pdf', $data[0]['name']);
+        $I->assertStringEndsWith('.pdf', $data[0]['path']);
+        $I->assertFileIsUploaded(self::DIRECTORY_FILES, $data[0]['path']);
     }
 
     #[Depends('testAddProductInvoiceFile')]

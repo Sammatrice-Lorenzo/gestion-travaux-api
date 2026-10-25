@@ -47,6 +47,30 @@ final class SupplierCest
         $I->seeResponseCodeIsClientError();
     }
 
+    public function testCreateSupplierWithOnlyName(ApiTester $I): void
+    {
+        $I->sendPost(self::BASE_URL, ['name' => 'Supplier Only Name API']);
+
+        $I->seeResponseCodeIsSuccessful();
+        $I->seeResponseContainsJson(['name' => 'Supplier Only Name API']);
+        // API Platform omet les champs null (skip_null_values) : absent ou null, la valeur lue est null.
+        foreach (['address', 'city', 'country'] as $field) {
+            $I->assertNull($I->grabDataFromResponseByJsonPath('$.' . $field)[0] ?? null, "{$field} doit rester vide.");
+        }
+        $I->dontSeeResponseJsonMatchesJsonPath('$.qontoSupplierId');
+
+        $I->sendPost(self::BASE_URL, ['address' => '85 rue Paris']);
+        $I->seeResponseCodeIsClientError();
+    }
+
+    public function testCreateSupplierWithBlankAddressFails(ApiTester $I): void
+    {
+        $I->sendPost(self::BASE_URL, ['name' => 'Supplier Blank Address API', 'address' => '', 'city' => '  ']);
+
+        $I->seeResponseCodeIs(422);
+        $I->seeResponseContainsJson(['violations' => [['propertyPath' => 'address'], ['propertyPath' => 'city']]]);
+    }
+
     #[Depends('testCreateSupplier')]
     public function testPutSupplierByUser(ApiTester $I): void
     {

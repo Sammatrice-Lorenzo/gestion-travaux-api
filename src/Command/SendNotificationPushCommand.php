@@ -9,7 +9,7 @@ use Symfony\Component\Console\Input\InputArgument;
 use App\Repository\TokenNotificationPushRepository;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use App\Interface\Firebase\FirebaseNotificationServiceInterface;
+use App\Service\TokenNotificationPush\NotificationPushSender;
 
 #[AsCommand(
     name: 'app:send-notification-push',
@@ -18,7 +18,7 @@ use App\Interface\Firebase\FirebaseNotificationServiceInterface;
 final class SendNotificationPushCommand extends Command
 {
     public function __construct(
-        private readonly FirebaseNotificationServiceInterface $firebaseNotificationService,
+        private readonly NotificationPushSender $notificationPushSender,
         private readonly TokenNotificationPushRepository $tokenNotificationPushRepository
     ) {
         parent::__construct();
@@ -37,14 +37,8 @@ final class SendNotificationPushCommand extends Command
         $io->note(sprintf('You passed an argument: %s', $title));
         $io->note(sprintf('You passed an argument: %s', $body));
 
-        $totalNotificationSended = 0;
         $tokenNotificationPushes = $this->tokenNotificationPushRepository->findAll();
-        foreach ($tokenNotificationPushes as $tokenNotificationPush) {
-            $response = $this->firebaseNotificationService->sendNotification($tokenNotificationPush->getToken(), $title, $body);
-            if (array_key_exists('name', $response)) {
-                ++$totalNotificationSended;
-            }
-        }
+        $totalNotificationSended = $this->notificationPushSender->send($tokenNotificationPushes, $title, $body);
 
         $io->success(
             "Notifications push sent {$totalNotificationSended} out of " . count($tokenNotificationPushes)

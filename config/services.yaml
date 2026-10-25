@@ -13,6 +13,10 @@ parameters:
     mail_username: '%env(MAIL_USERNAME)%'
     env: '%env(APP_ENV)%'
     firebase_admin: '%kernel.project_dir%/config/gestion-travaux-firebase-admin.json'
+    # Moniteurs heartbeat GlitchTip : URL appelée (POST) après chaque exécution réussie d'une tâche planifiée.
+    # Sans appel dans l'intervalle prévu, GlitchTip alerte (worker arrêté, tâche en échec). Valeur vide = désactivé.
+    scheduler_heartbeat_urls:
+        'app:qonto:sync-supplier-invoices': '%env(QONTO_SYNC_HEARTBEAT_URL)%'
 services:
     # default configuration for services in *this* file
     _defaults:

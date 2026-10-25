@@ -1,0 +1,5 @@
+framework:
+    # Verrous en base (table lock_keys) via la connexion Doctrine : partagés par tous les processus et conteneurs
+    # (API, worker Messenger/Scheduler, commande lancée à la main). Un fichier (flock) ne l'est pas d'un conteneur à l'autre.
+    # En test, la même connexion pointe sur la base de test.
+    lock: 'doctrine.dbal.default_connection'

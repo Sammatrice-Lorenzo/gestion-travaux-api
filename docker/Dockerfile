@@ -21,6 +21,7 @@ RUN apt-get update && apt-get upgrade -y \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         curl \
+        exif \
         fileinfo \
         gd \
         intl \
