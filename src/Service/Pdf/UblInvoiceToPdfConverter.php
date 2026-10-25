@@ -47,26 +47,19 @@ final readonly class UblInvoiceToPdfConverter
      */
     public function supports(string $content): bool
     {
-        $reader = new XMLReader();
-        $previousUseErrors = libxml_use_internal_errors(true);
-
-        try {
+        return $this->withoutLibxmlErrors(function () use ($content): bool {
+            $reader = new XMLReader();
             if (!$reader->XML($content, null, LIBXML_NONET)) {
                 return false;
             }
 
-            while ($reader->read()) {
-                if (XMLReader::ELEMENT === $reader->nodeType) {
-                    return 'Invoice' === $reader->localName && self::INVOICE_NAMESPACE === $reader->namespaceURI;
-                }
+            try {
+                // Lecture en flux arrêtée à la racine : inutile d'analyser tout le fichier pour le reconnaître.
+                return $this->moveToRootElement($reader) && $this->isUblInvoice($reader->localName, $reader->namespaceURI);
+            } finally {
+                $reader->close();
             }
-
-            return false;
-        } finally {
-            $reader->close();
-            libxml_clear_errors();
-            libxml_use_internal_errors($previousUseErrors);
-        }
+        });
     }
 
     /**
@@ -87,19 +80,16 @@ final readonly class UblInvoiceToPdfConverter
     private function load(string $content): DOMXPath
     {
         $document = new DOMDocument();
-        $previousUseErrors = libxml_use_internal_errors(true);
+        // Sans LIBXML_NOENT ni DTD chargée : aucune entité externe n'est résolue (XXE).
+        $isLoaded = $this->withoutLibxmlErrors(static fn (): bool => $document->loadXML($content, LIBXML_NONET | LIBXML_COMPACT));
+        $root = $document->documentElement;
 
-        try {
-            // Sans LIBXML_NOENT ni DTD chargée : aucune entité externe n'est résolue (XXE).
-            $loaded = $document->loadXML($content, LIBXML_NONET | LIBXML_COMPACT);
-        } finally {
-            libxml_clear_errors();
-            libxml_use_internal_errors($previousUseErrors);
+        if (!$isLoaded || null === $root) {
+            throw new UnsupportedEInvoiceException('XML illisible');
         }
 
-        $root = $document->documentElement;
-        if (!$loaded || null === $root || 'Invoice' !== $root->localName || self::INVOICE_NAMESPACE !== $root->namespaceURI) {
-            throw new UnsupportedEInvoiceException('XML illisible ou facture UBL attendue');
+        if (!$this->isUblInvoice($root->localName, $root->namespaceURI)) {
+            throw new UnsupportedEInvoiceException("élément racine « {$root->localName} » inattendu, facture UBL attendue");
         }
 
         $xpath = new DOMXPath($document);
@@ -108,6 +98,46 @@ final readonly class UblInvoiceToPdfConverter
         $xpath->registerNamespace('cbc', self::CBC_NAMESPACE);
 
         return $xpath;
+    }
+
+    /**
+     * Avance jusqu'au premier élément, en sautant prologue, commentaires et instructions de traitement.
+     *
+     * @return bool false si le contenu ne contient aucun élément (ou n'est pas du XML)
+     */
+    private function moveToRootElement(XMLReader $reader): bool
+    {
+        do {
+            $hasNode = $reader->read();
+        } while ($hasNode && XMLReader::ELEMENT !== $reader->nodeType);
+
+        return $hasNode;
+    }
+
+    private function isUblInvoice(?string $localName, ?string $namespace): bool
+    {
+        return 'Invoice' === $localName && self::INVOICE_NAMESPACE === $namespace;
+    }
+
+    /**
+     * Un contenu non XML ferait émettre des warnings par libxml : ils sont capturés puis vidés, l'état précédent est rétabli.
+     *
+     * @template T
+     *
+     * @param callable(): T $parse
+     *
+     * @return T
+     */
+    private function withoutLibxmlErrors(callable $parse): mixed
+    {
+        $previousUseErrors = libxml_use_internal_errors(true);
+
+        try {
+            return $parse();
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousUseErrors);
+        }
     }
 
     /**
