@@ -23,6 +23,7 @@ use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
 #[ORM\Entity(repositoryClass: SupplierRepository::class)]
+#[ORM\UniqueConstraint(name: Supplier::UNIQUE_USER_QONTO_SUPPLIER_ID, columns: ['user_id', 'qonto_supplier_id'])]
 #[ApiResource(operations: [
     new GetCollection(
         security: "is_granted('ROLE_USER')"
@@ -49,6 +50,8 @@ class Supplier implements UserOwnerInterface
 {
     private const string GROUP_SUPPLIER_WRITE = 'supplier:write';
 
+    public const string UNIQUE_USER_QONTO_SUPPLIER_ID = 'UNIQ_SUPPLIER_USER_QONTO_SUPPLIER_ID';
+
     public const string GROUP_SUPPLIER_READ = 'supplier:read';
 
     #[ORM\Id]
@@ -67,20 +70,20 @@ class Supplier implements UserOwnerInterface
     ])]
     private string $name;
 
-    #[ORM\Column(length: 255)]
-    #[NotBlank]
+    #[ORM\Column(length: 255, nullable: true)]
+    #[NotBlank(allowNull: true, normalizer: 'trim')]
     #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
-    private string $address;
+    private ?string $address = null;
 
-    #[ORM\Column(length: 255)]
-    #[NotBlank]
+    #[ORM\Column(length: 255, nullable: true)]
+    #[NotBlank(allowNull: true, normalizer: 'trim')]
     #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
-    private string $city;
+    private ?string $city = null;
 
-    #[ORM\Column(length: 255)]
-    #[NotBlank]
+    #[ORM\Column(length: 255, nullable: true)]
+    #[NotBlank(allowNull: true, normalizer: 'trim')]
     #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
-    private string $country;
+    private ?string $country = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Regex(
@@ -93,6 +96,9 @@ class Supplier implements UserOwnerInterface
     #[ORM\Column(length: 50, nullable: true)]
     #[Groups([self::GROUP_SUPPLIER_READ, self::GROUP_SUPPLIER_WRITE])]
     private ?string $vatNumber = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $qontoSupplierId = null;
 
     #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
     private DateTimeImmutable $createdAt;
@@ -138,36 +144,36 @@ class Supplier implements UserOwnerInterface
         return $this;
     }
 
-    public function getAddress(): string
+    public function getAddress(): ?string
     {
         return $this->address;
     }
 
-    public function setAddress(string $address): static
+    public function setAddress(?string $address): static
     {
         $this->address = $address;
 
         return $this;
     }
 
-    public function getCity(): string
+    public function getCity(): ?string
     {
         return $this->city;
     }
 
-    public function setCity(string $city): static
+    public function setCity(?string $city): static
     {
         $this->city = $city;
 
         return $this;
     }
 
-    public function getCountry(): string
+    public function getCountry(): ?string
     {
         return $this->country;
     }
 
-    public function setCountry(string $country): static
+    public function setCountry(?string $country): static
     {
         $this->country = $country;
 
@@ -194,6 +200,18 @@ class Supplier implements UserOwnerInterface
     public function setVatNumber(?string $vatNumber): static
     {
         $this->vatNumber = $vatNumber;
+
+        return $this;
+    }
+
+    public function getQontoSupplierId(): ?string
+    {
+        return $this->qontoSupplierId;
+    }
+
+    public function setQontoSupplierId(?string $qontoSupplierId): static
+    {
+        $this->qontoSupplierId = $qontoSupplierId;
 
         return $this;
     }

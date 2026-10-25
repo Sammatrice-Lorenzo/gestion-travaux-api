@@ -2,3 +2,14 @@ services:
     App\Interface\Firebase\FirebaseNotificationServiceInterface: '@App\Tests\Support\Fake\FakeFirebaseNotificationService'
 
     App\Tests\Support\Fake\FakeFirebaseNotificationService: ~
+
+    App\Interface\InvoicingPlatform\InvoicingPlatformClientInterface: '@App\Tests\Support\Fake\FakeInvoicingPlatformClient'
+
+    App\Tests\Support\Fake\FakeInvoicingPlatformClient:
+        public: true
+
+    # Indépendant des fichiers .env : le bootstrap des tests ne charge que .env.test.local ou .env.test.
+    App\Service\InvoicingPlatform\InvoicingPlatformAccountOwner:
+        autowire: true
+        arguments:
+            $email: 'user@test.com'

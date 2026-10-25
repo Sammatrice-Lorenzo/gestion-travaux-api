@@ -23,6 +23,7 @@ use App\Dto\ProductInvoiceCreationInput;
 use App\Processor\ProductInvoiceProcessor;
 use App\Dto\ProductInvoiceDownloadZipInput;
 use App\Interface\MonthlyProviderInterface;
+use App\Enum\ProductInvoiceSourceEnum;
 use Symfony\Component\HttpFoundation\File\File;
 use App\Controller\ProductInvoiceFileController;
 use App\Repository\ProductInvoiceFileRepository;
@@ -36,6 +37,7 @@ use ApiPlatform\OpenApi\Model\Response;
 use ApiPlatform\OpenApi\Model\RequestBody as ModelRequestBody;
 
 #[ORM\Entity(repositoryClass: ProductInvoiceFileRepository::class)]
+#[ORM\UniqueConstraint(name: ProductInvoiceFile::UNIQUE_USER_QONTO_ID, columns: ['user_id', 'qonto_id'])]
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -155,6 +157,8 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
 
     public const string GROUP_PRODUCT_INVOICE_FILE_WRITE = 'product_invoice_file:write';
 
+    public const string UNIQUE_USER_QONTO_ID = 'UNIQ_PRODUCT_INVOICE_FILE_USER_QONTO_ID';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -191,6 +195,22 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     #[ORM\ManyToOne(inversedBy: 'productInvoiceFiles')]
     #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
     private ?Supplier $supplier = null;
+
+    /**
+     * Identifiant de la facture fournisseur Qonto : garantit qu'une facture n'est importée qu'une fois par utilisateur (contrainte UNIQUE_USER_QONTO_ID).
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $qontoId = null;
+
+    #[ORM\Column(length: 20, enumType: ProductInvoiceSourceEnum::class, options: ['default' => ProductInvoiceSourceEnum::MANUAL->value])]
+    #[Groups([self::GROUP_PRODUCT_INVOICE_FILE_READ])]
+    private ProductInvoiceSourceEnum $source = ProductInvoiceSourceEnum::MANUAL;
+
+    /**
+     * @var null|array{name: string, totalAmount: float, date: string}
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $platformSnapshot = null;
 
     /**
      * @var Collection<int, SupplierReturnInvoiceFile>
@@ -291,6 +311,48 @@ class ProductInvoiceFile implements UserOwnerInterface, MonthlyProviderInterface
     public function setSupplier(?Supplier $supplier): static
     {
         $this->supplier = $supplier;
+
+        return $this;
+    }
+
+    public function getQontoId(): ?string
+    {
+        return $this->qontoId;
+    }
+
+    public function setQontoId(?string $qontoId): static
+    {
+        $this->qontoId = $qontoId;
+
+        return $this;
+    }
+
+    public function getSource(): ProductInvoiceSourceEnum
+    {
+        return $this->source;
+    }
+
+    public function setSource(ProductInvoiceSourceEnum $source): static
+    {
+        $this->source = $source;
+
+        return $this;
+    }
+
+    /**
+     * @return null|array{name: string, totalAmount: float, date: string}
+     */
+    public function getPlatformSnapshot(): ?array
+    {
+        return $this->platformSnapshot;
+    }
+
+    /**
+     * @param null|array{name: string, totalAmount: float, date: string} $platformSnapshot
+     */
+    public function setPlatformSnapshot(?array $platformSnapshot): static
+    {
+        $this->platformSnapshot = $platformSnapshot;
 
         return $this;
     }
