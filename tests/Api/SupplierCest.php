@@ -52,12 +52,11 @@ final class SupplierCest
         $I->sendPost(self::BASE_URL, ['name' => 'Supplier Only Name API']);
 
         $I->seeResponseCodeIsSuccessful();
-        $I->seeResponseContainsJson([
-            'name' => 'Supplier Only Name API',
-            'address' => null,
-            'city' => null,
-            'country' => null,
-        ]);
+        $I->seeResponseContainsJson(['name' => 'Supplier Only Name API']);
+        // API Platform omet les champs null (skip_null_values) : absent ou null, la valeur lue est null.
+        foreach (['address', 'city', 'country'] as $field) {
+            $I->assertNull($I->grabDataFromResponseByJsonPath('$.' . $field)[0] ?? null, "{$field} doit rester vide.");
+        }
         $I->dontSeeResponseJsonMatchesJsonPath('$.qontoSupplierId');
 
         $I->sendPost(self::BASE_URL, ['address' => '85 rue Paris']);

@@ -35,4 +35,14 @@ jobs:
                   backend_path: .
 
             - name: Run tests
+              # php-cgi (backend du serveur local Symfony) s'arrête après 500 requêtes par défaut : la requête en cours
+              # reçoit alors un 502 « unexpected EOF ». 0 = pas de limite, la suite Api dépasse ce seuil.
+              env:
+                  PHP_FCGI_MAX_REQUESTS: 0
               run: yarn test && yarn replace-env
+
+            - name: Symfony server logs
+              if: failure()
+              run: |
+                  find ~/.symfony5 -name '*.log' -exec tail -n 100 {} + || true
+                  tail -n 100 var/log/test.log || true
