@@ -12,9 +12,11 @@ use App\Entity\User;
 use App\Enum\ProductInvoiceSourceEnum;
 use App\Exceptions\InvoicingPlatformException;
 use App\Exceptions\SupplierInvoiceSyncAlreadyRunningException;
+use App\Exceptions\UnsupportedEInvoiceException;
 use App\Exceptions\UnsupportedImageFormatException;
 use App\Interface\InvoicingPlatform\InvoicingPlatformClientInterface;
 use App\Service\Pdf\ImageToPdfConverter;
+use App\Service\Pdf\UblInvoiceToPdfConverter;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -62,6 +64,7 @@ final readonly class SupplierInvoiceSyncService
         private ManagerRegistry $doctrine,
         private SupplierMatcher $supplierMatcher,
         private ImageToPdfConverter $imageToPdfConverter,
+        private UblInvoiceToPdfConverter $ublInvoiceToPdfConverter,
         private LockFactory $lockFactory,
         private LoggerInterface $logger,
         private Filesystem $filesystem = new Filesystem(),
@@ -152,10 +155,10 @@ final readonly class SupplierInvoiceSyncService
 
             $this->create($user, $invoice, $suppliers);
             ++$result->created;
-        } catch (UnsupportedImageFormatException $exception) {
+        } catch (UnsupportedEInvoiceException|UnsupportedImageFormatException $exception) {
             ++$result->skipped;
             $result->unsupported[] = "{$this->label($invoice)} : {$exception->getMessage()}";
-            $this->logger->warning('Facture fournisseur ignorée : format non pris en charge.', ['id' => $invoice->id, 'mimeType' => $exception->mimeType]);
+            $this->logger->warning('Facture fournisseur ignorée : format non pris en charge.', ['id' => $invoice->id, 'reason' => $exception->getMessage()]);
         } catch (InvoicingPlatformException $exception) {
             $result->errors[] = "{$this->label($invoice)} : {$exception->getMessage()}";
             $this->logger->error('Import de facture fournisseur en erreur, retenté à la prochaine synchro.', ['id' => $invoice->id, 'exception' => $exception]);
@@ -268,9 +271,11 @@ final readonly class SupplierInvoiceSyncService
     }
 
     /**
-     * Télécharge la pièce jointe tout de suite (le lien expire), la convertit en PDF si c'est une image, puis Vich l'enregistre.
+     * Télécharge la pièce jointe tout de suite (le lien expire), la convertit en PDF si c'est une facture électronique
+     * UBL ou une image, puis Vich l'enregistre.
      *
      * @throws InvoicingPlatformException
+     * @throws UnsupportedEInvoiceException
      * @throws UnsupportedImageFormatException
      */
     private function create(User $user, PlatformSupplierInvoice $invoice, SupplierLookup $suppliers): void
@@ -280,7 +285,9 @@ final readonly class SupplierInvoiceSyncService
 
         $mimeType = $this->detectMimeType($content, $attachment->fileContentType);
         if (self::PDF_MIME_TYPE !== $mimeType) {
-            $content = $this->imageToPdfConverter->convert($content, $mimeType);
+            $content = $this->ublInvoiceToPdfConverter->supports($content)
+                ? $this->ublInvoiceToPdfConverter->convert($content)
+                : $this->imageToPdfConverter->convert($content, $mimeType);
         }
 
         $fileName = $this->imageToPdfConverter->pdfFileName('' !== $attachment->fileName ? $attachment->fileName : $invoice->fileName);

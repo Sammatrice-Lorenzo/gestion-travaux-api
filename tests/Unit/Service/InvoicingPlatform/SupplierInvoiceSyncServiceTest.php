@@ -13,6 +13,7 @@ use App\Exceptions\SupplierInvoiceSyncAlreadyRunningException;
 use App\Service\InvoicingPlatform\SupplierInvoiceSyncService;
 use App\Service\InvoicingPlatform\SupplierMatcher;
 use App\Service\Pdf\ImageToPdfConverter;
+use App\Service\Pdf\UblInvoiceToPdfConverter;
 use App\Tests\Enum\UserFixturesEnum;
 use App\Tests\Support\Fake\FakeInvoicingPlatformClient;
 use App\Tests\Support\UnitTester;
@@ -61,6 +62,7 @@ final class SupplierInvoiceSyncServiceTest extends Unit
             $doctrine,
             new SupplierMatcher($this->entityManager),
             new ImageToPdfConverter(new AsciiSlugger()),
+            new UblInvoiceToPdfConverter(),
             $this->lockFactory,
             new NullLogger(),
         );
@@ -247,6 +249,24 @@ final class SupplierInvoiceSyncServiceTest extends Unit
         $this->assertSame(1, $result->created);
         $productInvoiceFile = $this->findByPlatformId('sync-image');
         $this->assertSame('ticket.pdf', $productInvoiceFile->getName());
+        $this->assertStoredPdf($productInvoiceFile);
+    }
+
+    public function testUblEInvoiceIsConvertedToPdf(): void
+    {
+        $this->client->addInvoice(
+            FakeInvoicingPlatformClient::invoice('sync-ubl', invoiceNumber: 'UBL-2026-0042'),
+            fileName: '26-09-UBL-2026-0042-Fournisseur.xml',
+            contentType: 'application/xml',
+            content: (string) file_get_contents(codecept_data_dir('ubl-invoice.xml')),
+        );
+
+        $result = $this->syncService->sync($this->user, $this->from, $this->until);
+
+        $this->assertSame(1, $result->created);
+        $this->assertSame([], $result->unsupported);
+        $productInvoiceFile = $this->findByPlatformId('sync-ubl');
+        $this->assertSame('UBL-2026-0042', $productInvoiceFile->getName());
         $this->assertStoredPdf($productInvoiceFile);
     }
 
