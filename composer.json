@@ -10,7 +10,6 @@
         "ext-iconv": "*",
         "ext-json": "*",
         "ext-mbstring": "*",
-        "amphp/http-client": "^4.6",
         "api-platform/core": "^4.4",
         "doctrine/doctrine-bundle": "^2.18",
         "doctrine/doctrine-migrations-bundle": "^3.2",

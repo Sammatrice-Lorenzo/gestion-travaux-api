@@ -125,7 +125,7 @@ final class SyncSupplierInvoicesHandlerCest
         $failure = $this->runExpectingFailure($I, $user);
 
         $I->assertStringContainsString('Fournisseur En Panne / F-handler-broken', $failure->getMessage());
-        $I->assertCount(1, $this->firebase->sent);
+        $I->assertContains($this->notification('device-incomplete', 'Synchronisation Qonto incomplète : 0 importée(s), 1 en erreur'), $this->firebase->sent);
     }
 
     public function testCompletedSyncReturnsReadableReport(FunctionalTester $I): void
