@@ -123,6 +123,17 @@ final class QontoSyncSupplierInvoicesCommand extends Command
             [[$result->created, $result->updated, $result->skipped, count($result->errors), count($result->failures)]],
         );
 
+        if ([] !== $result->suppliers) {
+            $io->table(
+                ['Fournisseur', 'Créées', 'Mises à jour', 'Ignorées', 'En échec'],
+                array_map(
+                    static fn (string $supplier, array $counts): array => [$supplier, $counts['created'], $counts['updated'], $counts['skipped'], $counts['failed']],
+                    array_keys($result->suppliers),
+                    $result->suppliers,
+                ),
+            );
+        }
+
         if ([] !== $result->unsupported) {
             $io->warning(['Factures au format ou dans une devise non pris en charge, à ajouter à la main :', ...$result->unsupported]);
         }

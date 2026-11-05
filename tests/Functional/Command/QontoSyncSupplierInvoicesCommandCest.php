@@ -56,6 +56,7 @@ final class QontoSyncSupplierInvoicesCommandCest
         $I->assertMatchesRegularExpression('/^\s*1\s+0\s+2\s+0\s+0\s*$/m', $output);
         $I->assertStringContainsString('F-cmd-heic', $output);
         $I->assertStringContainsString('Synchro terminée', $output);
+        $I->assertMatchesRegularExpression('/^\s*Fournisseur Commande\s+1\s+0\s+0\s+0\s*$/m', $output);
 
         /** @var User $user */
         $user = $I->grabEntityFromRepository(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);

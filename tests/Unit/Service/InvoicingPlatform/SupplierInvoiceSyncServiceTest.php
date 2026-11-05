@@ -190,9 +190,9 @@ final class SupplierInvoiceSyncServiceTest extends Unit
     public function testPermanentFailureIsReportedWithoutBlockingSyncPoint(): void
     {
         $this->client
-            ->addInvoice(FakeInvoicingPlatformClient::invoice('sync-permanent'), content: $this->pdfContent())
+            ->addInvoice(FakeInvoicingPlatformClient::invoice('sync-permanent', supplierName: 'Fournisseur En Panne'), content: $this->pdfContent())
             ->failDownload('att-sync-permanent', new RuntimeException('Disque plein'))
-            ->addInvoice(FakeInvoicingPlatformClient::invoice('sync-after-failure'), content: $this->pdfContent())
+            ->addInvoice(FakeInvoicingPlatformClient::invoice('sync-after-failure', supplierName: 'Fournisseur OK'), content: $this->pdfContent())
         ;
 
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
@@ -200,6 +200,9 @@ final class SupplierInvoiceSyncServiceTest extends Unit
         $this->assertSame(1, $result->created, 'Les factures suivantes sont importées.');
         $this->assertCount(1, $result->failures);
         $this->assertStringContainsString('Disque plein', $result->failures[0]);
+        $this->assertStringStartsWith('Fournisseur En Panne / ', $result->failures[0]);
+        $this->assertSame(1, $result->suppliers['Fournisseur En Panne']['failed']);
+        $this->assertSame(1, $result->suppliers['Fournisseur OK']['created']);
         $this->assertFalse($result->hasErrors());
         $this->assertEquals($this->until, $result->syncedUntil, 'Une erreur permanente ne bloque pas les synchros suivantes.');
     }

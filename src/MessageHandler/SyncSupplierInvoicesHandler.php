@@ -28,13 +28,16 @@ final readonly class SyncSupplierInvoicesHandler
         private LoggerInterface $logger,
     ) {}
 
-    public function __invoke(SyncSupplierInvoicesMessage $message): void
+    /**
+     * @return array<string, mixed> bilan conservé dans l'historique des messages traités (tableau de bord Messenger)
+     */
+    public function __invoke(SyncSupplierInvoicesMessage $message): array
     {
         $user = $this->userRepository->find($message->userId);
         if (null === $user || !$this->accountOwner->isOwner($user)) {
             $this->logger->warning('Synchro des factures fournisseurs refusée : utilisateur non relié à la plateforme.', ['userId' => $message->userId]);
 
-            return;
+            return ['status' => 'refused'];
         }
 
         try {
@@ -43,13 +46,13 @@ final readonly class SyncSupplierInvoicesHandler
             // La synchro en cours importe déjà les mêmes factures : rien à refaire.
             $this->notifier->notifySyncNotRun($user, SupplierInvoiceImportNotifier::ALREADY_RUNNING_BODY);
 
-            return;
+            return ['status' => 'already_running'];
         } catch (InvoicingPlatformException $exception) {
             // Pas de nouvel essai du message : la synchro planifiée reprendra au même point dans l'heure.
             $this->logger->error('Synchro des factures fournisseurs à la demande interrompue.', ['userId' => $message->userId, 'exception' => $exception]);
             $this->notifier->notifySyncNotRun($user, SupplierInvoiceImportNotifier::PLATFORM_UNAVAILABLE_BODY);
 
-            return;
+            return ['status' => 'interrupted', 'error' => $exception->getMessage()];
         }
 
         $this->notifier->notifyRequestedSync($user, $result);
@@ -61,5 +64,7 @@ final readonly class SyncSupplierInvoicesHandler
                 'failures' => $result->failures,
             ]);
         }
+
+        return $result->toReport();
     }
 }
