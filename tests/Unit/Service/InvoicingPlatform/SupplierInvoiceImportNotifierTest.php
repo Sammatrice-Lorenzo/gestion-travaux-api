@@ -34,7 +34,7 @@ final class SupplierInvoiceImportNotifierTest extends Unit
 
         /** @var TokenNotificationPushRepository $tokenRepository */
         $tokenRepository = $this->tester->grabService(TokenNotificationPushRepository::class);
-        $this->notifier = new SupplierInvoiceImportNotifier(new NotificationPushSender($this->firebase, new NullLogger()), $tokenRepository, new NullLogger());
+        $this->notifier = new SupplierInvoiceImportNotifier(new NotificationPushSender($this->firebase, $tokenRepository, new NullLogger()), $tokenRepository, new NullLogger());
 
         /** @var User $user */
         $user = $this->tester->grabEntityFromRepository(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);

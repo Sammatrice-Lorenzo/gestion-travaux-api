@@ -6,16 +6,22 @@ namespace App\Service\TokenNotificationPush;
 
 use App\Entity\TokenNotificationPush;
 use App\Interface\Firebase\FirebaseNotificationServiceInterface;
+use App\Repository\TokenNotificationPushRepository;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Throwable;
 
 /**
- * Envoie une notification push à une liste d'appareils. Un appareil injoignable est journalisé sans bloquer les autres.
+ * Envoie une notification push à une liste d'appareils. Un appareil injoignable est journalisé sans bloquer les autres ;
+ * un token que Firebase déclare mort est supprimé, la PWA enverra le nouveau à la prochaine connexion.
  */
 final readonly class NotificationPushSender
 {
+    private const string FIREBASE_ERROR_UNREGISTERED = 'UNREGISTERED';
+
     public function __construct(
         private FirebaseNotificationServiceInterface $firebaseNotificationService,
+        private TokenNotificationPushRepository $tokenNotificationPushRepository,
         private LoggerInterface $logger,
     ) {}
 
@@ -51,7 +57,46 @@ final readonly class NotificationPushSender
             return true;
         }
 
+        if (self::isUnregistered($response)) {
+            $this->deleteToken($tokenNotificationPush);
+
+            return false;
+        }
+
         $this->logger->warning('Notification push refusée.', ['title' => $title, 'response' => $response]);
+
+        return false;
+    }
+
+    private function deleteToken(TokenNotificationPush $tokenNotificationPush): void
+    {
+        $context = ['tokenId' => $tokenNotificationPush->getId()];
+
+        // Une suppression en échec ne doit pas priver les autres appareils : elle sera retentée au prochain envoi.
+        try {
+            $this->tokenNotificationPushRepository->deleteByToken($tokenNotificationPush->getToken());
+            $this->logger->warning('Notification push : appareil plus enregistré, token supprimé.', $context);
+        } catch (Throwable $exception) {
+            $this->logger->warning('Notification push : suppression du token impossible.', [...$context, 'exception' => $exception]);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private static function isUnregistered(array $response): bool
+    {
+        $error = $response['error'] ?? null;
+        $details = is_array($error) ? ($error['details'] ?? null) : null;
+        if (!is_array($details)) {
+            return false;
+        }
+
+        foreach ($details as $detail) {
+            if (is_array($detail) && self::FIREBASE_ERROR_UNREGISTERED === ($detail['errorCode'] ?? null)) {
+                return true;
+            }
+        }
 
         return false;
     }

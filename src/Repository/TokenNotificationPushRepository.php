@@ -17,4 +17,15 @@ final class TokenNotificationPushRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, TokenNotificationPush::class);
     }
+
+    public function deleteByToken(string $token): void
+    {
+        $this->createQueryBuilder('tokenNotificationPush')
+            ->delete()
+            ->where('tokenNotificationPush.token = :token')
+            ->setParameter('token', $token)
+            ->getQuery()
+            ->execute()
+        ;
+    }
 }
