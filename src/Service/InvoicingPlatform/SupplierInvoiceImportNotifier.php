@@ -38,7 +38,7 @@ final readonly class SupplierInvoiceImportNotifier
      */
     public function notifyImported(User $user, SupplierInvoiceSyncResult $result): int
     {
-        return 0 === $result->created ? 0 : $this->send($user, self::importedBody($result->created));
+        return 0 === $result->created() ? 0 : $this->send($user, self::importedBody($result->created()));
     }
 
     /**
@@ -71,12 +71,12 @@ final readonly class SupplierInvoiceImportNotifier
     public static function resultBody(SupplierInvoiceSyncResult $result): string
     {
         if (!$result->isSuccessful()) {
-            $inError = count($result->errors) + count($result->failures);
+            $inError = count($result->errors()) + count($result->failures());
 
-            return "Synchronisation Qonto incomplète : {$result->created} importée(s), {$inError} en erreur";
+            return "Synchronisation Qonto incomplète : {$result->created()} importée(s), {$inError} en erreur";
         }
 
-        return 0 === $result->created ? self::NOTHING_NEW_BODY : self::importedBody($result->created);
+        return 0 === $result->created() ? self::NOTHING_NEW_BODY : self::importedBody($result->created());
     }
 
     private function send(User $user, string $body): int

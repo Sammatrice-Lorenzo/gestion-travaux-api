@@ -9,7 +9,7 @@ use Zenstruck\Messenger\Monitor\Controller\MessengerMonitorController as BaseMes
 
 /**
  * Tableau de bord Messenger, sans login : hors de /api, il n'est pas routé par le port 443 de l'application.
- * En prod, seul un port lié à l'IP Tailscale y mène, en lecture seule (GET), comme Dozzle.
+ * En prod, seul un port lié à l'IP Tailscale y mène. Lecture seule, comme Dozzle : security.yaml refuse tout sauf GET.
  */
 #[Route('/admin/messenger')]
 final class MessengerMonitorController extends BaseMessengerMonitorController {}

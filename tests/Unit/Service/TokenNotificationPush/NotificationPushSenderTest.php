@@ -6,11 +6,13 @@ namespace App\Tests\Unit\Service\TokenNotificationPush;
 
 use App\Entity\TokenNotificationPush;
 use App\Entity\User;
+use App\Exceptions\UnregisteredPushTokenException;
 use App\Interface\Firebase\FirebaseNotificationServiceInterface;
 use App\Repository\TokenNotificationPushRepository;
 use App\Service\TokenNotificationPush\NotificationPushSender;
 use App\Tests\Enum\UserFixturesEnum;
 use App\Tests\Support\UnitTester;
+use Closure;
 use Codeception\Test\Unit;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -47,11 +49,7 @@ final class NotificationPushSenderTest extends Unit
     public function testUnregisteredTokenIsDeletedAndOthersStillNotified(): void
     {
         $devices = $this->haveDevices('sender-dead', 'sender-alive');
-        $this->firebase->method('sendNotification')->willReturnCallback(
-            static fn (string $token): array => 'sender-dead' === $token
-                ? self::firebaseError(404, 'NOT_FOUND', 'UNREGISTERED')
-                : ['name' => 'projects/x/messages/1'],
-        );
+        $this->firebase->method('sendNotification')->willReturnCallback(self::firebaseRejecting('sender-dead'));
 
         $this->assertSame(1, $this->sender->send($devices, 'Titre', 'Message'));
 
@@ -82,11 +80,7 @@ final class NotificationPushSenderTest extends Unit
     public function testDeletionFailureDoesNotStopOtherDevices(): void
     {
         $devices = $this->haveDevices('sender-dead-undeletable', 'sender-reachable');
-        $this->firebase->method('sendNotification')->willReturnCallback(
-            static fn (string $token): array => 'sender-dead-undeletable' === $token
-                ? self::firebaseError(404, 'NOT_FOUND', 'UNREGISTERED')
-                : ['name' => 'projects/x/messages/1'],
-        );
+        $this->firebase->method('sendNotification')->willReturnCallback(self::firebaseRejecting('sender-dead-undeletable'));
 
         $registry = $this->createMock(ManagerRegistry::class);
         $registry->method('getManagerForClass')->willThrowException(new RuntimeException('Base indisponible'));
@@ -123,6 +117,17 @@ final class NotificationPushSenderTest extends Unit
         }
 
         return $devices;
+    }
+
+    private static function firebaseRejecting(string $deadToken): Closure
+    {
+        return static function (string $token) use ($deadToken): array {
+            if ($deadToken === $token) {
+                throw new UnregisteredPushTokenException('Token mort');
+            }
+
+            return ['name' => 'projects/x/messages/1'];
+        };
     }
 
     /**

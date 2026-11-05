@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
+use App\Service\Scheduler\ScheduledTaskName;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Exception\RunCommandFailedException;
 use Symfony\Component\Console\Messenger\RunCommandContext;
@@ -16,8 +17,8 @@ use Symfony\Component\Scheduler\Messenger\ScheduledStamp;
 use Throwable;
 
 /**
- * Journalise chaque exécution d'une tâche planifiée, avec le rapport de la commande : le worker la lance dans une
- * sortie en mémoire, qui serait sinon perdue, y compris le motif d'un échec.
+ * Journalise chaque exécution d'une tâche planifiée, avec le rapport de la commande, pour la suivre en direct dans
+ * Dozzle. L'historique consultable est celui du tableau de bord Messenger, qui conserve aussi ce rapport.
  */
 final readonly class SchedulerRunLogSubscriber implements EventSubscriberInterface
 {
@@ -43,7 +44,7 @@ final readonly class SchedulerRunLogSubscriber implements EventSubscriberInterfa
         $result = $envelope->last(HandledStamp::class)?->getResult();
 
         $this->schedulerLogger->info('Tâche planifiée terminée.', [
-            'task' => SchedulerHeartbeatSubscriber::taskName($envelope->getMessage()),
+            'task' => ScheduledTaskName::of($envelope->getMessage()),
             ...($result instanceof RunCommandContext ? self::commandContext($result) : []),
         ]);
     }
@@ -59,7 +60,7 @@ final readonly class SchedulerRunLogSubscriber implements EventSubscriberInterfa
         $commandFailure = self::findCommandFailure($throwable);
 
         $this->schedulerLogger->error('Tâche planifiée en échec.', [
-            'task' => SchedulerHeartbeatSubscriber::taskName($envelope->getMessage()),
+            'task' => ScheduledTaskName::of($envelope->getMessage()),
             'error' => $throwable->getMessage(),
             ...(null !== $commandFailure ? self::commandContext($commandFailure->context) : []),
         ]);

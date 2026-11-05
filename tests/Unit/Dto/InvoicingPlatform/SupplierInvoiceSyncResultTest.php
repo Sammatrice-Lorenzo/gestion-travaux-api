@@ -18,18 +18,30 @@ final class SupplierInvoiceSyncResultTest extends Unit
         $result->addSkipped('Peintures Martin');
         $result->addError('Peintures Martin', 'Peintures Martin / F-1 : Qonto indisponible');
         $result->addFailure('Bois & Co', 'Bois & Co / F-2 : disque plein');
+        $result->addUnsupported('Bois & Co', 'Bois & Co / F-3 : devise USD');
 
         $this->assertSame([
             'Bricomat' => ['created' => 2, 'updated' => 1, 'skipped' => 0, 'failed' => 0],
             'Peintures Martin' => ['created' => 0, 'updated' => 0, 'skipped' => 1, 'failed' => 1],
-            'Bois & Co' => ['created' => 0, 'updated' => 0, 'skipped' => 0, 'failed' => 1],
-        ], $result->suppliers);
+            'Bois & Co' => ['created' => 0, 'updated' => 0, 'skipped' => 1, 'failed' => 1],
+        ], $result->suppliers());
 
-        $this->assertSame(2, $result->created);
-        $this->assertSame(1, $result->updated);
-        $this->assertSame(1, $result->skipped);
-        $this->assertSame(['Peintures Martin / F-1 : Qonto indisponible'], $result->errors);
-        $this->assertSame(['Bois & Co / F-2 : disque plein'], $result->failures);
+        $this->assertSame(2, $result->created());
+        $this->assertSame(1, $result->updated());
+        $this->assertSame(2, $result->skipped());
+        $this->assertSame(['Peintures Martin / F-1 : Qonto indisponible'], $result->errors());
+        $this->assertSame(['Bois & Co / F-2 : disque plein'], $result->failures());
+        $this->assertSame(['Bois & Co / F-3 : devise USD'], $result->unsupported());
+    }
+
+    public function testEmptyResultHasZeroTotals(): void
+    {
+        $result = new SupplierInvoiceSyncResult();
+
+        $this->assertSame(0, $result->created());
+        $this->assertSame(0, $result->updated());
+        $this->assertSame(0, $result->skipped());
+        $this->assertTrue($result->isSuccessful());
     }
 
     public function testInvoiceWithoutSupplierNameIsCountedAsUnknown(): void
@@ -40,18 +52,7 @@ final class SupplierInvoiceSyncResultTest extends Unit
 
         $this->assertSame(
             [SupplierInvoiceSyncResult::UNKNOWN_SUPPLIER => ['created' => 1, 'updated' => 0, 'skipped' => 1, 'failed' => 0]],
-            $result->suppliers,
+            $result->suppliers(),
         );
-    }
-
-    public function testReportContainsSupplierBreakdown(): void
-    {
-        $result = new SupplierInvoiceSyncResult();
-        $result->addCreated('Bricomat');
-
-        $report = $result->toReport();
-
-        $this->assertSame(1, $report['created']);
-        $this->assertSame($result->suppliers, $report['suppliers']);
     }
 }

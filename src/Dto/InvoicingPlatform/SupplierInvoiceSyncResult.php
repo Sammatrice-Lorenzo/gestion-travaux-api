@@ -7,35 +7,12 @@ namespace App\Dto\InvoicingPlatform;
 use DateTimeImmutable;
 
 /**
- * Bilan d'une synchronisation des factures fournisseurs.
+ * Bilan d'une synchronisation des factures fournisseurs. Les totaux sont calculés depuis le bilan par fournisseur,
+ * pour que les deux ne puissent pas diverger.
  */
 final class SupplierInvoiceSyncResult
 {
     public const string UNKNOWN_SUPPLIER = 'Fournisseur inconnu';
-
-    public int $created = 0;
-
-    public int $updated = 0;
-
-    /**
-     * Factures exclues (statut, avoir, document non financier, sans pièce jointe, format ou devise non pris en charge) ou inchangées.
-     */
-    public int $skipped = 0;
-
-    /**
-     * @var list<string> pièces jointes ignorées car dans un format ou une devise non pris en charge, à traiter à la main
-     */
-    public array $unsupported = [];
-
-    /**
-     * @var list<string> erreurs de la plateforme (réseau, indisponibilité) : retentées, le point de reprise n'avance pas
-     */
-    public array $errors = [];
-
-    /**
-     * @var list<string> erreurs permanentes (donnée invalide, fichier...) : signalées sans bloquer les synchros suivantes
-     */
-    public array $failures = [];
 
     /**
      * Fin de la fenêtre synchronisée, null si le point de reprise n'a pas avancé (erreurs de la plateforme).
@@ -45,7 +22,22 @@ final class SupplierInvoiceSyncResult
     /**
      * @var array<string, array{created: int, updated: int, skipped: int, failed: int}> bilan par nom de fournisseur
      */
-    public array $suppliers = [];
+    private array $suppliers = [];
+
+    /**
+     * @var list<string> pièces jointes ignorées car dans un format ou une devise non pris en charge, à traiter à la main
+     */
+    private array $unsupported = [];
+
+    /**
+     * @var list<string> erreurs de la plateforme (réseau, indisponibilité) : retentées, le point de reprise n'avance pas
+     */
+    private array $errors = [];
+
+    /**
+     * @var list<string> erreurs permanentes (donnée invalide, fichier...) : signalées sans bloquer les synchros suivantes
+     */
+    private array $failures = [];
 
     public static function supplierLabel(?string $supplierName): string
     {
@@ -56,19 +48,25 @@ final class SupplierInvoiceSyncResult
 
     public function addCreated(?string $supplierName): void
     {
-        ++$this->created;
         $this->countForSupplier($supplierName, 'created');
     }
 
     public function addUpdated(?string $supplierName): void
     {
-        ++$this->updated;
         $this->countForSupplier($supplierName, 'updated');
     }
 
+    /**
+     * Facture exclue (statut, avoir, document non financier, sans pièce jointe) ou inchangée.
+     */
     public function addSkipped(?string $supplierName): void
     {
-        ++$this->skipped;
+        $this->countForSupplier($supplierName, 'skipped');
+    }
+
+    public function addUnsupported(?string $supplierName, string $unsupported): void
+    {
+        $this->unsupported[] = $unsupported;
         $this->countForSupplier($supplierName, 'skipped');
     }
 
@@ -84,23 +82,51 @@ final class SupplierInvoiceSyncResult
         $this->countForSupplier($supplierName, 'failed');
     }
 
-    /**
-     * Bilan complet, conservé dans l'historique des messages traités par le worker.
-     *
-     * @return array<string, mixed>
-     */
-    public function toReport(): array
+    public function created(): int
     {
-        return [
-            'created' => $this->created,
-            'updated' => $this->updated,
-            'skipped' => $this->skipped,
-            'suppliers' => $this->suppliers,
-            'unsupported' => $this->unsupported,
-            'errors' => $this->errors,
-            'failures' => $this->failures,
-            'syncedUntil' => $this->syncedUntil,
-        ];
+        return array_sum(array_column($this->suppliers, 'created'));
+    }
+
+    public function updated(): int
+    {
+        return array_sum(array_column($this->suppliers, 'updated'));
+    }
+
+    public function skipped(): int
+    {
+        return array_sum(array_column($this->suppliers, 'skipped'));
+    }
+
+    /**
+     * @return array<string, array{created: int, updated: int, skipped: int, failed: int}>
+     */
+    public function suppliers(): array
+    {
+        return $this->suppliers;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function unsupported(): array
+    {
+        return $this->unsupported;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function errors(): array
+    {
+        return $this->errors;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function failures(): array
+    {
+        return $this->failures;
     }
 
     public function hasErrors(): bool

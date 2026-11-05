@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\EventSubscriber;
 
+use App\Service\Scheduler\ScheduledTaskName;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Console\Messenger\RunCommandMessage;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Scheduler\Event\PostRunEvent;
@@ -37,7 +37,7 @@ final readonly class SchedulerHeartbeatSubscriber implements EventSubscriberInte
 
     public function onPostRun(PostRunEvent $event): void
     {
-        $taskName = self::taskName($event->getMessage());
+        $taskName = ScheduledTaskName::of($event->getMessage());
         $url = trim($this->heartbeatUrls[$taskName] ?? '');
         if ('' === $url) {
             return;
@@ -52,17 +52,5 @@ final readonly class SchedulerHeartbeatSubscriber implements EventSubscriberInte
         } catch (ExceptionInterface $exception) {
             $this->logger->warning('Heartbeat impossible à envoyer.', ['task' => $taskName, 'exception' => $exception]);
         }
-    }
-
-    /**
-     * « app:qonto:sync-supplier-invoices --from=... » devient « app:qonto:sync-supplier-invoices ».
-     */
-    public static function taskName(object $message): string
-    {
-        if ($message instanceof RunCommandMessage) {
-            return explode(' ', trim($message->input), 2)[0];
-        }
-
-        return $message::class;
     }
 }

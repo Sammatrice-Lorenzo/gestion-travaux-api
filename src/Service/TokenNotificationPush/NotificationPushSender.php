@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service\TokenNotificationPush;
 
 use App\Entity\TokenNotificationPush;
+use App\Exceptions\UnregisteredPushTokenException;
 use App\Interface\Firebase\FirebaseNotificationServiceInterface;
 use App\Repository\TokenNotificationPushRepository;
 use Psr\Log\LoggerInterface;
@@ -17,8 +18,6 @@ use Throwable;
  */
 final readonly class NotificationPushSender
 {
-    private const string FIREBASE_ERROR_UNREGISTERED = 'UNREGISTERED';
-
     public function __construct(
         private FirebaseNotificationServiceInterface $firebaseNotificationService,
         private TokenNotificationPushRepository $tokenNotificationPushRepository,
@@ -46,6 +45,10 @@ final readonly class NotificationPushSender
     {
         try {
             $response = $this->firebaseNotificationService->sendNotification($tokenNotificationPush->getToken(), $title, $body);
+        } catch (UnregisteredPushTokenException) {
+            $this->deleteToken($tokenNotificationPush);
+
+            return false;
         } catch (RuntimeException $exception) {
             $this->logger->warning('Notification push impossible.', ['title' => $title, 'exception' => $exception]);
 
@@ -55,12 +58,6 @@ final readonly class NotificationPushSender
         // Firebase renvoie le nom du message créé ; sans lui, l'envoi a été refusé.
         if (array_key_exists('name', $response)) {
             return true;
-        }
-
-        if (self::isUnregistered($response)) {
-            $this->deleteToken($tokenNotificationPush);
-
-            return false;
         }
 
         $this->logger->warning('Notification push refusée.', ['title' => $title, 'response' => $response]);
@@ -79,25 +76,5 @@ final readonly class NotificationPushSender
         } catch (Throwable $exception) {
             $this->logger->warning('Notification push : suppression du token impossible.', [...$context, 'exception' => $exception]);
         }
-    }
-
-    /**
-     * @param array<string, mixed> $response
-     */
-    private static function isUnregistered(array $response): bool
-    {
-        $error = $response['error'] ?? null;
-        $details = is_array($error) ? ($error['details'] ?? null) : null;
-        if (!is_array($details)) {
-            return false;
-        }
-
-        foreach ($details as $detail) {
-            if (is_array($detail) && self::FIREBASE_ERROR_UNREGISTERED === ($detail['errorCode'] ?? null)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

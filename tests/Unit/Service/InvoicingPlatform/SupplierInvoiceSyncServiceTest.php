@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Unit\Service\InvoicingPlatform;
 
+use App\Dto\InvoicingPlatform\SupplierInvoiceSyncResult;
 use App\Entity\ProductInvoiceFile;
 use App\Entity\QontoSyncState;
 use App\Entity\User;
@@ -89,6 +90,23 @@ final class SupplierInvoiceSyncServiceTest extends Unit
         }
     }
 
+    public function testReportGroupsInvoicesByResolvedSupplier(): void
+    {
+        $this->client
+            ->addInvoice(FakeInvoicingPlatformClient::invoice('sync-group-1', supplierName: 'LEROY MERLIN', vatNumber: 'FR00123456789'), content: $this->pdfContent())
+            ->addInvoice(FakeInvoicingPlatformClient::invoice('sync-group-2', supplierName: 'Leroy Merlin SAS', vatNumber: 'FR00123456789'), content: $this->pdfContent())
+            ->addInvoice(FakeInvoicingPlatformClient::invoice('sync-group-3', vatNumber: 'FR00123456789'), content: $this->pdfContent())
+            ->addInvoice(FakeInvoicingPlatformClient::invoice('sync-group-4'), content: $this->pdfContent())
+        ;
+
+        $result = $this->syncService->sync($this->user, $this->from, $this->until);
+
+        $this->assertSame([
+            'LEROY MERLIN' => ['created' => 3, 'updated' => 0, 'skipped' => 0, 'failed' => 0],
+            SupplierInvoiceSyncResult::UNKNOWN_SUPPLIER => ['created' => 1, 'updated' => 0, 'skipped' => 0, 'failed' => 0],
+        ], $result->suppliers());
+    }
+
     public function testCreatesProductInvoiceFromPdf(): void
     {
         $this->client->addInvoice(
@@ -98,7 +116,7 @@ final class SupplierInvoiceSyncServiceTest extends Unit
 
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
 
-        $this->assertSame(1, $result->created);
+        $this->assertSame(1, $result->created());
 
         $productInvoiceFile = $this->findByPlatformId('sync-pdf');
         $this->assertSame(ProductInvoiceSourceEnum::QONTO, $productInvoiceFile->getSource());
@@ -117,16 +135,16 @@ final class SupplierInvoiceSyncServiceTest extends Unit
         $this->client->addInvoice(FakeInvoicingPlatformClient::invoice('sync-update', totalAmount: 150.0, issueDate: new DateTimeImmutable('2026-01-20')));
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
 
-        $this->assertSame(0, $result->created);
-        $this->assertSame(1, $result->updated);
+        $this->assertSame(0, $result->created());
+        $this->assertSame(1, $result->updated());
         $this->assertCount(1, $this->entityManager->getRepository(ProductInvoiceFile::class)->findBy(['user' => $this->user, 'qontoId' => 'sync-update']));
         $productInvoiceFile = $this->findByPlatformId('sync-update');
         $this->assertSame(150.0, $productInvoiceFile->getTotalAmount());
         $this->assertSame('2026-01-20', $productInvoiceFile->getDate()->format('Y-m-d'));
 
         $unchanged = $this->syncService->sync($this->user, $this->from, $this->until);
-        $this->assertSame(0, $unchanged->updated);
-        $this->assertSame(1, $unchanged->skipped);
+        $this->assertSame(0, $unchanged->updated());
+        $this->assertSame(1, $unchanged->skipped());
     }
 
     public function testUpdateKeepsSupplierChangedByUser(): void
@@ -171,7 +189,7 @@ final class SupplierInvoiceSyncServiceTest extends Unit
         $this->client->addInvoice(FakeInvoicingPlatformClient::invoice('sync-ocr', invoiceNumber: 'F-2026-042'));
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
 
-        $this->assertSame(1, $result->updated);
+        $this->assertSame(1, $result->updated());
         $this->assertSame('F-2026-042', $this->findByPlatformId('sync-ocr')->getName());
     }
 
@@ -181,9 +199,9 @@ final class SupplierInvoiceSyncServiceTest extends Unit
 
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
 
-        $this->assertSame(0, $result->created);
-        $this->assertSame(1, $result->skipped);
-        $this->assertStringContainsString('USD', $result->unsupported[0]);
+        $this->assertSame(0, $result->created());
+        $this->assertSame(1, $result->skipped());
+        $this->assertStringContainsString('USD', $result->unsupported()[0]);
         $this->assertNull($this->entityManager->getRepository(ProductInvoiceFile::class)->findOneBy(['user' => $this->user, 'qontoId' => 'sync-usd']));
     }
 
@@ -197,12 +215,12 @@ final class SupplierInvoiceSyncServiceTest extends Unit
 
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
 
-        $this->assertSame(1, $result->created, 'Les factures suivantes sont importées.');
-        $this->assertCount(1, $result->failures);
-        $this->assertStringContainsString('Disque plein', $result->failures[0]);
-        $this->assertStringStartsWith('Fournisseur En Panne / ', $result->failures[0]);
-        $this->assertSame(1, $result->suppliers['Fournisseur En Panne']['failed']);
-        $this->assertSame(1, $result->suppliers['Fournisseur OK']['created']);
+        $this->assertSame(1, $result->created(), 'Les factures suivantes sont importées.');
+        $this->assertCount(1, $result->failures());
+        $this->assertStringContainsString('Disque plein', $result->failures()[0]);
+        $this->assertStringStartsWith('Fournisseur En Panne / ', $result->failures()[0]);
+        $this->assertSame(1, $result->suppliers()['Fournisseur En Panne']['failed']);
+        $this->assertSame(1, $result->suppliers()['Fournisseur OK']['created']);
         $this->assertFalse($result->hasErrors());
         $this->assertEquals($this->until, $result->syncedUntil, 'Une erreur permanente ne bloque pas les synchros suivantes.');
     }
@@ -233,8 +251,8 @@ final class SupplierInvoiceSyncServiceTest extends Unit
 
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
 
-        $this->assertSame(0, $result->created);
-        $this->assertSame(5, $result->skipped);
+        $this->assertSame(0, $result->created());
+        $this->assertSame(5, $result->skipped());
         $this->assertFalse($result->hasErrors());
     }
 
@@ -249,7 +267,7 @@ final class SupplierInvoiceSyncServiceTest extends Unit
 
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
 
-        $this->assertSame(1, $result->created);
+        $this->assertSame(1, $result->created());
         $productInvoiceFile = $this->findByPlatformId('sync-image');
         $this->assertSame('ticket.pdf', $productInvoiceFile->getName());
         $this->assertStoredPdf($productInvoiceFile);
@@ -266,8 +284,8 @@ final class SupplierInvoiceSyncServiceTest extends Unit
 
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
 
-        $this->assertSame(1, $result->created);
-        $this->assertSame([], $result->unsupported);
+        $this->assertSame(1, $result->created());
+        $this->assertSame([], $result->unsupported());
         $productInvoiceFile = $this->findByPlatformId('sync-ubl');
         $this->assertSame('UBL-2026-0042', $productInvoiceFile->getName());
         $this->assertStoredPdf($productInvoiceFile);
@@ -284,10 +302,10 @@ final class SupplierInvoiceSyncServiceTest extends Unit
 
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
 
-        $this->assertSame(0, $result->created);
-        $this->assertSame(1, $result->skipped);
-        $this->assertCount(1, $result->unsupported);
-        $this->assertStringContainsString('image/heic', $result->unsupported[0]);
+        $this->assertSame(0, $result->created());
+        $this->assertSame(1, $result->skipped());
+        $this->assertCount(1, $result->unsupported());
+        $this->assertStringContainsString('image/heic', $result->unsupported()[0]);
         $this->assertEquals($this->until, $result->syncedUntil);
     }
 
@@ -300,8 +318,8 @@ final class SupplierInvoiceSyncServiceTest extends Unit
 
         $result = $this->syncService->sync($this->user, $this->from, $this->until);
 
-        $this->assertSame(1, $result->created);
-        $this->assertCount(1, $result->errors);
+        $this->assertSame(1, $result->created());
+        $this->assertCount(1, $result->errors());
         $this->assertNull($result->syncedUntil);
         $this->assertNull($this->findSyncState()?->getLastSyncedAt());
     }
