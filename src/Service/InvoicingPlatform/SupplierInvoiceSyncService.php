@@ -132,14 +132,13 @@ final readonly class SupplierInvoiceSyncService
     private function importInvoice(User $user, PlatformSupplierInvoice $invoice, SupplierLookup $suppliers, SupplierInvoiceSyncResult $result): void
     {
         if ($this->isExcluded($invoice)) {
-            ++$result->skipped;
+            $result->addSkipped($this->supplierName($invoice, $suppliers));
 
             return;
         }
 
         if (!$this->hasSupportedCurrency($invoice)) {
-            ++$result->skipped;
-            $result->unsupported[] = "{$this->label($invoice)} : devise {$invoice->currency} non prise en charge";
+            $result->addUnsupported($this->supplierName($invoice, $suppliers), "{$this->label($invoice, $suppliers)} : devise {$invoice->currency} non prise en charge");
             $this->logger->warning('Facture fournisseur ignorée : devise non prise en charge.', ['id' => $invoice->id, 'currency' => $invoice->currency]);
 
             return;
@@ -148,23 +147,26 @@ final readonly class SupplierInvoiceSyncService
         try {
             $existing = $this->entityManager->getRepository(ProductInvoiceFile::class)->findOneBy(['user' => $user, 'qontoId' => $invoice->id]);
             if (null !== $existing) {
-                $this->updateExisting($user, $existing, $invoice, $suppliers) ? ++$result->updated : ++$result->skipped;
+                if ($this->updateExisting($user, $existing, $invoice, $suppliers)) {
+                    $result->addUpdated($this->supplierName($invoice, $suppliers));
+                } else {
+                    $result->addSkipped($this->supplierName($invoice, $suppliers));
+                }
 
                 return;
             }
 
             $this->create($user, $invoice, $suppliers);
-            ++$result->created;
+            $result->addCreated($this->supplierName($invoice, $suppliers));
         } catch (UnsupportedEInvoiceException|UnsupportedImageFormatException $exception) {
-            ++$result->skipped;
-            $result->unsupported[] = "{$this->label($invoice)} : {$exception->getMessage()}";
+            $result->addUnsupported($this->supplierName($invoice, $suppliers), "{$this->label($invoice, $suppliers)} : {$exception->getMessage()}");
             $this->logger->warning('Facture fournisseur ignorée : format non pris en charge.', ['id' => $invoice->id, 'reason' => $exception->getMessage()]);
         } catch (InvoicingPlatformException $exception) {
-            $result->errors[] = "{$this->label($invoice)} : {$exception->getMessage()}";
+            $result->addError($this->supplierName($invoice, $suppliers), "{$this->label($invoice, $suppliers)} : {$exception->getMessage()}");
             $this->logger->error('Import de facture fournisseur en erreur, retenté à la prochaine synchro.', ['id' => $invoice->id, 'exception' => $exception]);
         } catch (Throwable $exception) {
             // Erreur permanente (donnée, fichier, base) : la retenter bloquerait toutes les synchros suivantes.
-            $result->failures[] = "{$this->label($invoice)} : {$exception->getMessage()}";
+            $result->addFailure($this->supplierName($invoice, $suppliers), "{$this->label($invoice, $suppliers)} : {$exception->getMessage()}");
             $this->logger->error('Import de facture fournisseur impossible, ignorée jusqu\'à sa prochaine modification.', ['id' => $invoice->id, 'exception' => $exception]);
         }
     }
@@ -367,8 +369,20 @@ final readonly class SupplierInvoiceSyncService
         return strtolower(is_string($detected) && 'application/octet-stream' !== $detected ? $detected : $declaredMimeType);
     }
 
-    private function label(PlatformSupplierInvoice $invoice): string
+    /**
+     * Nom du fournisseur auquel la facture est rattachée, sinon celui envoyé par la plateforme : un même fournisseur
+     * peut y porter plusieurs noms, ou aucun s'il est retrouvé par son identifiant ou son n° de TVA.
+     */
+    private function supplierName(PlatformSupplierInvoice $invoice, SupplierLookup $suppliers): ?string
     {
-        return $invoice->invoiceNumber ?? ('' !== $invoice->fileName ? $invoice->fileName : $invoice->id);
+        return $suppliers->find($invoice)?->getName() ?? $invoice->supplierName;
+    }
+
+    private function label(PlatformSupplierInvoice $invoice, SupplierLookup $suppliers): string
+    {
+        $supplier = SupplierInvoiceSyncResult::supplierLabel($this->supplierName($invoice, $suppliers));
+        $invoiceLabel = $invoice->invoiceNumber ?? ('' !== $invoice->fileName ? $invoice->fileName : $invoice->id);
+
+        return "{$supplier} / {$invoiceLabel}";
     }
 }

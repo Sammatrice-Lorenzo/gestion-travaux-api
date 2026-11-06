@@ -120,19 +120,30 @@ final class QontoSyncSupplierInvoicesCommand extends Command
     {
         $io->table(
             ['Créées', 'Mises à jour', 'Ignorées', 'Erreurs', 'Échecs'],
-            [[$result->created, $result->updated, $result->skipped, count($result->errors), count($result->failures)]],
+            [[$result->created(), $result->updated(), $result->skipped(), count($result->errors()), count($result->failures())]],
         );
 
-        if ([] !== $result->unsupported) {
-            $io->warning(['Factures au format ou dans une devise non pris en charge, à ajouter à la main :', ...$result->unsupported]);
+        if ([] !== $result->suppliers()) {
+            $io->table(
+                ['Fournisseur', 'Créées', 'Mises à jour', 'Ignorées', 'En échec'],
+                array_map(
+                    static fn (string $supplier, array $counts): array => [$supplier, $counts['created'], $counts['updated'], $counts['skipped'], $counts['failed']],
+                    array_keys($result->suppliers()),
+                    $result->suppliers(),
+                ),
+            );
+        }
+
+        if ([] !== $result->unsupported()) {
+            $io->warning(['Factures au format ou dans une devise non pris en charge, à ajouter à la main :', ...$result->unsupported()]);
         }
 
         if ($result->hasFailures()) {
-            $io->error(['Factures impossibles à importer, ignorées jusqu\'à leur prochaine modification sur la plateforme (ou relancer avec --from) :', ...$result->failures]);
+            $io->error(['Factures impossibles à importer, ignorées jusqu\'à leur prochaine modification sur la plateforme (ou relancer avec --from) :', ...$result->failures()]);
         }
 
         if ($result->hasErrors()) {
-            $io->error(['Factures en erreur, retentées à la prochaine synchro :', ...$result->errors]);
+            $io->error(['Factures en erreur, retentées à la prochaine synchro :', ...$result->errors()]);
         }
 
         if ($result->isSuccessful()) {
