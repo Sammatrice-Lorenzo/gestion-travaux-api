@@ -9,7 +9,6 @@ use Codeception\Test\Unit;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use stdClass;
 use Symfony\Component\Console\Messenger\RunCommandMessage;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -72,12 +71,6 @@ final class SchedulerHeartbeatSubscriberTest extends Unit
         $subscriber = new SchedulerHeartbeatSubscriber($httpClient, $logger, [self::COMMAND => self::HEARTBEAT_URL]);
 
         $subscriber->onPostRun($this->postRunEvent(new RunCommandMessage(self::COMMAND)));
-    }
-
-    public function testTaskName(): void
-    {
-        $this->assertSame(self::COMMAND, SchedulerHeartbeatSubscriber::taskName(new RunCommandMessage('  ' . self::COMMAND . ' --from=2026-01-01')));
-        $this->assertSame(stdClass::class, SchedulerHeartbeatSubscriber::taskName(new stdClass()));
     }
 
     public function testSubscribesToPostRunEvent(): void

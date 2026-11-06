@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Exceptions\UnregisteredPushTokenException;
 use Firebase\JWT\JWT;
 use RuntimeException;
 use App\Dto\FirebaseServiceAccount;
@@ -12,6 +13,8 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 final class FirebaseNotificationService implements FirebaseNotificationServiceInterface
 {
+    private const string ERROR_UNREGISTERED = 'UNREGISTERED';
+
     private FirebaseServiceAccount $serviceAccount;
 
     public function __construct(
@@ -22,6 +25,7 @@ final class FirebaseNotificationService implements FirebaseNotificationServiceIn
     }
 
     /**
+     * @throws UnregisteredPushTokenException
      * @throws RuntimeException
      *
      * @return array<string, array<string, int|string>|string>
@@ -66,10 +70,36 @@ final class FirebaseNotificationService implements FirebaseNotificationServiceIn
                 ],
             ]);
 
-            return $response->toArray(false);
+            $data = $response->toArray(false);
         } catch (\Throwable $e) {
             throw new RuntimeException('Firebase notification sending failed: ' . $e->getMessage(), $e->getCode(), $e);
         }
+
+        if (self::isUnregistered($data)) {
+            throw new UnregisteredPushTokenException('Firebase push token is no longer registered.');
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param array<mixed> $response
+     */
+    private static function isUnregistered(array $response): bool
+    {
+        $error = $response['error'] ?? null;
+        $details = is_array($error) ? ($error['details'] ?? null) : null;
+        if (!is_array($details)) {
+            return false;
+        }
+
+        foreach ($details as $detail) {
+            if (is_array($detail) && self::ERROR_UNREGISTERED === ($detail['errorCode'] ?? null)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function generateAccessToken(): string

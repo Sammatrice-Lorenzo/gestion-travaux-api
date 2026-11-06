@@ -18,6 +18,7 @@ use App\Tests\Support\Fake\FakeInvoicingPlatformClient;
 use App\Tests\Support\FunctionalTester;
 use LogicException;
 use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 
 final class SyncSupplierInvoicesHandlerCest
 {
@@ -110,10 +111,35 @@ final class SyncSupplierInvoicesHandlerCest
         $user = $this->grabUserWithDevice($I, 'device-unavailable');
         $this->client->failListing(new InvoicingPlatformException('Qonto indisponible', 503));
 
-        // Pas d'exception : le message n'est pas retenté, la synchro planifiée prendra le relais.
-        ($this->handler)(new SyncSupplierInvoicesMessage((int) $user->getId()));
+        $failure = $this->runExpectingFailure($I, $user);
 
+        $I->assertStringContainsString('Qonto indisponible', $failure->getMessage());
         $I->assertContains($this->notification('device-unavailable', SupplierInvoiceImportNotifier::PLATFORM_UNAVAILABLE_BODY), $this->firebase->sent);
+    }
+
+    public function testIncompleteSyncFailsWithItsReportAfterNotifying(FunctionalTester $I): void
+    {
+        $user = $this->grabUserWithDevice($I, 'device-incomplete');
+        $this->client->addInvoice(FakeInvoicingPlatformClient::invoice('handler-broken', supplierName: 'Fournisseur En Panne'));
+
+        $failure = $this->runExpectingFailure($I, $user);
+
+        $I->assertStringContainsString('Fournisseur En Panne / F-handler-broken', $failure->getMessage());
+        $I->assertContains($this->notification('device-incomplete', 'Synchronisation Qonto incomplète : 0 importée(s), 1 en erreur'), $this->firebase->sent);
+    }
+
+    public function testCompletedSyncReturnsReadableReport(FunctionalTester $I): void
+    {
+        $user = $this->grabUser($I, UserFixturesEnum::DEFAULT_USER->value);
+        $this->client->addInvoice(
+            FakeInvoicingPlatformClient::invoice('handler-report', supplierName: 'Société Générale'),
+            content: (string) file_get_contents(codecept_data_dir('InvoiceTemplate.pdf')),
+        );
+
+        $report = ($this->handler)(new SyncSupplierInvoicesMessage((int) $user->getId()));
+
+        $I->assertSame('completed', $report['status']);
+        $I->assertStringContainsString('Société Générale : créées 1', $report['report']);
     }
 
     public function testOtherUserCannotImportOwnerInvoices(FunctionalTester $I): void
@@ -136,6 +162,22 @@ final class SyncSupplierInvoicesHandlerCest
         ($this->handler)(new SyncSupplierInvoicesMessage(PHP_INT_MAX));
 
         $I->assertSame([], $this->client->requestedWindows);
+    }
+
+    /**
+     * Sans nouvel essai : le message échoue, la synchro planifiée prendra le relais.
+     */
+    private function runExpectingFailure(FunctionalTester $I, User $user): UnrecoverableMessageHandlingException
+    {
+        try {
+            ($this->handler)(new SyncSupplierInvoicesMessage((int) $user->getId()));
+        } catch (UnrecoverableMessageHandlingException $exception) {
+            return $exception;
+        }
+
+        $I->fail('Une UnrecoverableMessageHandlingException était attendue.');
+
+        throw new LogicException('Inatteignable');
     }
 
     private function grabUserWithDevice(FunctionalTester $I, string $token): User

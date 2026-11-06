@@ -34,7 +34,7 @@ final class SupplierInvoiceImportNotifierTest extends Unit
 
         /** @var TokenNotificationPushRepository $tokenRepository */
         $tokenRepository = $this->tester->grabService(TokenNotificationPushRepository::class);
-        $this->notifier = new SupplierInvoiceImportNotifier(new NotificationPushSender($this->firebase, new NullLogger()), $tokenRepository, new NullLogger());
+        $this->notifier = new SupplierInvoiceImportNotifier(new NotificationPushSender($this->firebase, $tokenRepository, new NullLogger()), $tokenRepository, new NullLogger());
 
         /** @var User $user */
         $user = $this->tester->grabEntityFromRepository(User::class, ['email' => UserFixturesEnum::DEFAULT_USER->value]);
@@ -120,8 +120,8 @@ final class SupplierInvoiceImportNotifierTest extends Unit
         $this->assertSame('2 nouvelles factures fournisseurs importées depuis Qonto', SupplierInvoiceImportNotifier::importedBody(2));
 
         $incomplete = $this->syncResult(created: 2);
-        $incomplete->errors = ['F-1 : Qonto indisponible'];
-        $incomplete->failures = ['F-2 : disque plein'];
+        $incomplete->addError('Bricomat', 'F-1 : Qonto indisponible');
+        $incomplete->addFailure('Bricomat', 'F-2 : disque plein');
         $this->assertSame('Synchronisation Qonto incomplète : 2 importée(s), 2 en erreur', SupplierInvoiceImportNotifier::resultBody($incomplete));
     }
 
@@ -135,7 +135,9 @@ final class SupplierInvoiceImportNotifierTest extends Unit
     private function syncResult(int $created): SupplierInvoiceSyncResult
     {
         $result = new SupplierInvoiceSyncResult();
-        $result->created = $created;
+        for ($i = 0; $i < $created; ++$i) {
+            $result->addCreated('Bricomat');
+        }
 
         return $result;
     }
