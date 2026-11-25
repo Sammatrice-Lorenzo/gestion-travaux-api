@@ -15,15 +15,15 @@ final class WorkEventDaysFormatter
      *
      * @return array<array<int, string>>
      */
-    public static function getWorkDayEventFormattedForFile(array $workEventDays): array
-    {
-        $timeFormat = DateFormatHelper::TIME_FORMAT;
-
+    public static function getWorkDayEventFormattedForFile(
+        array $workEventDays,
+        ?string $timeZone = null,
+    ): array {
         return array_map(static fn (WorkEventDay $workEventDay): array => [
-            $workEventDay->getStartDate()->format(DateFormatHelper::FRENCH_FORMAT),
+            DateFormatHelper::format($workEventDay->getStartDate(), DateFormatHelper::FRENCH_FORMAT, $timeZone),
             $workEventDay->getTitle(),
-            $workEventDay->getStartDate()->format($timeFormat),
-            $workEventDay->getEndDate()->format($timeFormat),
+            DateFormatHelper::format($workEventDay->getStartDate(), DateFormatHelper::TIME_FORMAT, $timeZone),
+            DateFormatHelper::format($workEventDay->getEndDate(), DateFormatHelper::TIME_FORMAT, $timeZone),
             $workEventDay->getClient() instanceof Client ? $workEventDay->getClient()->getName() : '',
         ], $workEventDays);
     }
@@ -33,14 +33,14 @@ final class WorkEventDaysFormatter
      *
      * @return array<array<int, string>>
      */
-    public static function getWorkDayEventFormattedForSearchExport(array $workEventDays): array
-    {
-        $frenchFormat = DateFormatHelper::FRENCH_FORMAT_WITH_TIME;
-
+    public static function getWorkDayEventFormattedForSearchExport(
+        array $workEventDays,
+        ?string $timeZone = null,
+    ): array {
         return array_map(static fn (WorkEventDay $workEventDay): array => [
             $workEventDay->getTitle(),
-            $workEventDay->getStartDate()->format($frenchFormat),
-            $workEventDay->getEndDate()->format($frenchFormat),
+            DateFormatHelper::format($workEventDay->getStartDate(), DateFormatHelper::FRENCH_FORMAT_WITH_TIME, $timeZone),
+            DateFormatHelper::format($workEventDay->getEndDate(), DateFormatHelper::FRENCH_FORMAT_WITH_TIME, $timeZone),
             $workEventDay->getClient() instanceof Client ? $workEventDay->getClient()->getName() : '',
         ], $workEventDays);
     }

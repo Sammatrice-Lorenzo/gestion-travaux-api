@@ -6,6 +6,8 @@ namespace App\Helper;
 
 final class DateFormatHelper
 {
+    public const string DEFAULT_TIME_ZONE = 'Europe/Paris';
+
     public const string DEFAULT_FORMAT = 'Y-m-d';
 
     public const string FRENCH_FORMAT = 'd/m/y';
@@ -25,4 +27,14 @@ final class DateFormatHelper
     public const string DEFAULT_FORMAT_WITH_TIME = self::DEFAULT_FORMAT . ' ' . self::TIME_FORMAT ;
 
     public const string FRENCH_FORMAT_WITH_TIME = self::FRENCH_FORMAT . ' ' . self::TIME_FORMAT ;
+
+    public static function format(
+        \DateTimeInterface $date,
+        string $format,
+        ?string $timeZone = null,
+    ): string {
+        return \DateTimeImmutable::createFromInterface($date)
+            ->setTimezone(new \DateTimeZone($timeZone ?? self::DEFAULT_TIME_ZONE))
+            ->format($format);
+    }
 }
