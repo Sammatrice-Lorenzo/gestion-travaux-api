@@ -35,7 +35,7 @@ final class WorkEventDaysFormatter
      */
     public static function getWorkDayEventFormattedForSearchExport(array $workEventDays): array
     {
-        $frenchFormat = DateFormatHelper::FRENCH_FORMAT;
+        $frenchFormat = DateFormatHelper::FRENCH_FORMAT_WITH_TIME;
 
         return array_map(static fn (WorkEventDay $workEventDay): array => [
             $workEventDay->getTitle(),
