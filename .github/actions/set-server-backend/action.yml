@@ -20,7 +20,7 @@ runs:
           with:
               php-version: '8.3'
               extensions: gd, sodium, curl, zip, pdo_mysql
-              tools: composer
+              tools: composer, symfony-cli
               coverage: none
 
         - name: Set DATABASE_URL
@@ -52,11 +52,9 @@ runs:
           run: yarn install --frozen-lockfile --ignore-scripts
           working-directory: ${{ inputs.backend_path }}
 
-        - name: Install Symfony CLI
+        - name: Check Symfony CLI
           shell: bash
-          run: |
-              curl -sS https://get.symfony.com/cli/installer | bash
-              mv ~/.symfony*/bin/symfony /usr/local/bin/symfony
+          run: symfony version
 
         - name: Install JWT keys
           shell: bash

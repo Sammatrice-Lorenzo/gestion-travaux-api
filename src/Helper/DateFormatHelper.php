@@ -23,4 +23,6 @@ final class DateFormatHelper
     public const string LAST_DAY_FORMAT = 'Y-m-t';
 
     public const string DEFAULT_FORMAT_WITH_TIME = self::DEFAULT_FORMAT . ' ' . self::TIME_FORMAT ;
+
+    public const string FRENCH_FORMAT_WITH_TIME = self::FRENCH_FORMAT . ' ' . self::TIME_FORMAT ;
 }
